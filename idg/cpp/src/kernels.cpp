@@ -15,7 +15,7 @@ void add_pt_src_to_baseline(size_t bl, size_t nr_timesteps, size_t nr_channels,
                             std::complex<float> amplitude,
                             const xt::xarray<float> &frequencies,
                             const xt::xarray<UVW> &uvw, float l, float m,
-                            xt::xarray<std::complex<float>> &visibilities) {
+                            xt::xarray<VisibilityType> &visibilities) {
   const float speed_of_light = 299792458.0f;
 
   for (int t = 0; t < nr_timesteps; ++t) {
@@ -167,23 +167,22 @@ void add_subgrid_to_grid(size_t s, const std::vector<Metadata> &metadata,
 
 std::vector<Metadata> compute_metadata(size_t grid_size, size_t subgrid_size,
                                        size_t nr_channels, size_t bl,
-                                       const xt::xarray<float> &u_pixels,
-                                       const xt::xarray<float> &v_pixels,
+                                       const xt::xarray<UVW> &uvw,
                                        size_t max_group_size) {
   std::vector<Metadata> metadata;
-  const size_t nr_timesteps = u_pixels.size();
+  const size_t nr_timesteps = uvw.size();
   const float max_distance = 0.8f * subgrid_size;
 
   size_t timestep = 0;
   while (timestep < nr_timesteps) {
-    const float current_u = u_pixels(timestep);
-    const float current_v = v_pixels(timestep);
+    const float current_u = uvw(timestep).u;
+    const float current_v = uvw(timestep).v;
 
     size_t group_size = 1;
     while (timestep + group_size < nr_timesteps &&
            group_size < max_group_size) {
-      const float u_diff = u_pixels(timestep + group_size) - current_u;
-      const float v_diff = v_pixels(timestep + group_size) - current_v;
+      const float u_diff = uvw(timestep + group_size).u - current_u;
+      const float v_diff = uvw(timestep + group_size).v - current_v;
       const float distance = std::sqrt(u_diff * u_diff + v_diff * v_diff);
 
       if (distance > max_distance) {
@@ -196,8 +195,8 @@ std::vector<Metadata> compute_metadata(size_t grid_size, size_t subgrid_size,
     float group_u = 0.0f;
     float group_v = 0.0f;
     for (size_t i = 0; i < group_size; ++i) {
-      group_u += u_pixels(timestep + i);
-      group_v += v_pixels(timestep + i);
+      group_u += uvw(timestep + i).u;
+      group_v += uvw(timestep + i).v;
     }
     group_u /= group_size;
     group_v /= group_size;
