@@ -6,7 +6,7 @@
 #include "idgtypes.h"
 
 void add_pt_src_to_baseline(size_t bl, size_t nr_timesteps, size_t nr_channels,
-                            float amplitude,
+                            std::complex<float> amplitude,
                             const xt::xarray<float> &frequencies,
                             const xt::xarray<UVW> &uvw, float l, float m,
                             xt::xarray<VisibilityType> &visibilities);
@@ -24,8 +24,7 @@ void add_subgrid_to_grid(size_t s, const std::vector<Metadata> &metadata,
 
 std::vector<Metadata> compute_metadata(size_t grid_size, size_t subgrid_size,
                                        size_t nr_channels, size_t bl,
-                                       const xt::xarray<float> &u_pixels,
-                                       const xt::xarray<float> &v_pixels,
+                                       const xt::xarray<UVW> &uvw,
                                        size_t max_group_size);
 
 void visibilities_to_subgrid(

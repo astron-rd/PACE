@@ -105,19 +105,17 @@ xt::xarray<float> get_frequencies(const float start_frequency,
 std::vector<Metadata> get_metadata(const size_t nr_channels,
                                    const size_t subgrid_size,
                                    const size_t grid_size,
-                                   const xt::xarray<float> &uvw,
+                                   const xt::xarray<UVW> &uvw,
                                    const size_t max_group_size = 256) {
   const size_t nr_baselines = uvw.shape()[0];
 
   std::vector<Metadata> metadata;
 
   for (size_t bl = 0; bl < nr_baselines; ++bl) {
-    const auto u_pixels = xt::view(uvw, bl, xt::all(), 0);
-    const auto v_pixels = xt::view(uvw, bl, xt::all(), 1);
+    const auto bl_uvw = xt::view(uvw, bl, xt::all());
 
-    const auto bl_metadata =
-        compute_metadata(grid_size, subgrid_size, nr_channels, bl, u_pixels,
-                         v_pixels, max_group_size);
+    const auto bl_metadata = compute_metadata(
+        grid_size, subgrid_size, nr_channels, bl, bl_uvw, max_group_size);
 
     metadata.insert(metadata.end(), bl_metadata.begin(), bl_metadata.end());
   }
@@ -129,10 +127,9 @@ xt::xarray<VisibilityType>
 get_visibilities(const size_t nr_correlations, const size_t nr_channels,
                  const size_t nr_timesteps, const size_t nr_baselines,
                  const float image_size, const size_t grid_size,
-                 const xt::xarray<double> &frequencies,
-                 const xt::xarray<float> &uvw,
-                 const size_t nr_point_sources = 4, int max_pixel_offset = -1,
-                 const int random_seed = 2) {
+                 const xt::xarray<float> &frequencies,
+                 const xt::xarray<UVW> &uvw, const size_t nr_point_sources = 4,
+                 int max_pixel_offset = -1, const int random_seed = 2) {
   if (max_pixel_offset == -1) {
     max_pixel_offset = static_cast<int>(grid_size / 3);
   }
