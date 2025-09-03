@@ -65,7 +65,7 @@ xt::xarray<float> evaluate_spheroidal(const xt::xarray<float> &nu) {
     float end = (part == 0) ? 0.75f : 1.00f;
     float start = (part == 0) ? 0.0f : 0.75f;
 
-    // Create mask using XTensor's element-wise operations
+    // Create mask
     xt::xarray<bool> mask = (nu >= start) && (nu <= end);
 
     // Check if any elements in mask are true
@@ -73,51 +73,41 @@ xt::xarray<float> evaluate_spheroidal(const xt::xarray<float> &nu) {
       continue;
     }
 
-    // Use xt::filter to extract elements
+    // Extract elements using the mask
     xt::xarray<float> nu_part = xt::filter(nu, mask);
     xt::xarray<float> nusq = xt::square(nu_part);
     xt::xarray<float> delnusq = nusq - end * end;
 
-    // Reverse coefficients for polyval
-    xt::xarray<float> P_part = xt::view(P, part, xt::all());
-    xt::xarray<float> Q_part = xt::view(Q, part, xt::all());
-    xt::xarray<float> P_reversed = xt::flip(P_part, 0);
-    xt::xarray<float> Q_reversed = xt::flip(Q_part, 0);
+    // Get coefficients for this part
+    auto P_coeffs = xt::view(P, part, xt::all());
+    auto Q_coeffs = xt::view(Q, part, xt::all());
 
-    // Calculate polynomial using Horner's method
+    // Reverse coefficients for polyval (highest degree first)
+    xt::xarray<float> P_reversed = xt::flip(P_coeffs, 0);
+    xt::xarray<float> Q_reversed = xt::flip(Q_coeffs, 0);
+
+    // Calculate polynomials
     xt::xarray<float> top = polyval(P_reversed, delnusq);
     xt::xarray<float> bot = polyval(Q_reversed, delnusq);
 
-    // Create valid mask using element-wise comparison
-    xt::xarray<bool> valid = xt::not_equal(bot, 0.0f);
-
-    // Calculate result_part
+    // Calculate result for this part
     xt::xarray<float> result_part = xt::zeros_like(nu_part);
 
-    // Use xt::filter to apply the valid mask
-    xt::xarray<float> valid_top = xt::filter(top, valid);
-    xt::xarray<float> valid_bot = xt::filter(bot, valid);
-    xt::xarray<float> valid_nusq = xt::filter(nusq, valid);
-
-    xt::xarray<float> valid_result =
-        (1.0f - valid_nusq) * (valid_top / valid_bot);
-
-    // Assign the valid results back to result_part
-    xt::xarray<bool> valid_indices = xt::arange(nu_part.size());
-    valid_indices = xt::filter(valid_indices, valid);
-
-    for (size_t i = 0; i < valid_indices.size(); ++i) {
-      const size_t idx = valid_indices(i);
-      result_part(idx) = valid_result(i);
+    // Handle division by zero
+    for (size_t i = 0; i < result_part.size(); ++i) {
+      if (bot(i) != 0.0f) {
+        result_part(i) = (1.0f - nusq(i)) * (top(i) / bot(i));
+      }
     }
 
     // Assign result_part back to the original result array
-    xt::xarray<bool> mask_indices = xt::arange(nu.size());
-    mask_indices = xt::filter(mask_indices, mask);
-
-    for (size_t i = 0; i < mask_indices.size(); ++i) {
-      const size_t idx = mask_indices(i);
-      result(idx) = result_part(i);
+    // Find indices where mask is true
+    size_t result_idx = 0;
+    for (size_t i = 0; i < nu.size(); ++i) {
+      if (mask(i)) {
+        result(i) = result_part(result_idx);
+        result_idx++;
+      }
     }
   }
 
