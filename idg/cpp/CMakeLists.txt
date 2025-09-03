@@ -14,4 +14,6 @@ include("${CMAKE_SOURCE_DIR}/cmake/FetchXTensor.cmake")
 
 FetchContent_MakeAvailable(xtensor)
 
+find_package(OpenMP)
+
 add_subdirectory(src)
