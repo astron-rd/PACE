@@ -22,5 +22,5 @@ atermtype = numpy.complex64
 atermoffsettype = numpy.intc
 tapertype = numpy.float32
 
-FourierDomainToImageDomain = 0
-ImageDomainToFourierDomain = 1
+FOURIER_DOMAIN_TO_IMAGE_DOMAIN = 0
+IMAGE_DOMAIN_TO_FOURIER_DOMAIN = 1

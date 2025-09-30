@@ -1,6 +1,6 @@
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import numpy as np
+from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 import multiprocessing
+import numpy as np
 
 import idgtypes
 from kernels import add_subgrid_to_grid, compute_phasor, visibilities_to_subgrid
@@ -45,7 +45,7 @@ class Gridder:
 
         # Grid visibilities onto subgrids
         with ThreadPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
-            futures = []
+            futures: list[Future[None]] = []
             for s in range(nr_subgrids):
                 future = executor.submit(
                     visibilities_to_subgrid,
@@ -121,7 +121,7 @@ class Gridder:
         grid[:] = np.fft.fftshift(grid, axes=(1, 2))
 
         # FFT
-        if direction == idgtypes.FourierDomainToImageDomain:
+        if direction == idgtypes.FOURIER_DOMAIN_TO_IMAGE_DOMAIN:
             grid[:] = np.fft.ifft2(grid, axes=(1, 2))
         else:
             grid[:] = np.fft.fft2(grid, axes=(1, 2))
@@ -131,7 +131,7 @@ class Gridder:
 
         # Scaling
         scale = 2 + 0j
-        if direction == idgtypes.FourierDomainToImageDomain:
+        if direction == idgtypes.FOURIER_DOMAIN_TO_IMAGE_DOMAIN:
             grid *= scale
         else:
             grid /= scale

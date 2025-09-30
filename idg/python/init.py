@@ -1,7 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import multiprocessing
-import numpy as np
 import random
+import numpy as np
 
 import idgtypes
 
