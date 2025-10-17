@@ -23,7 +23,7 @@ int main() {
     float dm_start = 2.0;                                              // pc cm^-3
     float dm_end = 100.0;                                              // pc cm^-3
     float pulse_width = 4.0;                                           // ms
-    float dm_tol = 1.25;
+    float dm_tolerance = 1.25;
     size_t n_bits_in = 8;
     size_t n_bits_out = 32;
 
@@ -35,6 +35,9 @@ int main() {
 
     // Initialise and execute the FDD plan
     dedisp::FDDPlan fdd_plan(n_channels, time_resolution, peak_frequency, frequency_resolution);
+
+    fdd_plan.generate_dm_list(dm_start, dm_end, pulse_width, dm_tolerance);
+
     fdd_plan.execute(n_samples, input, n_bits_in, output, n_bits_out);
 
     fdd_plan.show();
