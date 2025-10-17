@@ -1,1 +1,6 @@
 .vscode
+*.npy
+*__pycache__*
+
+# Exclude build directories
+build/
