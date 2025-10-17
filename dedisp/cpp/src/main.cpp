@@ -1,7 +1,7 @@
 #include <chrono>
 #include <iostream>
 
-#include "fdd.hpp"
+#include "fddplan.hpp"
 
 int main() {
     // Mock input
@@ -36,4 +36,6 @@ int main() {
     // Initialise and execute the FDD plan
     dedisp::FDDPlan fdd_plan(n_channels, time_resolution, peak_frequency, frequency_resolution);
     fdd_plan.execute(n_samples, input, n_bits_in, output, n_bits_out);
+
+    fdd_plan.show();
 }
