@@ -34,12 +34,16 @@ int main() {
     unsigned char *output = 0;
 
     // Initialise and execute the FDD plan
+    std::cout << "Initialise FDD Plan <--" << std::endl;
+    auto start = std::chrono::high_resolution_clock::now();
     dedisp::FDDPlan fdd_plan(n_channels, time_resolution, peak_frequency, frequency_resolution);
+    auto end = std::chrono::high_resolution_clock::now();
+    std::cout << "--> runtime: " << std::chrono::duration<double>(end - start).count() << " seconds" << std::endl;
 
     std::cout << "Generate DM list <--" << std::endl;
-    auto start = std::chrono::high_resolution_clock::now();
+    start = std::chrono::high_resolution_clock::now();
     fdd_plan.generate_dm_list(dm_start, dm_end, pulse_width, dm_tolerance);
-    auto end = std::chrono::high_resolution_clock::now();
+    end = std::chrono::high_resolution_clock::now();
     std::cout << "--> runtime: " << std::chrono::duration<double>(end - start).count() << " seconds" << std::endl;
 
     // const std::vector<float> dm_list = fdd_plan.get_dm_list();
@@ -49,8 +53,11 @@ int main() {
     // }
     // std::cout << std::endl;
 
-
+    std::cout << "Execute FDD Plan <--" << std::endl;
+    start = std::chrono::high_resolution_clock::now();
     fdd_plan.execute(n_samples, input, n_bits_in, output, n_bits_out);
+    end = std::chrono::high_resolution_clock::now();
+    std::cout << "--> runtime: " << std::chrono::duration<double>(end - start).count() << " seconds" << std::endl;
 
     fdd_plan.show();
 }

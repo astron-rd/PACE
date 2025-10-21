@@ -6,18 +6,29 @@
 namespace dedisp {
 
 FDDPlan::FDDPlan(size_t n_channels, float time_resolution, float peak_frequency, float frequency_resolution) : dm_count_{0}, n_channels_{n_channels}, max_delay_{0}, time_resolution_{time_resolution}, peak_frequency_{peak_frequency}, frequency_resolution_{-std::abs(frequency_resolution)} {
-  std::cout << "Initialise FDD Plan..." << std::endl;
-
+  // Generate the delay table without the DM factor, which is applied during dedispersion.
   generate_delay_table();
 }
 
 void FDDPlan::execute(size_t n_samples, const unsigned char *input,
                        size_t n_bits_in, unsigned char *output, size_t n_bits_out) {
-  std::cout << "Execute FDD Plan..." << std::endl;
+  const size_t n_spin_frequencies = (n_samples / 2 + 1);
+  const size_t n_output_samples = n_samples - max_delay_;
 
-  // Rough outline:
+  // TODO: implemented zero padded FFT; initial version without!
+  const bool use_zero_padding = true;
+  const size_t n_samples_fft = n_samples;
+  const size_t n_samples_padded = n_samples_fft;
+
+  std::vector<float> data_nu(n_channels_ * n_samples_padded);
+  std::vector<float> data_dm(dm_count_ * n_samples_padded);
+
   // 1. Generate spin table
+  generate_spin_frequency_table(n_spin_frequencies, n_samples);
+
   // 2. Transpose data (convert input bytes to floats)
+  // TODO: can be remove this step? I.e. have the dedispersion code input and output lists of floats?
+
   // 3. Real-to-complex FFT: time series data to frequency domain
   // 4. Run dedispersion algorithm (CPU reference or optimised version)
   // 5. Complex-to-real FFT: frequency domain back to time series data
@@ -26,11 +37,11 @@ void FDDPlan::execute(size_t n_samples, const unsigned char *input,
 void FDDPlan::show() const {
   std::cout << "FDD Plan Summary" << std::endl;
   std::cout << "  nr channels:          " << n_channels_ << std::endl;
-  std::cout << "  dm count:             " << dm_count_ << std::endl;
-  std::cout << "  max delay:            " << max_delay_ << std::endl;
-  std::cout << "  time resolution:      " << time_resolution_ << std::endl;
-  std::cout << "  frequency resolution: " << frequency_resolution_ << std::endl;
-  std::cout << "  peak frequency:       " << peak_frequency_ << std::endl;
+  std::cout << "  nr dm trials:         " << dm_count_ << std::endl;
+  std::cout << "  max delay:            " << max_delay_ << " s" << std::endl;
+  std::cout << "  time resolution:      " << time_resolution_ << " s" << std::endl;
+  std::cout << "  frequency resolution: " << -frequency_resolution_ << " MHz" << std::endl;
+  std::cout << "  peak frequency:       " << peak_frequency_ << " MHz" << std::endl;
 }
 
 void FDDPlan::generate_dm_list(float dm_start, float dm_end, float pulse_width, float tolerance) {
@@ -64,11 +75,20 @@ void FDDPlan::generate_dm_list(float dm_start, float dm_end, float pulse_width, 
 void FDDPlan::generate_delay_table() {
     delay_table_.resize(n_channels_);
 
+    for (size_t channel = 0; channel < n_channels_; ++channel) {
+        const float inverse_channel_frequency = 1.0f / (peak_frequency_ + channel * frequency_resolution_);
+        const float inverse_peak_frequency = 1.0f / peak_frequency_;
 
+        delay_table_[channel] = 4.148741601e3 / time_resolution_ * (inverse_channel_frequency  * inverse_channel_frequency  - inverse_peak_frequency * inverse_peak_frequency);
+    }
 }
 
-void FDDPlan::generate_spin_frequency_table(size_t n_frequencies, size_t n_samples, float time_resolution) {
+void FDDPlan::generate_spin_frequency_table(size_t n_spin_frequencies, size_t n_samples) {
+    spin_frequency_table_.resize(n_spin_frequencies);
 
+    for (size_t i = 0; i < n_spin_frequencies; ++i) {
+        spin_frequency_table_[i] = i * (1.0f / (n_samples * time_resolution_));
+    }
 }
 
 } // dedisp

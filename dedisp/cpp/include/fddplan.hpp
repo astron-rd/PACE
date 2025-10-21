@@ -25,7 +25,7 @@ private:
   void generate_delay_table();
 
   /// Fill the spin frequency table.
-  void generate_spin_frequency_table(size_t n_frequencies, size_t n_samples, float time_resolution);
+  void generate_spin_frequency_table(size_t n_frequencies, size_t n_samples);
 
   // Size parameters
   size_t dm_count_;

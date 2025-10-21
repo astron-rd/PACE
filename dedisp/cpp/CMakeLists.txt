@@ -20,7 +20,7 @@ FetchContent_MakeAvailable(xtensor)
 find_package(OpenMP)
 
 # Configure targets
-add_library(dedisp OBJECT src/fddplan.cpp)
+add_library(dedisp OBJECT src/fddplan.cpp src/kernels.cpp)
 target_link_libraries(dedisp PUBLIC xtensor xtensor-fftw PkgConfig::FFTW OpenMP::OpenMP_CXX)
 
 add_executable(testfdd src/main.cpp)
