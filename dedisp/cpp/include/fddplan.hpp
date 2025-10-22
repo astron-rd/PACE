@@ -1,24 +1,29 @@
 #pragma once
 
-#include <vector>
+#include <xtensor/containers/xarray.hpp>
 
 namespace dedisp {
 
 class FDDPlan {
 public:
-  FDDPlan(size_t n_channels, float time_resolution, float peak_frequency, float frequency_resolution);
+  FDDPlan(size_t n_channels, float time_resolution, float peak_frequency,
+          float frequency_resolution);
 
-  void execute(size_t n_samples, const unsigned char *input,
-                       size_t n_bits_in, unsigned char *output, size_t n_bits_out);
+  void execute(size_t n_samples, const unsigned char *input, size_t n_bits_in,
+               unsigned char *output, size_t n_bits_out);
 
-  /// Generate a list of trial dispersion measures based on an algorithm by Lina Levin.
-  void generate_dm_list(float dm_start, float dm_end, float pulse_width, float tolerance);
+  /// Generate a list of trial dispersion measures based on an algorithm by Lina
+  /// Levin.
+  void generate_dm_list(float dm_start, float dm_end, float pulse_width,
+                        float tolerance);
 
   void show() const;
 
-  std::vector<float> get_dm_list() const { return dm_list_; };
-  std::vector<float> get_delay_table() const { return delay_table_; };
-  std::vector<float> get_spin_frequency_table() const { return spin_frequency_table_; };
+  xt::xarray<float> get_dm_table() const { return dm_table_; };
+  xt::xarray<float> get_delay_table() const { return delay_table_; };
+  xt::xarray<float> get_spin_frequency_table() const {
+    return spin_frequency_table_;
+  };
 
 private:
   /// Fill the dispersive delay table.
@@ -38,9 +43,9 @@ private:
   float frequency_resolution_;
 
   // Host arrays
-  std::vector<float> dm_list_;
-  std::vector<float> delay_table_;
-  std::vector<float> spin_frequency_table_;
+  xt::xarray<float> dm_table_;
+  xt::xarray<float> delay_table_;
+  xt::xarray<float> spin_frequency_table_;
 };
 
-} // dedisp
+} // namespace dedisp
