@@ -8,18 +8,16 @@
 int main() {
   // Observation details: duration, integration time, max. frequency, bandwidth,
   // and channel count.
-  const dedisp::ObservationInfo obs_info{30.0f, 250.0e-6, 1581.0f,
-                                                   100.0f, 1024};
+  const dedisp::ObservationInfo obs_info{30.0f, 250.0e-6, 1581.0f, 100.0f,
+                                         1024};
 
   // Mock signal parameters: RMS noise floor, DM, pulse arrival time, and signal
   // amplitude.
-  const dedisp::SignalInfo mock_signal{25.0f, 41.159f, 3.14159f,
-                                                 25.0f};
+  const dedisp::SignalInfo mock_signal{25.0f, 41.159f, 3.14159f, 25.0f};
 
   // Dedispersion plan constraints: start DM, end DM, pulse width (ms), smearing
   // tolerance.
-  const dedisp::DedispersionConstraints constraints{2.0f, 100.0f,
-                                                              4.0f, 1.25f};
+  const dedisp::DedispersionConstraints constraints{2.0f, 100.0f, 4.0f, 1.25f};
 
   const float sampling_period =
       250.0E-6; // Base is 250 microsecond time samples

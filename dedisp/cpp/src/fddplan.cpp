@@ -19,9 +19,8 @@ FDDPlan::FDDPlan(size_t n_channels, float time_resolution, float peak_frequency,
   generate_delay_table();
 }
 
-void FDDPlan::execute(size_t n_samples, const unsigned char *input,
-                      size_t n_bits_in, unsigned char *output,
-                      size_t n_bits_out) {
+void FDDPlan::execute(xt::xarray<float> input, xt::xarray<float> output) {
+  const size_t n_samples = input.shape(0);
   const size_t n_spin_frequencies = (n_samples / 2 + 1);
   const size_t n_output_samples = n_samples - max_delay_;
 

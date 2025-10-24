@@ -1,8 +1,5 @@
 #pragma once
 
-#include <array>
-#include <iostream>
-
 #include <xtensor/containers/xarray.hpp>
 #include <xtensor/generators/xrandom.hpp>
 
@@ -11,71 +8,46 @@
 namespace dedisp {
 
 /// Generate a dispersed signal with Gaussian noise.
-xt::xarray<float> simulate_dispersed_signal(
-    const dedisp::SignalInfo &signal,
-    const dedisp::ObservationInfo &observation) {
-  const float frequency_resolution =
-      -1.0f * observation.bandwidth / observation.channels;
-  const size_t n_samples = observation.duration / observation.sampling_period;
-
-  std::array<size_t, 2> shape = {n_samples, observation.channels};
-  xt::xarray<float> data =
-      signal.noise_rms * xt::random::randn<float>(shape, 0.0f, 1.0f);
-
-  for (size_t channel = 0; channel < observation.channels; ++channel) {
-    // Calculate the sample index corresponding to the frequency bin
-    const float a =
-        1 / (observation.peak_frequency + channel * frequency_resolution);
-    const float b = 1 / observation.peak_frequency;
-
-    const float channel_delay =
-        signal.dispersion_measure * 4.15e3 * (a * a - b * b);
-
-    // Embed the dispersed signal.
-    const size_t sample = static_cast<size_t>(
-        (signal.arrival_time + channel_delay) / observation.sampling_period);
-    data(sample, channel) += signal.intensity;
-  }
-
-  return data;
-}
+xt::xarray<float>
+simulate_dispersed_signal(const dedisp::SignalInfo &signal,
+                          const dedisp::ObservationInfo &observation);
 
 namespace benchmark {
 
 class Timer {
-  public:
-    Timer() : is_running{false}, time_sum{std::chrono::duration<double>::zero()}, time_start{} {};
+public:
+  Timer()
+      : is_running{false}, time_sum{std::chrono::duration<double>::zero()},
+        time_start{} {};
 
-    void start() {
-      if (!is_running) {
-        time_start = std::chrono::high_resolution_clock::now();
-        is_running = true;
-      }
+  void start() {
+    if (!is_running) {
+      time_start = std::chrono::high_resolution_clock::now();
+      is_running = true;
     }
+  }
 
-    void pause() {
-      if (is_running) {
-        auto now = std::chrono::high_resolution_clock::now();
-        time_sum += now - time_start;
+  void pause() {
+    if (is_running) {
+      auto now = std::chrono::high_resolution_clock::now();
+      time_sum += now - time_start;
 
-        is_running = false;
-      }
-    }
-
-    void reset() {
-      time_sum = std::chrono::duration<double>::zero();
       is_running = false;
     }
+  }
 
-    double duration() {
-      return time_sum.count();
-    }
+  void reset() {
+    time_sum = std::chrono::duration<double>::zero();
+    is_running = false;
+  }
 
-  private:
-    bool is_running;
+  double duration() { return time_sum.count(); }
 
-    std::chrono::duration<double> time_sum;
-    std::chrono::system_clock::time_point time_start;
+private:
+  bool is_running;
+
+  std::chrono::duration<double> time_sum;
+  std::chrono::system_clock::time_point time_start;
 };
 
 } // namespace benchmark

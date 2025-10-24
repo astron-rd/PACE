@@ -5,12 +5,14 @@
 #include <xtensor/io/xio.hpp>
 
 #include "fddplan.hpp"
+#include "metadata.hpp"
 #include "utilities.hpp"
 
 int main() {
   // Observation details: duration, integration time, max. frequency, bandwidth,
   // and channel count.
-  const dedisp::ObservationInfo observation{30.0f, 250.0e-6, 1581.0f, 100.0f, 1024};
+  const dedisp::ObservationInfo observation{30.0f, 250.0e-6, 1581.0f, 100.0f,
+                                            1024};
 
   // Mock signal parameters: RMS noise floor, DM, pulse arrival time, and signal
   // amplitude.
@@ -36,34 +38,41 @@ int main() {
       dedisp::simulate_dispersed_signal(mock_signal, observation);
   mock_timer->pause();
   std::cout << mock_input << std::endl;
-  std::cout << "> runtime: " << mock_timer->duration() << " seconds " << std::endl;
+  std::cout << "> runtime: " << mock_timer->duration() << " seconds "
+            << std::endl;
 
   // Initialise and execute the FDD plan
   std::cout << "Initialising FDD Plan..." << std::endl;
   plan_timer->start();
-  dedisp::FDDPlan fdd_plan(observation.channels, observation.sampling_period, observation.peak_frequency,
-                           frequency_resolution);
+  dedisp::FDDPlan fdd_plan(observation.channels, observation.sampling_period,
+                           observation.peak_frequency, frequency_resolution);
   plan_timer->pause();
   std::cout << "Generated delay table: ";
   std::cout << fdd_plan.get_delay_table() << std::endl;
-  std::cout << "> runtime: " << plan_timer->duration() << " seconds " << std::endl;
+  std::cout << "> runtime: " << plan_timer->duration() << " seconds "
+            << std::endl;
 
   std::cout << "Generate DM list..." << std::endl;
   prep_timer->start();
-  fdd_plan.generate_dm_list(constraints.dm_start, constraints.dm_end, constraints.pulse_width, constraints.tolerance);
+  fdd_plan.generate_dm_list(constraints.dm_start, constraints.dm_end,
+                            constraints.pulse_width, constraints.tolerance);
   prep_timer->pause();
   std::cout << fdd_plan.get_dm_table() << std::endl;
-  std::cout << "> runtime: " << prep_timer->duration() << " seconds " << std::endl;
+  std::cout << "> runtime: " << prep_timer->duration() << " seconds "
+            << std::endl;
 
   // std::cout << "Execute FDD Plan..." << std::endl;
   // exec_timer->start();
   // fdd_plan.execute(n_samples, input, n_bits_in, output, n_bits_out);
   // exec_timer->pause();
-  // std::cout << "> runtime: " << exec_timer->duration() << " seconds " << std::endl;
+  // std::cout << "> runtime: " << exec_timer->duration() << " seconds " <<
+  // std::endl;
 
   // fdd_plan.show();
 
-  const double total_runtime = mock_timer->duration() + plan_timer->duration() + prep_timer->duration() + exec_timer->duration();
+  const double total_runtime = mock_timer->duration() + plan_timer->duration() +
+                               prep_timer->duration() + exec_timer->duration();
   std::cout << "------------------------------------------------" << std::endl;
-  std::cout << "FDD test finished: total runtime = " << total_runtime << std::endl;
+  std::cout << "FDD test finished: total runtime = " << total_runtime
+            << std::endl;
 }
