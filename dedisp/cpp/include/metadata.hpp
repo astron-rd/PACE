@@ -1,4 +1,8 @@
-namespace dedisp::metadata {
+#pragma once
+
+#include <cstddef>
+
+namespace dedisp {
 
 struct SignalInfo {
   /// RMS of the noise in the randomly generated data
@@ -28,7 +32,7 @@ struct ObservationInfo {
   float bandwidth;
 
   /// Number of channel
-  float channels;
+  size_t channels;
 };
 
 struct DedispersionConstraints {
@@ -45,4 +49,4 @@ struct DedispersionConstraints {
   float tolerance;
 };
 
-} // namespace dedisp::metadata
+} // namespace dedisp
