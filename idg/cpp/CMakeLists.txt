@@ -9,7 +9,7 @@ pkg_search_module(FFTW REQUIRED fftw3 fftw3f IMPORTED_TARGET)
 
 include(FetchContent)
 
-set(XTENSOR_LIBRARIES xtl xtensor xtensor-fftw)
+set(XTENSOR_LIBRARIES xtl xtensor xtensor-fftw xtensor-io)
 include("${CMAKE_SOURCE_DIR}/cmake/FetchXTensor.cmake")
 
 FetchContent_MakeAvailable(xtensor)

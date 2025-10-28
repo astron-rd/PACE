@@ -5,4 +5,4 @@ target_link_libraries(idg PUBLIC xtensor xtensor-fftw PkgConfig::FFTW
                                  OpenMP::OpenMP_CXX)
 
 add_executable(main main.cpp)
-target_link_libraries(main PRIVATE idg)
+target_link_libraries(main PRIVATE idg xtensor-io)

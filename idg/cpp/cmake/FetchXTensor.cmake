@@ -22,6 +22,9 @@ endif()
 if(NOT xtensor-python_GIT_TAG)
   set(xtensor-python_GIT_TAG 0.28.0)
 endif()
+if(NOT xtensor-io_GIT_TAG)
+  set(xtensor-io_GIT_TAG 0.3.0)
+endif()
 
 # By default, only load the basic 'xtensor' library.
 if(NOT XTENSOR_LIBRARIES)
