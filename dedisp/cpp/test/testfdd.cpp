@@ -61,14 +61,14 @@ int main() {
   std::cout << "> runtime: " << prep_timer->duration() << " seconds "
             << std::endl;
 
-  // std::cout << "Execute FDD Plan..." << std::endl;
-  // exec_timer->start();
-  // fdd_plan.execute(n_samples, input, n_bits_in, output, n_bits_out);
-  // exec_timer->pause();
-  // std::cout << "> runtime: " << exec_timer->duration() << " seconds " <<
-  // std::endl;
+  std::cout << "Execute FDD Plan..." << std::endl;
+  exec_timer->start();
+  xt::xarray<float> mock_output = fdd_plan.execute(mock_input);
+  exec_timer->pause();
+  std::cout << "> runtime: " << exec_timer->duration() << " seconds " <<
+  std::endl;
 
-  // fdd_plan.show();
+  fdd_plan.show();
 
   const double total_runtime = mock_timer->duration() + plan_timer->duration() +
                                prep_timer->duration() + exec_timer->duration();

@@ -6,6 +6,7 @@
 
 #include "fddplan.hpp"
 #include "kernels.hpp"
+#include "utilities.hpp"
 
 namespace dedisp {
 
@@ -19,22 +20,22 @@ FDDPlan::FDDPlan(size_t n_channels, float time_resolution, float peak_frequency,
   generate_delay_table();
 }
 
-void FDDPlan::execute(xt::xarray<float> input, xt::xarray<float> output) {
+xt::xarray<float> FDDPlan::execute(const xt::xarray<float>& input) {
   const size_t n_samples = input.shape(0);
   const size_t n_spin_frequencies = (n_samples / 2 + 1);
   const size_t n_output_samples = n_samples - max_delay_;
 
-  // TODO: implemented zero padded FFT; initial version without!
+  // TODO: understand where all this comes from..!?
   const bool use_zero_padding = true;
-  const size_t n_samples_fft = n_samples;
-  const size_t n_samples_padded = n_samples_fft;
+  const size_t n_samples_fft = use_zero_padding ? round_up(n_samples + 1, 16384) : n_samples;
+  const size_t n_samples_padded = round_up(n_samples_fft + 1, 1024);
 
   const std::vector<size_t> input_shape = {n_channels_ * n_samples_padded};
   const std::vector<size_t> output_shape = {dm_count_ * n_samples_padded};
   xt::xarray<float> input_data(input_shape);
   xt::xarray<float> output_data(output_shape);
 
-  std::cout << input_data;
+  std::cout << input_data << std::endl;
 
   // 1. Generate spin table
   generate_spin_frequency_table(n_spin_frequencies, n_samples);

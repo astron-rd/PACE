@@ -12,6 +12,12 @@ xt::xarray<float>
 simulate_dispersed_signal(const dedisp::SignalInfo &signal,
                           const dedisp::ObservationInfo &observation);
 
+/// ... 
+uint8_t quanitise(float value_in);
+
+/// round up int a to a multiple of int b
+inline int round_up(int a, int b) { return ((a + b - 1) / b) * b; }
+
 namespace benchmark {
 
 class Timer {
