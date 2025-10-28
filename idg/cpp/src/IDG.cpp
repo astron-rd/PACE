@@ -64,20 +64,28 @@ void Gridder::transform(int direction,
   const size_t width = grid.shape()[2];
   assert(height == width);
 
-  grid = xt::fftw::fftshift(grid);
+  for (size_t i = 0; i < nr_correlations_out_; ++i) {
+    auto slice = xt::view(grid, i, xt::all(), xt::all());
+    xt::xarray<std::complex<float>> tmp = slice;
 
-  if (direction == FourierDomainToImageDomain) {
-    grid = xt::fftw::ifft2(grid);
-  } else {
-    grid = xt::fftw::fft2(grid);
-  }
+    tmp = xt::fftw::fftshift(tmp);
 
-  grid = xt::fftw::fftshift(grid);
+    if (direction == FourierDomainToImageDomain) {
+      tmp = xt::fftw::ifft2(tmp);
+    } else {
+      tmp = xt::fftw::fft2(tmp);
+    }
 
-  std::complex<float> scale = {2.0f, 0.0f};
-  if (direction == FourierDomainToImageDomain) {
-    grid *= scale;
-  } else {
-    grid /= scale;
+    tmp = xt::fftw::fftshift(tmp);
+
+    std::complex<float> scale{2.0f, 0.0f};
+
+    if (direction == FourierDomainToImageDomain) {
+      tmp *= scale;
+    } else {
+      tmp /= scale;
+    }
+
+    slice = tmp;
   }
 }

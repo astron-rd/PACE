@@ -2,6 +2,7 @@
 #include <iostream>
 
 #include <xtensor/containers/xarray.hpp>
+#include <xtensor/io/xnpy.hpp>
 
 #include "IDG.h"
 #include "init.h"
@@ -20,7 +21,7 @@ int main() {
   const double start_frequency = 150e6;
   const double frequency_increment = 1e6;
   const double end_frequency =
-      start_frequency + nr_channels * frequency_increment;
+      start_frequency + (nr_channels - 1) * frequency_increment;
 
   const double speed_of_light = 299792458.0;
   const double image_size = speed_of_light / end_frequency;
@@ -31,6 +32,7 @@ int main() {
   // Generate UVW coordinates
   std::cout << "Initialize UVW" << std::endl;
   xt::xarray<UVW> uvw = get_uvw(observation_hours, nr_baselines, grid_size);
+//   xt::dump_npy("uvw.npy", uvw);
 
   // Generate frequencies
   std::cout << "Initialize frequencies" << std::endl;
@@ -45,6 +47,13 @@ int main() {
   std::vector<Metadata> metadata =
       get_metadata(nr_channels, subgrid_size, grid_size, uvw);
   size_t nr_subgrids = metadata.size();
+  const std::array<size_t, 2> shape = {nr_subgrids, 2};
+  xt::xarray<size_t> subgrid_coordinates = xt::zeros<size_t>(shape);
+  for (size_t s = 0; s < nr_subgrids; ++s) {
+    subgrid_coordinates(s, 0) = metadata[s].coordinate.x;
+    subgrid_coordinates(s, 1) = metadata[s].coordinate.y;
+  }
+  xt::dump_npy("subgrid_coordinates.npy", subgrid_coordinates);
 
   // Print parameters
   std::cout << "Parameters:" << std::endl;
@@ -71,6 +80,7 @@ int main() {
   auto end = std::chrono::high_resolution_clock::now();
   std::cout << "runtime: " << std::chrono::duration<double>(end - start).count()
             << " seconds" << std::endl;
+  xt::dump_npy("visibilities.npy", visibilities);
 
   // Allocate grid
   xt::xarray<std::complex<float>> grid = xt::zeros<std::complex<float>>(
@@ -79,6 +89,7 @@ int main() {
   // Taper
   std::cout << "Initialize taper" << std::endl;
   xt::xarray<float> taper = get_taper(subgrid_size);
+  xt::dump_npy("taper.npy", taper);
 
   // Allocate subgrids
   xt::xarray<std::complex<float>> subgrids = xt::zeros<std::complex<float>>(
@@ -105,6 +116,7 @@ int main() {
   end = std::chrono::high_resolution_clock::now();
   std::cout << "runtime: " << std::chrono::duration<double>(end - start).count()
             << " seconds" << std::endl;
+  xt::dump_npy("grid1.npy", taper);
 
   // Transform to image domain
   std::cout << "Transform to image domain" << std::endl;
@@ -113,6 +125,7 @@ int main() {
   end = std::chrono::high_resolution_clock::now();
   std::cout << "runtime: " << std::chrono::duration<double>(end - start).count()
             << " seconds" << std::endl;
+  xt::dump_npy("grid2.npy", taper);
 
   return EXIT_SUCCESS;
 }

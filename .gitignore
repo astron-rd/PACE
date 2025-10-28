@@ -1,1 +1,4 @@
 .vscode
+*.npy
+*__pycache__*
+*build*
