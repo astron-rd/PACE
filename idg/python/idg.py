@@ -1,4 +1,4 @@
-from concurrent.futures import Future, ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import multiprocessing
 import numpy as np
 
@@ -45,7 +45,7 @@ class Gridder:
 
         # Grid visibilities onto subgrids
         with ThreadPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
-            futures: list[Future[None]] = []
+            futures = []
             for s in range(nr_subgrids):
                 future = executor.submit(
                     visibilities_to_subgrid,
