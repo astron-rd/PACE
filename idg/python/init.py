@@ -45,9 +45,6 @@ def get_uvw(
     np.random.seed(seed)
     baseline_ratios = np.random.beta(1, 3, nr_baselines)
 
-    # Normalize ratio to have max of one
-    baseline_ratios /= baseline_ratios.max()
-
     # Generate random starting angles for each baseline
     start_angles = 2 * np.pi * np.random.rand(nr_baselines)
 
