@@ -1,7 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import multiprocessing
-import numpy as np
 import random
+import numpy as np
 
 import idgtypes
 
@@ -44,9 +44,6 @@ def get_uvw(
     # Beta distribution with alpha=1, beta=3 peaks at 0 and decreases
     np.random.seed(seed)
     baseline_ratios = np.random.beta(1, 3, nr_baselines)
-
-    # Normalize ratio to have max of one
-    baseline_ratios /= baseline_ratios.max()
 
     # Generate random starting angles for each baseline
     start_angles = 2 * np.pi * np.random.rand(nr_baselines)
