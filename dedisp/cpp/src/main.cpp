@@ -6,8 +6,9 @@
 #include "metadata.hpp"
 
 int main() {
-    std::cout << "PACE - Fourier Domain Dedispersion" << std::endl;
+  std::cout << "PACE - Fourier Domain Dedispersion" << std::endl;
 
-    // TODO: implement command-line interface.
-    // IDEA: allow input as npy file and deserialise using xtensor; provide additional arguments for metadata.
+  // TODO: implement command-line interface.
+  // IDEA: allow input as npy file and deserialise using xtensor; provide
+  // additional arguments for metadata.
 }

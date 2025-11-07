@@ -3,6 +3,8 @@
 
 #include <xtensor/containers/xadapt.hpp>
 #include <xtensor/io/xio.hpp>
+#include <xtensor-fftw/basic.hpp>
+#include <xtensor-fftw/helper.hpp>
 
 #include "fddplan.hpp"
 #include "kernels.hpp"
@@ -20,33 +22,43 @@ FDDPlan::FDDPlan(size_t n_channels, float time_resolution, float peak_frequency,
   generate_delay_table();
 }
 
-xt::xarray<float> FDDPlan::execute(const xt::xarray<float>& input) {
+xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
   const size_t n_samples = input.shape(0);
   const size_t n_spin_frequencies = (n_samples / 2 + 1);
   const size_t n_output_samples = n_samples - max_delay_;
 
   // TODO: understand where all this comes from..!?
   const bool use_zero_padding = true;
-  const size_t n_samples_fft = use_zero_padding ? round_up(n_samples + 1, 16384) : n_samples;
+  const size_t n_samples_fft =
+      use_zero_padding ? round_up(n_samples + 1, 16384) : n_samples;
   const size_t n_samples_padded = round_up(n_samples_fft + 1, 1024);
 
+  // Input is in the frequency domain, while the output is in the DM domain.
   const std::vector<size_t> input_shape = {n_channels_ * n_samples_padded};
   const std::vector<size_t> output_shape = {dm_count_ * n_samples_padded};
-  xt::xarray<float> input_data(input_shape);
-  xt::xarray<float> output_data(output_shape);
-
-  std::cout << input_data << std::endl;
+  xt::xarray<float> frequency_data(input_shape);
+  xt::xarray<float> dm_data(output_shape);
 
   // 1. Generate spin table
   generate_spin_frequency_table(n_spin_frequencies, n_samples);
 
   // 2. Transpose data (convert input bytes to floats)
-  // TODO: can be remove this step? I.e. have the dedispersion code input and
-  // output lists of floats?
+  constexpr float byte_offset = 127.5;
+  transpose_data<uint8_t, float>(n_channels_, n_samples, n_channels_,
+                         n_samples_padded, byte_offset, n_channels_,
+                         input.data(), frequency_data.data());
 
   // 3. Real-to-complex FFT: time series data to frequency domain
+  frequency_data = xt::fftw::fftshift(frequency_data);
+  // xt::xarray<std::complex<float>> fft_output = xt::fftw::rfft2(frequency_data);
+  xt::xarray<double> d = xt::zeros()
+  xt::xarray<std::complex<float>> fft_output = xt::fftw::rfft2(frequency_data);
+
   // 4. Run dedispersion algorithm (CPU reference or optimised version)
+
   // 5. Complex-to-real FFT: frequency domain back to time series data
+
+  return dm_data;
 }
 
 void FDDPlan::show() const {

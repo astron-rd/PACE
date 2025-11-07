@@ -33,17 +33,17 @@ simulate_dispersed_signal(const dedisp::SignalInfo &signal,
   return data;
 }
 
-uint8_t quanitise(float value_in) {
-    const float value = value_in + 127.5f;
-    uint8_t value_out;
-    if (value > 255.0f) {
-        value_out = 255;
-    } else if (value < 0.0f) {
-        value_out = 0;
-    } else {
-        value_out = round(value_in);
-    }
-    return value_out;
+uint8_t quantise(float value_in) {
+  const float value = value_in + 127.5f;
+  uint8_t value_out;
+  if (value > 255.0f) {
+    value_out = 255;
+  } else if (value < 0.0f) {
+    value_out = 0;
+  } else {
+    value_out = round(value_in);
+  }
+  return value_out;
 }
 
 } // namespace dedisp

@@ -9,7 +9,7 @@ public:
   FDDPlan(size_t n_channels, float time_resolution, float peak_frequency,
           float frequency_resolution);
 
-  xt::xarray<float> execute(const xt::xarray<float>& input);
+  xt::xarray<float> execute(const xt::xarray<uint8_t> &input);
 
   /// Generate a list of trial dispersion measures based on an algorithm by Lina
   /// Levin.
