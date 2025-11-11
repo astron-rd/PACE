@@ -22,7 +22,7 @@ find_package(OpenMP)
 
 # Configure targets
 add_library(dedisp OBJECT src/fddplan.cpp src/kernels.cpp src/utilities.cpp)
-target_link_libraries(dedisp PUBLIC xtensor xtensor-fftw PkgConfig::FFTW OpenMP::OpenMP_CXX)
+target_link_libraries(dedisp PUBLIC xtensor xtensor-fftw PkgConfig::FFTWb OpenMP::OpenMP_CXX)
 
 add_executable(fdd src/main.cpp)
 target_link_libraries(fdd PRIVATE dedisp)
