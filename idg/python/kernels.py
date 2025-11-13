@@ -1,5 +1,5 @@
 import numpy as np
-from numba import jit, float32
+from numba import jit, float32, prange, njit
 
 
 @jit(nopython=True, fastmath=True, cache=True)
@@ -105,7 +105,32 @@ def add_pt_src_to_baseline(
             visibilities[bl, t, c, :] += value
 
 
-@jit(nopython=True, fastmath=False, cache=True, nogil=True)
+@njit(fastmath=True, nogil=True)
+def compute_pixels(nr_correlations_out, nr_timesteps, offset, uvw, bl, l, m, n, u_offset, v_offset, w_offset, channel_begin, channel_end, wavenumbers, nr_correlations_in, visibilities):
+    pixels = np.zeros(nr_correlations_out, dtype=np.complex64)
+
+    for time in range(nr_timesteps):
+        idx = offset + time
+        u = uvw["u"][bl][idx]
+        v = uvw["v"][bl][idx]
+        w = uvw["w"][bl][idx]
+
+        phase_index = float32(u * l + v * m + w * n)
+        phase_offset = float32(u_offset * l + v_offset * m + w_offset * n)
+
+        for chan in range(channel_begin, channel_end):
+            phase = float32(phase_offset - (phase_index * wavenumbers[chan]))
+            phasor = np.exp(1j * phase)  # type: ignore
+
+            for pol in range(nr_correlations_in):
+                pixels[pol % nr_correlations_out] += (
+                    visibilities[bl, idx, chan, pol] * phasor
+                )
+
+    return pixels
+
+
+@jit(nopython=True, fastmath=False, cache=True, nogil=True, parallel=True)
 def visibilities_to_subgrid(
     s: int,
     metadata: np.ndarray,
@@ -161,9 +186,8 @@ def visibilities_to_subgrid(
     half_subgrid = subgrid_size / 2
     image_scale = image_size / subgrid_size
 
-    for y in range(subgrid_size):
-        for x in range(subgrid_size):
-
+    for y in prange(subgrid_size):
+        for x in prange(subgrid_size):
             # Compute l, m, n
             l = float32((x + 0.5 - half_subgrid) * image_scale)
             m = float32((y + 0.5 - half_subgrid) * image_scale)
@@ -171,25 +195,7 @@ def visibilities_to_subgrid(
             n = float32(tmp / (1.0 + np.sqrt(1.0 - tmp)))  # type: ignore
 
             # Compute pixels
-            pixels = np.zeros(nr_correlations_out, dtype=np.complex64)
-
-            for time in range(nr_timesteps):
-                idx = offset + time
-                u = uvw["u"][bl][idx]
-                v = uvw["v"][bl][idx]
-                w = uvw["w"][bl][idx]
-
-                phase_index = float32(u * l + v * m + w * n)
-                phase_offset = float32(u_offset * l + v_offset * m + w_offset * n)
-
-                for chan in range(channel_begin, channel_end):
-                    phase = float32(phase_offset - (phase_index * wavenumbers[chan]))
-                    phasor = np.exp(1j * phase)  # type: ignore
-
-                    for pol in range(nr_correlations_in):
-                        pixels[pol % nr_correlations_out] += (
-                            visibilities[bl, idx, chan, pol] * phasor
-                        )
+            pixels = compute_pixels(nr_correlations_out, nr_timesteps, offset, uvw, bl, l, m, n, u_offset, v_offset, w_offset, channel_begin, channel_end, wavenumbers, nr_correlations_in, visibilities)
 
             # Apply taper and store
             sph = taper[y, x]
