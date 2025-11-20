@@ -15,7 +15,7 @@ include(FetchContent)
 # pkg_check_modules (FFTW3F REQUIRED fftw3f)
 
 
-set(XTENSOR_LIBRARIES xtl xtensor xtensor-fftw)
+set(XTENSOR_LIBRARIES xtl xtensor xtensor-fftw-double xtensor-fftw-float)
 include("${CMAKE_SOURCE_DIR}/cmake/FetchXTensor.cmake")
 
 FetchContent_MakeAvailable(xtensor)

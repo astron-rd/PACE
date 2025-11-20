@@ -33,12 +33,27 @@ if(NOT xtl IN_LIST XTENSOR_LIBRARIES)
   list(APPEND XTENSOR_LIBRARIES xtl)
 endif()
 
+
 include(FetchContent)
 
 foreach(LIB ${XTENSOR_LIBRARIES})
-  set(XT_GIT_TAG "${${LIB}_GIT_TAG}")
+  if(LIB MATCHES "fftw")
+    string(REGEX REPLACE "^(.*)-([^-]*)$" "\\1;\\2" LIB_PARTS ${LIB})
+    message("${LIB}")
+    message("${LIB_PARTS}")
+    list(GET LIB_PARTS 0 LIB_BASE)
+    list(GET LIB_PARTS 1 FFTW_PRECISION)
+
+    string(TOUPPER ${FFTW_PRECISION} FFTW_PRECISION)
+    set(HAVE_XTENSOR_FFTW_${FFTW_PRECISION} TRUE)
+    set(XT_GIT_TAG ${${LIB_BASE}_GIT_TAG})
+
+    set(LIB ${LIB_BASE})
+  else()
+    set(XT_GIT_TAG "${${LIB}_GIT_TAG}")
+  endif()
   if(NOT XT_GIT_TAG)
-    message(FATAL_ERROR "Unknown git tag for XTensor library '${LIB}'")
+    message(FATAL_ERROR "Unknown git tag for XTensor library ${LIB}")
   endif()
 
   # Checking out a specific git commit hash does not (always) work when
@@ -51,32 +66,35 @@ foreach(LIB ${XTENSOR_LIBRARIES})
     set(XT_SHALLOW FALSE)
   endif()
 
-  FetchContent_Declare(
-    ${LIB}
-    GIT_REPOSITORY https://github.com/xtensor-stack/${LIB}.git
-    GIT_SHALLOW ${XT_SHALLOW}
-    GIT_TAG ${XT_GIT_TAG})
+  if(NOT TARGET ${LIB})
+    FetchContent_Declare(
+      ${LIB}
+      GIT_REPOSITORY https://github.com/xtensor-stack/${LIB}.git
+      GIT_SHALLOW ${XT_SHALLOW}
+      GIT_TAG ${XT_GIT_TAG})
 
-  # FetchContent_MakeAvailable makes ${LIB} part of the project. Headers from
-  # ${LIB} are then installed along with the project. However, most projects
-  # only use ${LIB} internally, at compile time, and should not install ${LIB},
-  # including its headers: - For libraries, XTensor shouldn't be part the public
-  # API. - For applications, installing headers isn't needed at all.
-  #
-  # Instead of FetchContent_MakeAvailable, we therefore use
-  # FetchContent_Populate and define an INTERFACE target manually. This approach
-  # also supports xtensor-fftw, which does not define a CMake target and also
-  # loads FFTW using custom options A drawback of this approach is that we have
-  # to set some options manually, like
-  # XTENSOR_FORCE_TEMPORARY_MEMORY_IN_ASSIGNMENTS.
+    # FetchContent_MakeAvailable makes ${LIB} part of the project. Headers from
+    # ${LIB} are then installed along with the project. However, most projects
+    # only use ${LIB} internally, at compile time, and should not install ${LIB},
+    # including its headers: - For libraries, XTensor shouldn't be part the public
+    # API. - For applications, installing headers isn't needed at all.
+    #
+    # Instead of FetchContent_MakeAvailable, we therefore use
+    # FetchContent_Populate and define an INTERFACE target manually. This approach
+    # also supports xtensor-fftw, which does not define a CMake target and also
+    # loads FFTW using custom options A drawback of this approach is that we have
+    # to set some options manually, like
+    # XTENSOR_FORCE_TEMPORARY_MEMORY_IN_ASSIGNMENTS.
 
-  FetchContent_GetProperties(${LIB})
-  if(NOT ${${LIB}_POPULATED})
-    FetchContent_Populate(${LIB})
+    FetchContent_GetProperties(${LIB})
+    if(NOT ${${LIB}_POPULATED})
+      FetchContent_Populate(${LIB})
+    endif()
+
+    add_library(${LIB} INTERFACE)
+    target_include_directories(${LIB} SYSTEM
+                              INTERFACE "${${LIB}_SOURCE_DIR}/include")
   endif()
-  add_library(${LIB} INTERFACE)
-  target_include_directories(${LIB} SYSTEM
-                             INTERFACE "${${LIB}_SOURCE_DIR}/include")
 endforeach()
 
 # Since xtensor uses xtl and possibly xsimd headers, create dependencies.
@@ -87,18 +105,18 @@ if(xsimd IN_LIST XTENSOR_LIBRARIES)
 endif()
 
 # Since xtensor-fftw uses fftw3, link fftw3(f) library if it's found.
-if(xtensor-fftw IN_LIST XTENSOR_LIBRARIES)
+if(HAVE_XTENSOR_FFTW_DOUBLE OR HAVE_XTENSOR_FFTW_FLOAT)
   find_package(PkgConfig)
   if(NOT PkgConfig_FOUND)
     message(WARNING "PkgConfig not found, not linking xtensor-fftw to fftw3.")
   else()
     pkg_search_module(FFTW fftw3 IMPORTED_TARGET)
-    if(FFTW_FOUND)
+    if(FFTW_FOUND AND HAVE_XTENSOR_FFTW_DOUBLE)
       target_link_libraries(xtensor-fftw INTERFACE PkgConfig::FFTW)
     endif()
 
     pkg_search_module(FFTWF fftw3f IMPORTED_TARGET)
-    if(FFTWF_FOUND)
+    if(FFTWF_FOUND AND HAVE_XTENSOR_FFTW_FLOAT)
       target_link_libraries(xtensor-fftw INTERFACE PkgConfig::FFTWF)
     endif()
 
