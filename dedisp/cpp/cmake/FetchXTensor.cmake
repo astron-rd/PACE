@@ -33,14 +33,18 @@ if(NOT xtl IN_LIST XTENSOR_LIBRARIES)
   list(APPEND XTENSOR_LIBRARIES xtl)
 endif()
 
+# Ignore warnings thrown by CMake policy CMP0169.
+# See the comment below about FetchContent_Populate.
+if(POLICY CMP0169)
+ cmake_policy(SET CMP0169 OLD)
+endif()
 
 include(FetchContent)
 
 foreach(LIB ${XTENSOR_LIBRARIES})
+  # 
   if(LIB MATCHES "fftw")
     string(REGEX REPLACE "^(.*)-([^-]*)$" "\\1;\\2" LIB_PARTS ${LIB})
-    message("${LIB}")
-    message("${LIB_PARTS}")
     list(GET LIB_PARTS 0 LIB_BASE)
     list(GET LIB_PARTS 1 FFTW_PRECISION)
 

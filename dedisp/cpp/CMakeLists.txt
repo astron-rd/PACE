@@ -34,3 +34,6 @@ target_link_libraries(dedisp PUBLIC xtensor xtensor-fftw OpenMP::OpenMP_CXX)
 
 add_executable(testfdd test/testfdd.cpp)
 target_link_libraries(testfdd PRIVATE dedisp)
+
+add_executable(testfft test/testfft.cpp)
+target_link_libraries(testfft PRIVATE dedisp)

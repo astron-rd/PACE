@@ -9,7 +9,7 @@ void fourier_domain_dedisperse(size_t dm_count, size_t n_frequencies,
                                float *spin_frequencies,
                                float *dispersion_measures, float *delays,
                                size_t stride_in, size_t stride_out,
-                               std::complex<float> input,
-                               std::complex<float> output);
+                               std::complex<float>* input,
+                               std::complex<float>* output);
 
 } // namespace dedisp
