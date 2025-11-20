@@ -1,0 +1,8 @@
+[package]
+name = "pace-idg"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+ndarray = "0.16.1"
+ndarray-rand = "0.15.0"
