@@ -86,6 +86,28 @@ if(xsimd IN_LIST XTENSOR_LIBRARIES)
   add_compile_definitions(XTENSOR_USE_XSIMD)
 endif()
 
+# Since xtensor-fftw uses fftw3, link fftw3(f) library if it's found.
+if(xtensor-fftw IN_LIST XTENSOR_LIBRARIES)
+  find_package(PkgConfig)
+  if(NOT PkgConfig_FOUND)
+    message(WARNING "PkgConfig not found, not linking xtensor-fftw to fftw3.")
+  else()
+    pkg_search_module(FFTW fftw3 IMPORTED_TARGET)
+    if(FFTW_FOUND)
+      target_link_libraries(xtensor-fftw INTERFACE PkgConfig::FFTW)
+    endif()
+
+    pkg_search_module(FFTWF fftw3f IMPORTED_TARGET)
+    if(FFTWF_FOUND)
+      target_link_libraries(xtensor-fftw INTERFACE PkgConfig::FFTWF)
+    endif()
+
+    if(NOT FFTW_FOUND AND NOT FFTWF_FOUND)
+      message(WARNING "Can't find fftw3 nor fftw3f.")
+    endif()
+  endif()
+endif()
+
 # This option is ON by default in xtensor, since avoiding temporaries in
 # assignments is still experimental.
 # https://github.com/xtensor-stack/xtensor/issues/2819 also shows an issue.
