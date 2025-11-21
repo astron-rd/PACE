@@ -33,6 +33,9 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
       use_zero_padding ? round_up(n_samples + 1, 16384) : n_samples;
   const size_t n_samples_padded = round_up(n_samples_fft + 1, 1024);
 
+  std::cout << "n_samples_fft = " << n_samples_fft << std::endl;
+  std::cout << "n_samples_padded = " << n_samples_padded << std::endl;
+
   // Input is in the frequency domain, while the output is in the DM domain.
   const std::vector<size_t> input_shape = {n_channels_, n_samples_padded};
   const std::vector<size_t> output_shape = {dm_count_, n_samples_padded};
@@ -40,24 +43,36 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
   xt::xarray<float> dm_data(output_shape);
 
   // 1. Generate spin table
+  std::cout << "Generate the spin frequency table..." << std::endl;
+
   generate_spin_frequency_table(n_spin_frequencies, n_samples);
 
   // 2. Transpose data (convert input bytes to floats)
+  std::cout << "Transpose data..." << std::endl;
+
   constexpr float byte_offset = 127.5;
   transpose_data<uint8_t, float>(n_channels_, n_samples, n_channels_,
                          n_samples_padded, byte_offset, n_channels_,
                          input.data(), frequency_data.data());
+  std::cout << "input shape = [" << input.shape(0) << ", " << input.shape(1) << "]" << std::endl;
+  std::cout << "Freq data shape = [" << frequency_data.shape(0) << ", " << frequency_data.shape(1) << "]" << std::endl;
 
   // 3. Real-to-complex FFT: time series data to frequency domain
   // Perform an FFT batched over frequency using OpenMP
+  std::cout << "Forward FFT..." << std::endl;
+
   xt::xarray<std::complex<float>> frequency_scratch(frequency_data.shape());
+  std::cout << "input shape = [" << frequency_scratch.shape(0) << ", " << frequency_scratch.shape(1) << "]" << std::endl;
   for(size_t c = 0; c < n_channels_; ++c) {
     xt::xarray<float> time_samples = xt::eval(xt::row(frequency_data, c));
+    std::cout << "time samples shape = [" << time_samples.shape(0) << ", " << time_samples.shape(1) << "]" << std::endl;
     time_samples = xt::fftw::fftshift(time_samples);
     xt::view(frequency_scratch, c, xt::all()) = xt::fftw::rfft(time_samples);
   }
 
   // 4. Run dedispersion algorithm (CPU reference or optimised version)
+  std::cout << "Run dedispersion algorithm..." << std::endl;
+
   xt::xarray<std::complex<float>> dm_scratch(dm_data.shape());
 
   const size_t in_out_stride = n_samples_padded / 2;
@@ -66,14 +81,18 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
     spin_frequency_table_.data(), dm_table_.data(), delay_table_.data(),
     in_out_stride, in_out_stride, frequency_scratch.data(), dm_scratch.data()
   );
+  std::cout << "DM data shape = [" << dm_data.shape(0) << ", " << dm_data.shape(1) << "]" << std::endl;
+  std::cout << "DM scratch shape = [" << dm_scratch.shape(0) << ", " << dm_scratch.shape(1) << "]" << std::endl;
 
   // 5. Complex-to-real FFT: frequency domain back to time series data
   // Perform an FFT batched along the DM axis using OpenMP
-  for(size_t d = 0; d < dm_count_; ++d) {
-    xt::xarray<std::complex<float>> samples = xt::eval(xt::row(dm_scratch, d));
-    samples = xt::fftw::fftshift(samples);
-    xt::view(dm_data, d, xt::all()) = xt::fftw::irfft(samples);
-  }
+  // std::cout << "Inverse FFT.." << std::endl;
+
+  // for(size_t d = 0; d < dm_count_; ++d) {
+  //   xt::xarray<std::complex<float>> samples = xt::eval(xt::row(dm_scratch, d));
+  //   samples = xt::fftw::fftshift(samples);
+  //   xt::view(dm_data, d, xt::all()) = xt::fftw::irfft(samples);
+  // }
 
   return dm_data;
 }

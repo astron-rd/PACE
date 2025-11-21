@@ -12,8 +12,9 @@ simulate_dispersed_signal(const dedisp::SignalInfo &signal,
   const size_t n_samples = observation.duration / observation.sampling_period;
 
   std::array<size_t, 2> shape = {n_samples, observation.channels};
-  xt::xarray<float> data =
-      signal.noise_rms * xt::random::randn<float>(shape, 0.0f, 1.0f);
+  xt::xarray<float> data = xt::ones<float>(shape);
+  // xt::xarray<float> data =
+  //     signal.noise_rms * xt::random::randn<float>(shape, 0.0f, 1.0f);
 
   for (size_t channel = 0; channel < observation.channels; ++channel) {
     // Calculate the sample index corresponding to the frequency bin
