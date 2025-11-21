@@ -37,7 +37,7 @@ void fourier_domain_dedisperse(size_t dm_count, size_t n_frequencies,
         std::complex<float> phasor{std::cos(phase), std::sin(phase)};
 
         // Load sample
-        std::complex<float> *sample_ptr = &input[channel_index + stride_in];
+        std::complex<float> *sample_ptr = &input[channel_index * stride_in];
         std::complex<float> sample = sample_ptr[frequency_index];
 
         // Update the sum
