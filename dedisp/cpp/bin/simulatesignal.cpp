@@ -29,7 +29,7 @@ int main() {
   const size_t n_samples = observation.duration / observation.sampling_period;
 
   auto timer = std::make_unique<dedisp::benchmark::Timer>();
-  std::cout << "Simulating dispersed pulsar signal..." << std::endl;
+  std::cout << "Simulating a dispersed signal..." << std::endl;
   timer->start();
   xt::xarray<float> signal =
       dedisp::simulate_dispersed_signal(signal_properties, observation);
@@ -44,9 +44,11 @@ int main() {
   }
   timer->pause();
   std::cout << quantised_signal << std::endl;
-  std::cout << "> runtime: " << timer->duration() << " seconds "
+  std::cout << "> runtime: " << timer->duration() << " seconds. "
             << std::endl;
 
   const std::string filename{"signal.npy"};
   xt::dump_npy(filename, quantised_signal);
+
+  std::cout << "The simulated signal has been written to " << filename << "." << std::endl;
 }
