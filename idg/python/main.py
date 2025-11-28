@@ -31,6 +31,9 @@ parser.add_argument(
     "--nr_channels", type=int, default=16, help="Number of frequency channels"
 )
 parser.add_argument("--nr_stations", type=int, default=20, help="Number of stations")
+parser.add_argument(
+    "--store", action="store_true", default=False, help="Store data in Numpy format"
+)
 args = parser.parse_args()
 
 SUBGRID_SIZE = args.subgrid_size
@@ -38,6 +41,7 @@ GRID_SIZE = args.grid_size
 OBSERVATION_HOURS = args.observation_hours
 NR_TIMESTEPS = int(OBSERVATION_HOURS * 3600)
 NR_CHANNELS = args.nr_channels
+STORE_DATA = args.store
 
 END_FREQUENCY = START_FREQUENCY + NR_CHANNELS * FREQUENCY_INCREMENT
 IMAGE_SIZE = SPEED_OF_LIGHT / END_FREQUENCY
@@ -49,12 +53,10 @@ uvw = get_uvw(
     nr_baselines=NR_BASELINES,
     grid_size=GRID_SIZE,
 )
-np.save("uvw.npy", uvw)
 
 print("Initialize frequencies")
 frequencies = get_frequencies(START_FREQUENCY, FREQUENCY_INCREMENT, NR_CHANNELS)
 wavenumbers = (frequencies * 2 * np.pi) / SPEED_OF_LIGHT
-np.save("frequencies.npy", frequencies)
 
 print("Initialize metadata")
 metadata = get_metadata(
@@ -64,7 +66,6 @@ metadata = get_metadata(
     uvw=uvw,
 )
 nr_subgrids = metadata.shape[0]
-np.save("metadata.npy", metadata)
 
 
 print("Parameters:")
@@ -94,16 +95,13 @@ visibilities = get_visibilities(
 )
 end = time.time()
 print(f"runtime: {end-start:.2f} seconds")
-np.save("visibilities.npy", visibilities)
-
 print("Initialize grid")
 grid = np.zeros((NR_CORRELATIONS_OUT, GRID_SIZE, GRID_SIZE), dtype=idgtypes.gridtype)
 
 print("Initialize taper")
 taper = get_taper(subgrid_size=SUBGRID_SIZE)
-np.save("taper.npy", taper)
 
-# allocate subgrids
+print("Initialize subgrids")
 subgrids = np.zeros(
     shape=(nr_subgrids, NR_CORRELATIONS_OUT, SUBGRID_SIZE, SUBGRID_SIZE),
     dtype=idgtypes.gridtype,
@@ -130,7 +128,6 @@ gridder.grid_onto_subgrids(
 )
 end = time.time()
 print(f"runtime: {end-start:.2f} seconds")
-np.save("subgrids.npy", subgrids)
 
 print("Add subgrids to grid")
 start = time.time()
@@ -142,9 +139,6 @@ gridder.add_subgrids_to_grid(
 end = time.time()
 print(f"runtime: {end-start:.2f} seconds")
 
-print("Save grid to grid1.npy")
-np.save("grid1.npy", grid)
-
 print("Transform to image domain")
 start = time.time()
 gridder.transform(
@@ -154,5 +148,13 @@ gridder.transform(
 end = time.time()
 print(f"runtime: {end-start:.2f} seconds")
 
-print("Save grid to grid2.npy")
-np.save("grid2.npy", grid)
+if args.store:
+    print("Storing data")
+    np.save("uvw.npy", uvw)
+    np.save("frequencies.npy", frequencies)
+    np.save("taper.npy", taper)
+    np.save("metadata.npy", metadata)
+    np.save("visibilities.npy", visibilities)
+    np.save("subgrids.npy", subgrids)
+    np.save("grid.npy", grid)
+    np.save("image.npy", grid)
