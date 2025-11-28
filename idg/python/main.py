@@ -69,7 +69,7 @@ def print_header(title, header_length=50, newline="\n"):
     print("=" * header_length)
 
 
-params = {
+parameters = {
     "nr_correlations_in": NR_CORRELATIONS_IN,
     "nr_correlations_out": NR_CORRELATIONS_OUT,
     "start_frequency": f"{START_FREQUENCY*1e-6} MHz",
@@ -83,7 +83,7 @@ params = {
 }
 
 print_header("PARAMETERS", newline="")
-for key, value in params.items():
+for key, value in parameters.items():
     print(f"{key:<39} {value:>10}")
 
 
@@ -211,11 +211,22 @@ if STORE_DATA:
     np.save("image.npy", grid)
 
 if OUTPUT_FILENAME:
-    timings_ms = {}
+    output = {
+        "parameters": {},
+        "timings": {},
+    }
+
+    for parameter in parameters.items():
+        key, value = parameter
+        if type(value) == str:
+            value = value.split()[0]
+        output["parameters"][key] = value
 
     for timing in timings.items():
         operation, duration = timing
-        timings_ms[operation.lower().replace(" ", "_")] = round(duration * 1000, 2)
+        output["timings"][operation.lower().replace(" ", "_")] = round(
+            duration * 1000, 2
+        )
 
     with open(OUTPUT_FILENAME, "w") as f:
-        json.dump(timings_ms, f, indent=2)
+        json.dump(output, f, indent=2)
