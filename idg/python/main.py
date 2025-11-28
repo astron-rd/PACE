@@ -72,8 +72,8 @@ def print_header(title, header_length=50, newline="\n"):
 parameters = {
     "nr_correlations_in": NR_CORRELATIONS_IN,
     "nr_correlations_out": NR_CORRELATIONS_OUT,
-    "start_frequency": f"{START_FREQUENCY*1e-6} MHz",
-    "frequency_increment": f"{FREQUENCY_INCREMENT*1e-6} MHz",
+    "start_frequency": START_FREQUENCY * 1e-6,
+    "frequency_increment": FREQUENCY_INCREMENT * 1e-6,
     "nr_channels": NR_CHANNELS,
     "nr_timesteps": NR_TIMESTEPS,
     "nr_stations": NR_STATIONS,
@@ -218,8 +218,6 @@ if OUTPUT_FILENAME:
 
     for parameter in parameters.items():
         key, value = parameter
-        if type(value) == str:
-            value = value.split()[0]
         output["parameters"][key] = value
 
     for timing in timings.items():
