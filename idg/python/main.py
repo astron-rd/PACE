@@ -1,4 +1,5 @@
 import argparse
+import json
 import time
 import numpy as np
 
@@ -38,6 +39,13 @@ parser.add_argument("--nr_stations", type=int, default=20, help="Number of stati
 parser.add_argument(
     "--store", action="store_true", default=False, help="Store data in Numpy format"
 )
+parser.add_argument(
+    "--json",
+    nargs="?",
+    const="timings.json",
+    default=False,
+    help="Output timings in JSON format (optional: specify filename)",
+)
 args = parser.parse_args()
 
 SUBGRID_SIZE = args.subgrid_size
@@ -45,7 +53,7 @@ GRID_SIZE = args.grid_size
 OBSERVATION_HOURS = args.observation_hours
 NR_CHANNELS = args.nr_channels
 STORE_DATA = args.store
-OUTPUT_JSON = args.json
+OUTPUT_FILENAME = args.json
 
 # Derived arguments
 NR_TIMESTEPS = int(OBSERVATION_HOURS * 3600)
@@ -201,3 +209,13 @@ if STORE_DATA:
     np.save("subgrids.npy", subgrids)
     np.save("grid.npy", grid)
     np.save("image.npy", grid)
+
+if OUTPUT_FILENAME:
+    timings_ms = {}
+
+    for timing in timings.items():
+        operation, duration = timing
+        timings_ms[operation.lower().replace(" ", "_")] = round(duration * 1000, 2)
+
+    with open(OUTPUT_FILENAME, "w") as f:
+        json.dump(timings_ms, f, indent=2)
