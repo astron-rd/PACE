@@ -88,15 +88,15 @@ for key, value in parameters.items():
 
 
 def timeit(description, operation):
-    print(f"{description:<40}", end="")
+    print(f"{description:<38}", end="")
     start = time.time()
     result = operation()
     end = time.time()
     duration = end - start
     if duration > 1:
-        print(f" {duration:>7.3f} s")
+        print(f" {duration:>9.3f} s")
     else:
-        print(f" {duration*1e3:>6.3f} ms")
+        print(f" {duration*1e3:>8.3f} ms")
     timings[description] = duration
     return result
 
