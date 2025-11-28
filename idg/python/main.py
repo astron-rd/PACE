@@ -6,7 +6,10 @@ import idgtypes
 from init import get_uvw, get_metadata, get_frequencies, get_visibilities, get_taper
 from idg import Gridder  # type: ignore
 
+# Dictionary to store all timings
+timings = dict()
 
+# Constants
 NR_CORRELATIONS_IN = 2  # XX, YY
 NR_CORRELATIONS_OUT = 1  # I
 W_STEP = 1.0  # w step in wavelengths
@@ -14,6 +17,7 @@ SPEED_OF_LIGHT = 299792458.0
 START_FREQUENCY = 150e6  # 150 MHz
 FREQUENCY_INCREMENT = 1e6  # 1 MHz
 
+# Command line arguments
 parser = argparse.ArgumentParser()
 parser.add_argument(
     "--subgrid_size", type=int, default=32, help="Size of the subgrid in pixels"
@@ -39,117 +43,156 @@ args = parser.parse_args()
 SUBGRID_SIZE = args.subgrid_size
 GRID_SIZE = args.grid_size
 OBSERVATION_HOURS = args.observation_hours
-NR_TIMESTEPS = int(OBSERVATION_HOURS * 3600)
 NR_CHANNELS = args.nr_channels
 STORE_DATA = args.store
+OUTPUT_JSON = args.json
 
+# Derived arguments
+NR_TIMESTEPS = int(OBSERVATION_HOURS * 3600)
 END_FREQUENCY = START_FREQUENCY + NR_CHANNELS * FREQUENCY_INCREMENT
 IMAGE_SIZE = SPEED_OF_LIGHT / END_FREQUENCY
 NR_STATIONS = args.nr_stations
 NR_BASELINES = NR_STATIONS * (NR_STATIONS - 1) // 2
 
-uvw = get_uvw(
-    observation_hours=OBSERVATION_HOURS,
-    nr_baselines=NR_BASELINES,
-    grid_size=GRID_SIZE,
+
+def print_header(title, header_length=50, newline="\n"):
+    print(newline + "=" * header_length)
+    print(title)
+    print("=" * header_length)
+
+
+params = {
+    "nr_correlations_in": NR_CORRELATIONS_IN,
+    "nr_correlations_out": NR_CORRELATIONS_OUT,
+    "start_frequency": f"{START_FREQUENCY*1e-6} MHz",
+    "frequency_increment": f"{FREQUENCY_INCREMENT*1e-6} MHz",
+    "nr_channels": NR_CHANNELS,
+    "nr_timesteps": NR_TIMESTEPS,
+    "nr_stations": NR_STATIONS,
+    "nr_baselines": NR_BASELINES,
+    "subgrid_size": SUBGRID_SIZE,
+    "grid_size": GRID_SIZE,
+}
+
+print_header("PARAMETERS", newline="")
+for key, value in params.items():
+    print(f"{key:<39} {value:>10}")
+
+
+def timeit(description, operation):
+    print(f"{description:<40}", end="")
+    start = time.time()
+    result = operation()
+    end = time.time()
+    duration = end - start
+    if duration > 1:
+        print(f" {duration:>7.3f} s")
+    else:
+        print(f" {duration*1e3:>6.3f} ms")
+    timings[description] = duration
+    return result
+
+
+print_header("INITIALIZATION")
+uvw = timeit(
+    "Initialize UVW coordinates",
+    lambda: get_uvw(
+        observation_hours=OBSERVATION_HOURS,
+        nr_baselines=NR_BASELINES,
+        grid_size=GRID_SIZE,
+    ),
 )
 
-print("Initialize frequencies")
-frequencies = get_frequencies(START_FREQUENCY, FREQUENCY_INCREMENT, NR_CHANNELS)
+frequencies = timeit(
+    "Initialize frequencies",
+    lambda: get_frequencies(START_FREQUENCY, FREQUENCY_INCREMENT, NR_CHANNELS),
+)
 wavenumbers = (frequencies * 2 * np.pi) / SPEED_OF_LIGHT
 
-print("Initialize metadata")
-metadata = get_metadata(
-    nr_channels=NR_CHANNELS,
-    subgrid_size=SUBGRID_SIZE,
-    grid_size=GRID_SIZE,
-    uvw=uvw,
+metadata = timeit(
+    "Initialize metadata",
+    lambda: get_metadata(
+        nr_channels=NR_CHANNELS,
+        subgrid_size=SUBGRID_SIZE,
+        grid_size=GRID_SIZE,
+        uvw=uvw,
+    ),
 )
 nr_subgrids = metadata.shape[0]
 
-
-print("Parameters:")
-print(f"\tnr_correlations_in: {NR_CORRELATIONS_IN}")
-print(f"\tnr_correlations_out: {NR_CORRELATIONS_OUT}")
-print(f"\tstart_frequency: {START_FREQUENCY*1e-6} MHz")
-print(f"\tfrequency_increment: {FREQUENCY_INCREMENT*1e-6} MHz")
-print(f"\tnr_channels: {NR_CHANNELS}")
-print(f"\tnr_timesteps: {NR_TIMESTEPS}")
-print(f"\tnr_stations: {NR_STATIONS}")
-print(f"\tnr_baselines: {NR_BASELINES}")
-print(f"\tsubgrid_size: {SUBGRID_SIZE}")
-print(f"\tnr_subgrids: {nr_subgrids}")
-print(f"\tgrid_size: {GRID_SIZE}")
-
-print("Initialize visibilities")
-start = time.time()
-visibilities = get_visibilities(
-    nr_correlations=NR_CORRELATIONS_IN,
-    nr_channels=NR_CHANNELS,
-    nr_timesteps=NR_TIMESTEPS,
-    nr_baselines=NR_BASELINES,
-    image_size=IMAGE_SIZE,
-    grid_size=GRID_SIZE,
-    frequencies=frequencies,
-    uvw=uvw,
+visibilities = timeit(
+    "Initialize visibilities",
+    lambda: get_visibilities(
+        nr_correlations=NR_CORRELATIONS_IN,
+        nr_channels=NR_CHANNELS,
+        nr_timesteps=NR_TIMESTEPS,
+        nr_baselines=NR_BASELINES,
+        image_size=IMAGE_SIZE,
+        grid_size=GRID_SIZE,
+        frequencies=frequencies,
+        uvw=uvw,
+    ),
 )
-end = time.time()
-print(f"runtime: {end-start:.2f} seconds")
-print("Initialize grid")
+
 grid = np.zeros((NR_CORRELATIONS_OUT, GRID_SIZE, GRID_SIZE), dtype=idgtypes.gridtype)
 
-print("Initialize taper")
-taper = get_taper(subgrid_size=SUBGRID_SIZE)
+taper = timeit("Initialize taper", lambda: get_taper(subgrid_size=SUBGRID_SIZE))
 
-print("Initialize subgrids")
 subgrids = np.zeros(
     shape=(nr_subgrids, NR_CORRELATIONS_OUT, SUBGRID_SIZE, SUBGRID_SIZE),
     dtype=idgtypes.gridtype,
 )
 
-print("Initialize gridder")
-gridder = Gridder(
-    nr_correlations_in=NR_CORRELATIONS_IN,
-    subgrid_size=SUBGRID_SIZE,
+gridder = timeit(
+    "Initialize gridder",
+    lambda: Gridder(
+        nr_correlations_in=NR_CORRELATIONS_IN,
+        subgrid_size=SUBGRID_SIZE,
+    ),
 )
 
-print("Grid visibilities onto subgrids")
-start = time.time()
-gridder.grid_onto_subgrids(
-    w_step=W_STEP,
-    image_size=IMAGE_SIZE,
-    grid_size=GRID_SIZE,
-    wavenumbers=wavenumbers,
-    uvw=uvw,
-    visibilities=visibilities,
-    taper=taper,
-    metadata=metadata,
-    subgrids=subgrids,
-)
-end = time.time()
-print(f"runtime: {end-start:.2f} seconds")
+print_header("MAIN")
 
-print("Add subgrids to grid")
-start = time.time()
-gridder.add_subgrids_to_grid(
-    metadata=metadata,
-    subgrids=subgrids,
-    grid=grid,
+timeit(
+    "Grid visibilities",
+    lambda: gridder.grid_onto_subgrids(
+        w_step=W_STEP,
+        image_size=IMAGE_SIZE,
+        grid_size=GRID_SIZE,
+        wavenumbers=wavenumbers,
+        uvw=uvw,
+        visibilities=visibilities,
+        taper=taper,
+        metadata=metadata,
+        subgrids=subgrids,
+    ),
 )
-end = time.time()
-print(f"runtime: {end-start:.2f} seconds")
 
-print("Transform to image domain")
-start = time.time()
-gridder.transform(
-    direction=idgtypes.FOURIER_DOMAIN_TO_IMAGE_DOMAIN,
-    grid=grid,
+timeit(
+    "Add subgrids",
+    lambda: gridder.add_subgrids_to_grid(
+        metadata=metadata,
+        subgrids=subgrids,
+        grid=grid,
+    ),
 )
-end = time.time()
-print(f"runtime: {end-start:.2f} seconds")
 
-if args.store:
-    print("Storing data")
+timeit(
+    "Transform grid",
+    lambda: gridder.transform(
+        direction=idgtypes.FOURIER_DOMAIN_TO_IMAGE_DOMAIN,
+        grid=grid,
+    ),
+)
+
+print_header("TIMINGS")
+total_time = sum(timings.values())
+for operation, duration in timings.items():
+    percentage = (duration / total_time) * 100
+    print(f"{operation:<30} {duration:>8.2f} s ({percentage:>5.1f}%)")
+print(f"{'Total':<30} {total_time:>8.2f} s")
+
+if STORE_DATA:
     np.save("uvw.npy", uvw)
     np.save("frequencies.npy", frequencies)
     np.save("taper.npy", taper)
