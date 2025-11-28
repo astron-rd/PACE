@@ -1,3 +1,4 @@
+import argparse
 import time
 import numpy as np
 
@@ -8,21 +9,39 @@ from idg import Gridder  # type: ignore
 
 NR_CORRELATIONS_IN = 2  # XX, YY
 NR_CORRELATIONS_OUT = 1  # I
-SUBGRID_SIZE = 32  # size of each subgrid
-GRID_SIZE = 1024  # size of the full grid
-OBSERVATION_HOURS = 4  # total observation time in hours
-NR_TIMESTEPS = OBSERVATION_HOURS * 3600
-NR_CHANNELS = 16  # number of frequency channels
 W_STEP = 1.0  # w step in wavelengths
-
+SPEED_OF_LIGHT = 299792458.0
 START_FREQUENCY = 150e6  # 150 MHz
 FREQUENCY_INCREMENT = 1e6  # 1 MHz
+
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "--subgrid_size", type=int, default=32, help="Size of the subgrid in pixels"
+)
+parser.add_argument(
+    "--grid_size", type=int, default=1024, help="Size of the grid in pixels"
+)
+parser.add_argument(
+    "--observation_hours",
+    type=float,
+    default=4,
+    help="Length of the observation in hours",
+)
+parser.add_argument(
+    "--nr_channels", type=int, default=16, help="Number of frequency channels"
+)
+parser.add_argument("--nr_stations", type=int, default=20, help="Number of stations")
+args = parser.parse_args()
+
+SUBGRID_SIZE = args.subgrid_size
+GRID_SIZE = args.grid_size
+OBSERVATION_HOURS = args.observation_hours
+NR_TIMESTEPS = int(OBSERVATION_HOURS * 3600)
+NR_CHANNELS = args.nr_channels
+
 END_FREQUENCY = START_FREQUENCY + NR_CHANNELS * FREQUENCY_INCREMENT
-
-SPEED_OF_LIGHT = 299792458.0
 IMAGE_SIZE = SPEED_OF_LIGHT / END_FREQUENCY
-
-NR_STATIONS = 20
+NR_STATIONS = args.nr_stations
 NR_BASELINES = NR_STATIONS * (NR_STATIONS - 1) // 2
 
 uvw = get_uvw(
