@@ -93,10 +93,7 @@ def timeit(description, operation):
     result = operation()
     end = time.time()
     duration = end - start
-    if duration > 1:
-        print(f" {duration:>9.3f} s")
-    else:
-        print(f" {duration*1e3:>8.3f} ms")
+    print(f" {duration:>9.6f} s")
     timings[description] = duration
     return result
 
@@ -197,8 +194,8 @@ print_header("TIMINGS")
 total_time = sum(timings.values())
 for operation, duration in timings.items():
     percentage = (duration / total_time) * 100
-    print(f"{operation:<30} {duration:>8.2f} s ({percentage:>5.1f}%)")
-print(f"{'Total':<30} {total_time:>8.2f} s")
+    print(f"{operation:<30} {duration:>8.3f} s ({percentage:>5.1f}%)")
+print(f"{'Total':<30} {total_time:>8.3f} s")
 
 if STORE_DATA:
     np.save("uvw.npy", uvw)
