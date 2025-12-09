@@ -146,8 +146,24 @@ def compute_pixels(
 
     return pixels
 
+@nb.njit
+def compute_l(x: int, subgrid_size: int, image_size: float) -> float:
+    return (x + 0.5 - (subgrid_size / 2.0)) * image_size / subgrid_size
 
-@nb.njit(fastmath=False, cache=True, nogil=True, parallel=True)
+@nb.njit
+def compute_m(y: int, subgrid_size: int, image_size: float) -> float:
+    return compute_l(y, subgrid_size, image_size)
+
+@nb.njit
+def compute_n(l: float, m: float) -> float:
+    tmp = l * l + m * m
+
+    if tmp >= 1.0:
+        return 1.0
+
+    return tmp / (1.0 + np.sqrt(1.0 - tmp))
+
+@nb.njit(cache=True, nogil=True, parallel=True)
 def visibilities_to_subgrid(
     s: int,
     metadata: dict,
@@ -199,17 +215,12 @@ def visibilities_to_subgrid(
     )
     w_offset = 2 * np.pi * w_offset_in_lambda
 
-    # Precompute constants
-    half_subgrid = subgrid_size / 2
-    image_scale = image_size / subgrid_size
-
     for y in nb.prange(subgrid_size):
         for x in nb.prange(subgrid_size):
             # Compute l, m, n
-            l = nb.float32((x + 0.5 - half_subgrid) * image_scale)
-            m = nb.float32((y + 0.5 - half_subgrid) * image_scale)
-            tmp = nb.float32(l * l + m * m)  # type: ignore
-            n = nb.float32(tmp / (1.0 + np.sqrt(1.0 - tmp)))  # type: ignore
+            l = compute_l(x, subgrid_size, image_size)
+            m = compute_m(y, subgrid_size, image_size)
+            n = compute_n(l, m)
 
             # Compute pixels
             pixels = compute_pixels(
@@ -233,8 +244,8 @@ def visibilities_to_subgrid(
 
             # Apply taper and store
             sph = taper[y, x]
-            x_dst = int((x + half_subgrid) % subgrid_size)
-            y_dst = int((y + half_subgrid) % subgrid_size)
+            x_dst = int((x + (subgrid_size / 2)) % subgrid_size)
+            y_dst = int((y + (subgrid_size / 2)) % subgrid_size)
 
             for pol in range(nr_correlations_out):
                 subgrid[pol, y_dst, x_dst] = pixels[pol] * sph
