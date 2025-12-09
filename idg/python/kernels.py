@@ -2,7 +2,7 @@ import numpy as np
 import numba as nb
 
 
-@nb.njit(fastmath=True, cache=True)
+@nb.njit(fastmath=True)
 def polyval(coefficients: np.ndarray, x: np.ndarray) -> np.ndarray:
     """
     Numba-compatible polynomial evaluation (equivalent to np.polyval).
@@ -20,7 +20,7 @@ def polyval(coefficients: np.ndarray, x: np.ndarray) -> np.ndarray:
     return result
 
 
-@nb.njit(fastmath=True, cache=False)
+@nb.njit(fastmath=True)
 def evaluate_spheroidal(nu: np.ndarray) -> np.ndarray:
     """
     Evaluate the prolate spheroidal wave function.
@@ -67,7 +67,7 @@ def evaluate_spheroidal(nu: np.ndarray) -> np.ndarray:
     return result
 
 
-@nb.njit(fastmath=True, cache=True, parallel=True)
+@nb.njit(fastmath=True, parallel=True)
 def add_pt_src_to_baseline(
     bl: int,  # baseline index
     nr_time: int,  # number of timesteps
@@ -297,7 +297,7 @@ def visibilities_to_subgrids(
     return subgrids
 
 
-@nb.njit(fastmath=True, cache=True)
+@nb.njit(fastmath=True)
 def compute_phasor(subgrid_size: int) -> np.ndarray:
     """
     Compute the phasor which is used to shift the subgrid to the correct position
@@ -314,7 +314,7 @@ def compute_phasor(subgrid_size: int) -> np.ndarray:
     return phasor
 
 
-@nb.njit(fastmath=True, cache=True)
+@nb.njit(fastmath=True)
 def add_subgrid_to_grid(
     s: int,
     metadata: np.ndarray,
@@ -365,7 +365,7 @@ def add_subgrid_to_grid(
                     )
 
 
-@nb.njit(fastmath=True, cache=True)
+@nb.njit(fastmath=True)
 def compute_metadata(
     grid_size: int,
     subgrid_size: int,
