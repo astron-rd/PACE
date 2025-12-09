@@ -1,16 +1,26 @@
 import numpy as np
-from numba import njit, prange
+import numba as nb
 
 import idgtypes
 from kernels import add_subgrid_to_grid, compute_phasor, visibilities_to_subgrid
 
 
-@njit(parallel=True)
-def grid_into_subgrids(w_step, image_size, grid_size, wavenumbers, uvw, visibilities, taper, metadata, subgrids):
+@nb.njit(parallel=True)
+def grid_into_subgrids(
+    w_step,
+    image_size,
+    grid_size,
+    wavenumbers,
+    uvw,
+    visibilities,
+    taper,
+    metadata,
+    subgrids,
+):
     nr_subgrids = metadata.shape[0]
 
     # Grid visibilities onto subgrids
-    for s in prange(nr_subgrids):
+    for s in nb.prange(nr_subgrids):
         visibilities_to_subgrid(
             s,
             metadata,
@@ -64,11 +74,20 @@ class Gridder:
         assert self.nr_correlations_out == subgrids.shape[1]
         assert self.subgrid_size == subgrids.shape[2]
 
-        subgrids = grid_into_subgrids(w_step, image_size, grid_size, wavenumbers, uvw, visibilities, taper, metadata, subgrids)
+        subgrids = grid_into_subgrids(
+            w_step,
+            image_size,
+            grid_size,
+            wavenumbers,
+            uvw,
+            visibilities,
+            taper,
+            metadata,
+            subgrids,
+        )
 
         # Apply FFT to each subgrid
         subgrids[:] = np.fft.ifft2(subgrids, axes=(2, 3))
-
 
     def add_subgrids_to_grid(
         self,
