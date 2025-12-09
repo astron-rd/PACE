@@ -163,7 +163,7 @@ def compute_n(l: float, m: float) -> float:
 
     return tmp / (1.0 + np.sqrt(1.0 - tmp))
 
-@nb.njit(cache=True, nogil=True, parallel=True)
+@nb.njit(cache=True, nogil=True)
 def visibilities_to_subgrid(
     s: int,
     metadata: dict,
@@ -215,8 +215,8 @@ def visibilities_to_subgrid(
     )
     w_offset = 2 * np.pi * w_offset_in_lambda
 
-    for y in nb.prange(subgrid_size):
-        for x in nb.prange(subgrid_size):
+    for y in range(subgrid_size):
+        for x in range(subgrid_size):
             # Compute l, m, n
             l = compute_l(x, subgrid_size, image_size)
             m = compute_m(y, subgrid_size, image_size)
