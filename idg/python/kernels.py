@@ -165,7 +165,6 @@ def compute_n(l: float, m: float) -> float:
 
 @nb.njit(cache=True)
 def visibilities_to_subgrid(
-    s: int,
     metadata: dict,
     w_step: float,
     grid_size: int,
@@ -181,7 +180,6 @@ def visibilities_to_subgrid(
     """
     Grid visibilities onto a subgrid.
 
-    :param s: subgrid index
     :param metadata: metadata for the subgrid
     :param w_step: w step in wavelengths
     :param grid_size: grid size in pixels
@@ -195,7 +193,7 @@ def visibilities_to_subgrid(
     :param subgrid: subgrid array
     """
     # Load metadata
-    m = metadata[s]
+    m = metadata
     bl = m["baseline"]
     offset = m["time_index"]
     nr_timesteps = m["nr_timesteps"]
@@ -281,8 +279,7 @@ def visibilities_to_subgrids(
     # Grid visibilities onto subgrids
     for s in nb.prange(nr_subgrids):
         visibilities_to_subgrid(
-            s,
-            metadata,
+            metadata[s],
             w_step,
             grid_size,
             image_size,
