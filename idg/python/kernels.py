@@ -67,7 +67,7 @@ def evaluate_spheroidal(nu: np.ndarray) -> np.ndarray:
     return result
 
 
-@nb.njit(fastmath=True, cache=True, nogil=True)
+@nb.njit(fastmath=True, cache=True, nogil=True, parallel=True)
 def add_pt_src_to_baseline(
     bl: int,  # baseline index
     nr_time: int,  # number of timesteps
