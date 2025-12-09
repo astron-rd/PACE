@@ -67,7 +67,7 @@ def evaluate_spheroidal(nu: np.ndarray) -> np.ndarray:
     return result
 
 
-@nb.njit(fastmath=True, cache=True, nogil=True, parallel=True)
+@nb.njit(fastmath=True, cache=True, parallel=True)
 def add_pt_src_to_baseline(
     bl: int,  # baseline index
     nr_time: int,  # number of timesteps
@@ -105,7 +105,7 @@ def add_pt_src_to_baseline(
             visibilities[bl, t, c, :] += value
 
 
-@nb.njit(fastmath=True, nogil=True)
+@nb.njit(fastmath=True)
 def compute_pixels(
     nr_correlations_out,
     nr_timesteps,
@@ -163,7 +163,7 @@ def compute_n(l: float, m: float) -> float:
 
     return tmp / (1.0 + np.sqrt(1.0 - tmp))
 
-@nb.njit(cache=True, nogil=True)
+@nb.njit(cache=True)
 def visibilities_to_subgrid(
     s: int,
     metadata: dict,

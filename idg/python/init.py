@@ -141,7 +141,7 @@ def get_metadata(
     return np.asarray(metadata)
 
 
-@nb.njit(cache=True, nogil=True, parallel=True)
+@nb.njit(cache=True, parallel=True)
 def get_visibilities(
     nr_correlations: int,
     nr_channels: int,
