@@ -150,7 +150,7 @@ def compute_pixels(
 @nb.njit(fastmath=False, cache=True, nogil=True, parallel=True)
 def visibilities_to_subgrid(
     s: int,
-    metadata: np.ndarray,
+    metadata: dict,
     w_step: float,
     grid_size: int,
     image_size: float,
@@ -238,6 +238,52 @@ def visibilities_to_subgrid(
 
             for pol in range(nr_correlations_out):
                 subgrid[pol, y_dst, x_dst] = pixels[pol] * sph
+
+
+@nb.njit(parallel=True)
+def visibilities_to_subgrids(
+    w_step,
+    image_size,
+    grid_size,
+    wavenumbers,
+    uvw,
+    visibilities,
+    taper,
+    metadata,
+    subgrids,
+):
+    """
+    Grid visibilities onto subgrids.
+
+    :param w_step: w step in wavelengths
+    :param image_size: image size in radians
+    :param grid_size: grid size in pixels
+    :param wavenumbers: wavenumbers of the frequencies
+    :param uvw: uvw coordinates
+    :param visibilities: visibility data
+    :param taper: taper function
+    :param metadata: metadata array
+    :param subgrids: subgrid array
+    """
+    nr_subgrids = metadata.shape[0]
+
+    # Grid visibilities onto subgrids
+    for s in nb.prange(nr_subgrids):
+        visibilities_to_subgrid(
+            s,
+            metadata,
+            w_step,
+            grid_size,
+            image_size,
+            wavenumbers,
+            visibilities,
+            uvw,
+            taper,
+            visibilities.shape[3],
+            subgrids.shape[2],
+            subgrids[s],
+        )
+    return subgrids
 
 
 @nb.njit(fastmath=True, cache=True)
