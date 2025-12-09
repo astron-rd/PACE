@@ -1,4 +1,5 @@
 #include <numbers>
+#include <iostream>
 
 #include "kernels.hpp"
 
@@ -12,6 +13,8 @@ void fourier_domain_dedisperse(size_t dm_count, size_t n_frequencies,
                                size_t stride_in, size_t stride_out,
                                std::complex<float> *input,
                                std::complex<float> *output) {
+// TODO: use OpenMP!
+// #pragma omp parallel for
   for (size_t dm_index = 0; dm_index < dm_count; ++dm_index) {
     // Calculate DM delays
     float dm_delays[n_channels];
