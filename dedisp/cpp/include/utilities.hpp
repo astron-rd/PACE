@@ -26,8 +26,7 @@ template <typename InputType, typename OutputType>
 void transpose_data(size_t height, size_t width, size_t in_stride,
                     size_t out_stride, float offset, float scale,
                     const InputType *input, OutputType *output) {
-// TODO: use OpenMP
-// #pragma omp parallel for
+#pragma omp parallel for
   for (size_t y = 0; y < height; ++y) {
     for (size_t x = 0; x < width; ++x) {
       const InputType *input_ptr = &input[x * in_stride];

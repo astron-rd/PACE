@@ -34,9 +34,6 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
   const size_t n_samples_padded = round_up(n_samples_fft + 1, 1024);
   const size_t n_fft_frequency_bins = n_samples_padded / 2 + 1;
 
-  std::cout << "n_samples_fft = " << n_samples_fft << std::endl;
-  std::cout << "n_samples_padded = " << n_samples_padded << std::endl;
-
   // Input is in the frequency domain, while the output is in the DM domain.
   const std::vector<size_t> input_shape = {n_channels_, n_samples_padded};
   xt::xarray<float> frequency_data(input_shape);
@@ -63,15 +60,12 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
   transpose_data<uint8_t, float>(n_channels_, n_samples, n_channels_,
                          n_samples_padded, byte_offset, n_channels_,
                          input.data(), frequency_data.data());
-  std::cout << "input shape = [" << input.shape(0) << ", " << input.shape(1) << "]" << std::endl;
-  std::cout << "Freq data shape = [" << frequency_data.shape(0) << ", " << frequency_data.shape(1) << "]" << std::endl;
 
   // 3. Real-to-complex FFT: time series data to frequency domain
   // Perform an FFT batched over frequency using OpenMP
-  std::cout << "(3) Forward FFT: real-to-complex..." << std::endl;
+  std::cout << "(3) Forward FFT: real-to-complex." << std::endl;
 
-  // TODO: use OpenMP
-  // #pragma omp parallel for
+  #pragma omp parallel for
   for(size_t c = 0; c < n_channels_; ++c) {
     xt::xarray<float> time_samples = xt::eval(xt::row(frequency_data, c));
     time_samples = xt::fftw::fftshift(time_samples);
@@ -92,8 +86,7 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
   // Perform an FFT batched along the DM axis using OpenMP
   std::cout << "(5) Inverse FFT: complex-to-real." << std::endl;
 
-  // TODO: use OpenMP
-  // #pragma omp parallel for
+  #pragma omp parallel for
   for(size_t d = 0; d < dm_count_; ++d) {
     xt::xarray<std::complex<float>> samples = xt::eval(xt::row(dm_scratch, d));
     samples = xt::fftw::fftshift(samples);
@@ -175,8 +168,7 @@ void FDDPlan::generate_spin_frequency_table(size_t n_spin_frequencies,
                                             size_t n_samples) {
   spin_frequency_table_.resize({n_spin_frequencies});
 
-// TODO: use OpenMP
-// #pragma omp parallel for
+#pragma omp parallel for
   for (size_t i = 0; i < n_spin_frequencies; ++i) {
     spin_frequency_table_(i) = i * (1.0f / (n_samples * time_resolution_));
   }

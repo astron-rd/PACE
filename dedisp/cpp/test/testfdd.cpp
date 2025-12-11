@@ -3,6 +3,7 @@
 #include <random>
 
 #include <xtensor/io/xio.hpp>
+#include <xtensor/core/xmath.hpp>
 
 #include "fddplan.hpp"
 #include "metadata.hpp"
@@ -77,11 +78,46 @@ int main() {
   std::cout << "> runtime: " << exec_timer->duration() << " seconds "
             << std::endl;
 
-  fdd_plan.show();
-
   const double total_runtime = mock_timer->duration() + plan_timer->duration() +
                                prep_timer->duration() + exec_timer->duration();
   std::cout << "------------------------------------------------" << std::endl;
-  std::cout << "FDD test finished: total runtime = " << total_runtime
+  std::cout << "FDD test finished; total runtime = " << total_runtime
             << std::endl;
+
+  fdd_plan.show();
+
+  std::cout << '\n' << "Dedispersion report" << std::endl;
+  const float raw_mean = xt::mean<float>(mock_input)();
+  const float raw_std  = xt::stddev<float>(mock_input)();
+  std::cout << "  Raw RMS    : " << raw_mean << std::endl;
+  std::cout << "  Raw StdDev : " << raw_std << std::endl;
+
+  const float input_mean = xt::mean<float>(quantised_mock_input)();
+  const float input_std  = xt::stddev<float>(quantised_mock_input)();
+  std::cout << "  Input RMS    : " << input_mean << std::endl;
+  std::cout << "  Input StdDev : " << input_std << std::endl;
+
+  const float output_mean = xt::mean<float>(mock_output)();
+  const float output_std  = xt::stddev<float>(mock_output)();
+  std::cout << "  Output RMS    : " << output_mean << std::endl;
+  std::cout << "  Output StdDev : " << output_std << std::endl;
+
+  const size_t n_samples_computed = n_samples - fdd_plan.max_delay();
+  const xt::xarray<float> dm_table = fdd_plan.get_dm_table();
+
+  // TODO: limit output to 100 like the original dedisp code.
+  int n_candidates = 0;
+  for (size_t d = 0; d < fdd_plan.dm_count(); ++d) {
+    for (size_t s = 0; s < n_samples_computed; ++s) {
+      const float value = mock_output(d, s);
+      if (value - output_mean > 6.0f * output_std) {
+        printf(
+            "  DM trial %u (%.3f pc/cm^3), Samp %u (%.6f s): %f (%.2f sigma)\n",
+            d, dm_table(d), s, s * observation.sampling_period, value,
+            (value - output_mean) / output_std);
+        ++n_candidates;
+      }
+    }
+  }
+  std::cout << "\nFound " << n_candidates << " DM candidates." << std::endl;
 }
