@@ -1,9 +1,8 @@
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import multiprocessing
 import numpy as np
+import numba as nb
 
 import idgtypes
-from kernels import add_subgrid_to_grid, compute_phasor, visibilities_to_subgrid
+from kernels import add_subgrid_to_grid, compute_phasor, visibilities_to_subgrids
 
 
 class Gridder:
@@ -41,31 +40,18 @@ class Gridder:
         assert self.nr_correlations_in == visibilities.shape[3]
         assert self.nr_correlations_out == subgrids.shape[1]
         assert self.subgrid_size == subgrids.shape[2]
-        nr_subgrids = metadata.shape[0]
 
-        # Grid visibilities onto subgrids
-        with ThreadPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
-            futures = []
-            for s in range(nr_subgrids):
-                future = executor.submit(
-                    visibilities_to_subgrid,
-                    s,
-                    metadata,
-                    w_step,
-                    grid_size,
-                    image_size,
-                    wavenumbers,
-                    visibilities,
-                    uvw,
-                    taper,
-                    self.nr_correlations_in,
-                    self.subgrid_size,
-                    subgrids[s],
-                )
-                futures.append(future)
-
-            for future in as_completed(futures):
-                pass
+        visibilities_to_subgrids(
+            w_step,
+            image_size,
+            grid_size,
+            wavenumbers,
+            uvw,
+            visibilities,
+            taper,
+            metadata,
+            subgrids,
+        )
 
         # Apply FFT to each subgrid
         subgrids[:] = np.fft.ifft2(subgrids, axes=(2, 3))

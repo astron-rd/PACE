@@ -1,8 +1,8 @@
 import numpy as np
-from numba import jit, float32
+import numba as nb
 
 
-@jit(nopython=True, fastmath=True, cache=True)
+@nb.njit(fastmath=True)
 def polyval(coefficients: np.ndarray, x: np.ndarray) -> np.ndarray:
     """
     Numba-compatible polynomial evaluation (equivalent to np.polyval).
@@ -20,7 +20,7 @@ def polyval(coefficients: np.ndarray, x: np.ndarray) -> np.ndarray:
     return result
 
 
-@jit(nopython=True, fastmath=True, cache=False)
+@nb.njit(fastmath=True)
 def evaluate_spheroidal(nu: np.ndarray) -> np.ndarray:
     """
     Evaluate the prolate spheroidal wave function.
@@ -67,7 +67,7 @@ def evaluate_spheroidal(nu: np.ndarray) -> np.ndarray:
     return result
 
 
-@jit(nopython=True, fastmath=True, cache=True, nogil=True)
+@nb.njit(fastmath=True, parallel=True)
 def add_pt_src_to_baseline(
     bl: int,  # baseline index
     nr_time: int,  # number of timesteps
@@ -105,10 +105,67 @@ def add_pt_src_to_baseline(
             visibilities[bl, t, c, :] += value
 
 
-@jit(nopython=True, fastmath=False, cache=True, nogil=True)
+@nb.njit(fastmath=True)
+def compute_pixels(
+    nr_correlations_out,
+    nr_timesteps,
+    offset,
+    uvw,
+    bl,
+    l,
+    m,
+    n,
+    u_offset,
+    v_offset,
+    w_offset,
+    channel_begin,
+    channel_end,
+    wavenumbers,
+    nr_correlations_in,
+    visibilities,
+):
+    pixels = np.zeros(nr_correlations_out, dtype=np.complex64)
+
+    for time in range(nr_timesteps):
+        idx = offset + time
+        u = uvw["u"][bl][idx]
+        v = uvw["v"][bl][idx]
+        w = uvw["w"][bl][idx]
+
+        phase_index = nb.float32(u * l + v * m + w * n)
+        phase_offset = nb.float32(u_offset * l + v_offset * m + w_offset * n)
+
+        for chan in range(channel_begin, channel_end):
+            phase = nb.float32(phase_offset - (phase_index * wavenumbers[chan]))
+            phasor = np.exp(1j * phase)  # type: ignore
+
+            for pol in range(nr_correlations_in):
+                pixels[pol % nr_correlations_out] += (
+                    visibilities[bl, idx, chan, pol] * phasor
+                )
+
+    return pixels
+
+@nb.njit
+def compute_l(x: int, subgrid_size: int, image_size: float) -> float:
+    return (x + 0.5 - (subgrid_size / 2.0)) * image_size / subgrid_size
+
+@nb.njit
+def compute_m(y: int, subgrid_size: int, image_size: float) -> float:
+    return compute_l(y, subgrid_size, image_size)
+
+@nb.njit
+def compute_n(l: float, m: float) -> float:
+    tmp = l * l + m * m
+
+    if tmp >= 1.0:
+        return 1.0
+
+    return tmp / (1.0 + np.sqrt(1.0 - tmp))
+
+@nb.njit(cache=True)
 def visibilities_to_subgrid(
-    s: int,
-    metadata: np.ndarray,
+    metadata: dict,
     w_step: float,
     grid_size: int,
     image_size: float,
@@ -123,7 +180,6 @@ def visibilities_to_subgrid(
     """
     Grid visibilities onto a subgrid.
 
-    :param s: subgrid index
     :param metadata: metadata for the subgrid
     :param w_step: w step in wavelengths
     :param grid_size: grid size in pixels
@@ -137,7 +193,7 @@ def visibilities_to_subgrid(
     :param subgrid: subgrid array
     """
     # Load metadata
-    m = metadata[s]
+    m = metadata
     bl = m["baseline"]
     offset = m["time_index"]
     nr_timesteps = m["nr_timesteps"]
@@ -157,50 +213,88 @@ def visibilities_to_subgrid(
     )
     w_offset = 2 * np.pi * w_offset_in_lambda
 
-    # Precompute constants
-    half_subgrid = subgrid_size / 2
-    image_scale = image_size / subgrid_size
-
     for y in range(subgrid_size):
         for x in range(subgrid_size):
-
             # Compute l, m, n
-            l = float32((x + 0.5 - half_subgrid) * image_scale)
-            m = float32((y + 0.5 - half_subgrid) * image_scale)
-            tmp = float32(l * l + m * m)  # type: ignore
-            n = float32(tmp / (1.0 + np.sqrt(1.0 - tmp)))  # type: ignore
+            l = compute_l(x, subgrid_size, image_size)
+            m = compute_m(y, subgrid_size, image_size)
+            n = compute_n(l, m)
 
             # Compute pixels
-            pixels = np.zeros(nr_correlations_out, dtype=np.complex64)
-
-            for time in range(nr_timesteps):
-                idx = offset + time
-                u = uvw["u"][bl][idx]
-                v = uvw["v"][bl][idx]
-                w = uvw["w"][bl][idx]
-
-                phase_index = float32(u * l + v * m + w * n)
-                phase_offset = float32(u_offset * l + v_offset * m + w_offset * n)
-
-                for chan in range(channel_begin, channel_end):
-                    phase = float32(phase_offset - (phase_index * wavenumbers[chan]))
-                    phasor = np.exp(1j * phase)  # type: ignore
-
-                    for pol in range(nr_correlations_in):
-                        pixels[pol % nr_correlations_out] += (
-                            visibilities[bl, idx, chan, pol] * phasor
-                        )
+            pixels = compute_pixels(
+                nr_correlations_out,
+                nr_timesteps,
+                offset,
+                uvw,
+                bl,
+                l,
+                m,
+                n,
+                u_offset,
+                v_offset,
+                w_offset,
+                channel_begin,
+                channel_end,
+                wavenumbers,
+                nr_correlations_in,
+                visibilities,
+            )
 
             # Apply taper and store
             sph = taper[y, x]
-            x_dst = int((x + half_subgrid) % subgrid_size)
-            y_dst = int((y + half_subgrid) % subgrid_size)
+            x_dst = int((x + (subgrid_size / 2)) % subgrid_size)
+            y_dst = int((y + (subgrid_size / 2)) % subgrid_size)
 
             for pol in range(nr_correlations_out):
                 subgrid[pol, y_dst, x_dst] = pixels[pol] * sph
 
 
-@jit(nopython=True, fastmath=True, cache=True)
+@nb.njit(parallel=True)
+def visibilities_to_subgrids(
+    w_step,
+    image_size,
+    grid_size,
+    wavenumbers,
+    uvw,
+    visibilities,
+    taper,
+    metadata,
+    subgrids,
+):
+    """
+    Grid visibilities onto subgrids.
+
+    :param w_step: w step in wavelengths
+    :param image_size: image size in radians
+    :param grid_size: grid size in pixels
+    :param wavenumbers: wavenumbers of the frequencies
+    :param uvw: uvw coordinates
+    :param visibilities: visibility data
+    :param taper: taper function
+    :param metadata: metadata array
+    :param subgrids: subgrid array
+    """
+    nr_subgrids = metadata.shape[0]
+
+    # Grid visibilities onto subgrids
+    for s in nb.prange(nr_subgrids):
+        visibilities_to_subgrid(
+            metadata[s],
+            w_step,
+            grid_size,
+            image_size,
+            wavenumbers,
+            visibilities,
+            uvw,
+            taper,
+            visibilities.shape[3],
+            subgrids.shape[2],
+            subgrids[s],
+        )
+    return subgrids
+
+
+@nb.njit(fastmath=True)
 def compute_phasor(subgrid_size: int) -> np.ndarray:
     """
     Compute the phasor which is used to shift the subgrid to the correct position
@@ -217,7 +311,7 @@ def compute_phasor(subgrid_size: int) -> np.ndarray:
     return phasor
 
 
-@jit(nopython=True, fastmath=True, cache=True)
+@nb.njit(fastmath=True)
 def add_subgrid_to_grid(
     s: int,
     metadata: np.ndarray,
@@ -268,7 +362,7 @@ def add_subgrid_to_grid(
                     )
 
 
-@jit(nopython=True, fastmath=True, cache=True)
+@nb.njit(fastmath=True)
 def compute_metadata(
     grid_size: int,
     subgrid_size: int,
