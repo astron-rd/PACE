@@ -5,6 +5,7 @@
 #include <xtensor-fftw/helper.hpp>
 #include <xtensor/containers/xadapt.hpp>
 #include <xtensor/io/xio.hpp>
+#include <xtensor/io/xnpy.hpp>
 
 #include "fddplan.hpp"
 #include "kernels.hpp"
@@ -23,7 +24,7 @@ FDDPlan::FDDPlan(size_t n_channels, float time_resolution, float peak_frequency,
 }
 
 xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
-  const size_t n_samples = input.shape(0);
+  const size_t n_samples = input.shape(1); // input has dimensions channel x samples
   const size_t n_spin_frequencies = (n_samples / 2 + 1);
   const size_t n_output_samples = n_samples - max_delay_;
 
@@ -61,6 +62,10 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
                          n_samples_padded, byte_offset, n_channels_,
                          input.data(), frequency_data.data());
 
+
+  const std::string fn_transpose{"fdd-transpose.npy"};
+  xt::dump_npy(fn_transpose, frequency_data);
+  
   // 3. Real-to-complex FFT: time series data to frequency domain
   // Perform an FFT batched over frequency using OpenMP
   std::cout << "(3) Forward FFT: real-to-complex." << std::endl;
@@ -72,6 +77,10 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
     xt::view(frequency_scratch, c, xt::all()) = xt::fftw::rfft(time_samples);
   }
 
+
+  const std::string fn_r2c{"fdd-fft-r2c.npy"};
+  xt::dump_npy(fn_r2c, frequency_scratch);
+
   // 4. Run dedispersion algorithm (CPU reference or optimised version)
   std::cout << "(4) Run dedispersion algorithm." << std::endl;
 
@@ -81,6 +90,9 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
     spin_frequency_table_.data(), dm_table_.data(), delay_table_.data(),
     in_out_stride, in_out_stride, frequency_scratch.data(), dm_scratch.data()
   );
+
+  const std::string fn_dedisp{"fdd-dedisp.npy"};
+  xt::dump_npy(fn_dedisp, dm_scratch);
 
   // 5. Complex-to-real FFT: frequency domain back to time series data
   // Perform an FFT batched along the DM axis using OpenMP
@@ -100,7 +112,7 @@ void FDDPlan::show() const {
   std::cout << "FDD Plan Summary" << std::endl;
   std::cout << "  nr channels:          " << n_channels_ << std::endl;
   std::cout << "  nr dm trials:         " << dm_count_ << std::endl;
-  std::cout << "  max delay:            " << max_delay_ << " s" << std::endl;
+  std::cout << "  max delay:            " << max_delay_ * time_resolution_ << " s (" << max_delay_ << " samples)" << std::endl;
   std::cout << "  time resolution:      " << time_resolution_ << " s"
             << std::endl;
   std::cout << "  frequency resolution: " << -frequency_resolution_ << " MHz"
@@ -144,8 +156,8 @@ void FDDPlan::generate_dm_list(float dm_start, float dm_end, float pulse_width,
   dm_table_ = xt::adapt(dm_list, {dm_count_});
 
   // Calculate and store the maximum delay
-  const float max_dm = dm_table_(dm_count_);
-  const float max_delay = delay_table_(n_channels_);
+  const float max_dm = dm_table_(dm_count_ - 1);
+  const float max_delay = delay_table_(n_channels_ - 1);
   max_delay_ = static_cast<size_t>(max_dm * max_delay + 0.5);
 }
 
