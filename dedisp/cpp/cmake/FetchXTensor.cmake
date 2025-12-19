@@ -3,7 +3,6 @@
 # these versions in their master branch. That way, the XTensor versions will be
 # equal in all repositories.
 
-# cmake-lint: disable=C0103
 if(NOT xtl_GIT_TAG)
   set(xtl_GIT_TAG 0.8.0)
 endif()

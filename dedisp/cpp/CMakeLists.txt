@@ -28,6 +28,7 @@ target_link_libraries(dedisp PUBLIC xtensor xtensor-fftw OpenMP::OpenMP_CXX)
 
 add_executable(testfdd test/testfdd.cpp)
 target_link_libraries(testfdd PRIVATE dedisp)
+target_include_directories(testfdd PRIVATE ${PROJECT_SOURCE_DIR}/include)
 
 add_executable(simulatesignal bin/simulatesignal.cpp)
 target_link_libraries(simulatesignal PRIVATE dedisp)
