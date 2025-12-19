@@ -10,7 +10,7 @@ include_directories("${CMAKE_SOURCE_DIR}")
 # Load external dependencies
 include(FetchContent)
 
-set(XTENSOR_LIBRARIES xtl xtensor xtensor-fftw-double xtensor-fftw-float)
+set(XTENSOR_LIBRARIES xtl xtensor xtensor-fftw-float)
 include("${CMAKE_SOURCE_DIR}/cmake/FetchXTensor.cmake")
 
 FetchContent_MakeAvailable(xtensor)
