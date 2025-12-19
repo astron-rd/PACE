@@ -45,10 +45,10 @@ include(FetchContent)
 foreach(LIB ${XTENSOR_LIBRARIES})
   # Check which of the FFTW precisions are requested by the user and
   # set the git tag accordingly.
-  if(LIB EQUAL "xtensor-fftw-float")
+  if(LIB STREQUAL "xtensor-fftw-float")
     set(LIB "xtensor-fftw")
     set(HAVE_XTENSOR_FFTW_FLOAT TRUE)
-  elif(LIB EQUAL "xtensor-fftw-double")
+  elseif(LIB STREQUAL "xtensor-fftw-double")
     set(LIB "xtensor-fftw")
     set(HAVE_XTENSOR_FFTW_DOUBLE TRUE)
   endif()
