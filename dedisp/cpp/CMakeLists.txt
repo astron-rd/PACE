@@ -26,7 +26,7 @@ target_link_libraries(dedisp PUBLIC xtensor xtensor-fftw OpenMP::OpenMP_CXX)
 
 # install(TARGETS fdd DESTINATION bin)
 
-add_executable(testfdd test/testfdd.cpp)
+add_executable(testfdd bin/testfdd.cpp)
 target_link_libraries(testfdd PRIVATE dedisp)
 target_include_directories(testfdd PRIVATE ${PROJECT_SOURCE_DIR}/include)
 
