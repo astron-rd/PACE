@@ -3,6 +3,8 @@
 # these versions in their master branch. That way, the XTensor versions will be
 # equal in all repositories.
 
+# Supress warnings because some of the following variable names, e.g. "xtensor-python_GIT_TAG", are non-standard; they are non-standard because they use hyphens.
+# cmake-lint: disable=C0103
 if(NOT xtl_GIT_TAG)
   set(xtl_GIT_TAG 0.8.0)
 endif()
@@ -41,23 +43,16 @@ endif()
 include(FetchContent)
 
 foreach(LIB ${XTENSOR_LIBRARIES})
-  # 
-  if(LIB MATCHES "fftw")
-    string(REGEX REPLACE "^(.*)-([^-]*)$" "\\1;\\2" LIB_PARTS ${LIB})
-    list(GET LIB_PARTS 0 LIB_BASE)
-    list(GET LIB_PARTS 1 FFTW_PRECISION)
-
-    string(TOUPPER ${FFTW_PRECISION} FFTW_PRECISION)
-    set(HAVE_XTENSOR_FFTW_${FFTW_PRECISION} TRUE)
-    set(XT_GIT_TAG ${${LIB_BASE}_GIT_TAG})
-
-    set(LIB ${LIB_BASE})
-  else()
-    set(XT_GIT_TAG "${${LIB}_GIT_TAG}")
+  # Check which of the FFTW precisions are requested by the user and
+  # set the git tag accordingly.
+  if(LIB EQUAL "xtensor-fftw-float")
+    set(LIB "xtensor-fftw")
+    set(HAVE_XTENSOR_FFTW_FLOAT TRUE)
+  elif(LIB EQUAL "xtensor-fftw-double")
+    set(LIB "xtensor-fftw")
+    set(HAVE_XTENSOR_FFTW_DOUBLE TRUE)
   endif()
-  if(NOT XT_GIT_TAG)
-    message(FATAL_ERROR "Unknown git tag for XTensor library ${LIB}")
-  endif()
+  set(XT_GIT_TAG "${${LIB}_GIT_TAG}")
 
   # Checking out a specific git commit hash does not (always) work when
   # GIT_SHALLOW is TRUE. See the documentation for GIT_TAG in
@@ -107,24 +102,20 @@ if(xsimd IN_LIST XTENSOR_LIBRARIES)
   add_compile_definitions(XTENSOR_USE_XSIMD)
 endif()
 
-# Since xtensor-fftw uses fftw3, link fftw3(f) library if it's found.
+# Since xtensor-fftw uses fftw3, link to the fftw3(f) library.
 if(HAVE_XTENSOR_FFTW_DOUBLE OR HAVE_XTENSOR_FFTW_FLOAT)
   find_package(PkgConfig)
   if(NOT PkgConfig_FOUND)
-    message(WARNING "PkgConfig not found, not linking xtensor-fftw to fftw3.")
+    message(WARNING "PkgConfig not found, not linking xtensor-fftw to fftw3(f).")
   else()
-    pkg_search_module(FFTW fftw3 IMPORTED_TARGET)
-    if(FFTW_FOUND AND HAVE_XTENSOR_FFTW_DOUBLE)
+    if(HAVE_XTENSOR_FFTW_DOUBLE)
+      pkg_search_module(FFTW fftw3 REQUIRED IMPORTED_TARGET)
       target_link_libraries(xtensor-fftw INTERFACE PkgConfig::FFTW)
     endif()
 
-    pkg_search_module(FFTWF fftw3f IMPORTED_TARGET)
-    if(FFTWF_FOUND AND HAVE_XTENSOR_FFTW_FLOAT)
+    if(HAVE_XTENSOR_FFTW_FLOAT)
+      pkg_search_module(FFTWF fftw3f REQUIRED IMPORTED_TARGET)
       target_link_libraries(xtensor-fftw INTERFACE PkgConfig::FFTWF)
-    endif()
-
-    if(NOT FFTW_FOUND AND NOT FFTWF_FOUND)
-      message(WARNING "Can't find fftw3 nor fftw3f.")
     endif()
   endif()
 endif()
