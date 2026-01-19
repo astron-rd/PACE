@@ -1,6 +1,7 @@
 use std::ops::Add;
 
 use ndarray::Array2;
+use num_traits::identities::Zero;
 
 /// 3-d vector with UVW parameters
 #[derive(Clone, Copy)]
@@ -28,4 +29,18 @@ impl Add for Uvw {
     }
 }
 
-pub type ArrayUvw = Array2<Uvw>;
+impl Zero for Uvw {
+    fn zero() -> Self {
+        Self {
+            u: 0.0,
+            v: 0.0,
+            w: 0.0,
+        }
+    }
+
+    fn is_zero(&self) -> bool {
+        self.u == 0.0 && self.v == 0.0 && self.w == 0.0
+    }
+}
+
+pub type UvwArray = Array2<Uvw>;

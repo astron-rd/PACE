@@ -10,46 +10,54 @@ use crate::constants;
 pub struct Cli {
     /// Size of the subgrid in pixels
     #[arg(long, default_value = "32")]
-    subgrid_size: usize,
+    pub subgrid_size: usize,
 
     /// Size of the grid in pixels
     #[arg(long, default_value = "1024")]
-    grid_size: usize,
+    pub grid_size: usize,
 
     /// Length of the observation in hours
     #[arg(long, default_value = "4.0")]
-    observation_hours: f32,
+    pub observation_hours: f32,
 
     /// Number of frequency channels
     #[arg(long, default_value = "16")]
-    channel_count: usize,
+    pub channel_count: usize,
 
     /// Number of stations
     #[arg(long, default_value = "20")]
-    station_count: usize,
+    pub station_count: usize,
 
     /// Starting frequency in hertz
     #[arg(long, default_value = "150e6")]
-    start_frequency: f64,
+    pub start_frequency: f64,
 
     /// Frequency increment in hertz
     #[arg(long, default_value = "1e6")]
-    frequency_increment: f64,
+    pub frequency_increment: f64,
+
+    /// Ellipticity for simulated UVW data
+    #[arg(long)]
+    pub ellipticity: Option<f64>,
+
+    /// Random seed for RNG
+    #[arg(long)]
+    pub random_seed: Option<u64>,
 
     /// Output numpy data
     #[arg(long, default_value = "false", value_name = "OUTPUT_PATH")]
-    numpy_output: Option<PathBuf>,
+    pub numpy_output: Option<PathBuf>,
 
     /// Output timing data
     #[arg(long, default_value=None, value_name = "OUTPUT_PATH")]
-    timing_output: Option<PathBuf>,
+    pub timing_output: Option<PathBuf>,
 }
 
 #[allow(unused)] // These functions are here for potential future use
 impl Cli {
     // Derived values:
     /// The number of timesteps, as derived from the observation time.
-    pub fn num_timesteps(&self) -> usize {
+    pub fn timestep_count(&self) -> usize {
         (self.observation_hours * 3600.0).floor() as usize
     }
 
