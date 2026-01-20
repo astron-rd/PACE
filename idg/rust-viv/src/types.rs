@@ -3,7 +3,7 @@ use std::ops::Add;
 use ndarray::Array2;
 use num_traits::identities::Zero;
 
-/// 3-d vector with UVW parameters
+/// 3-dimensional vector with UVW parameters
 #[derive(Clone, Copy)]
 pub struct Uvw {
     pub u: f64,
