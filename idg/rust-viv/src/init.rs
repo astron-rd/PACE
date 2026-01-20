@@ -20,7 +20,7 @@ use crate::types::{Uvw, UvwArray};
 /// `ellipticity`: Amount of ellipticity (0=circular, 1=highly elliptical) (Optional, default = 0.1)
 /// `seed`: Random seed for generating baseline ratios and starting angles (Optional, default = 2)
 ///
-///  Returns a UVW array of size (baseline_count * timestep_count)
+///  Returns a UVW array of size (`baseline_count` * `timestep_count`)
 pub fn get_simulated_uvw(
     timestep_count: usize,
     baseline_count: usize,
@@ -56,7 +56,7 @@ pub fn get_simulated_uvw(
             v_radius /= ellipse_factor;
         }
 
-        let angular_velocity = (2.0 * PI) / (24 * 3600) as f64;
+        let angular_velocity = (2.0 * PI) / f64::from(24 * 3600);
 
         let angle = start_angles[baseline] + angular_velocity * &time_samples;
         let u_coords = u_radius * angle.cos();

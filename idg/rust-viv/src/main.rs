@@ -13,7 +13,7 @@ fn main() {
 
     print_header!("INITIALIZATION");
     println!("Get simulated UVW coords.");
-    let uvw = get_simulated_uvw(
+    let _uvw = get_simulated_uvw(
         cli.timestep_count(),
         cli.baseline_count(),
         cli.grid_size,
@@ -21,5 +21,5 @@ fn main() {
         cli.random_seed,
     );
 
-    println!("Done!")
+    println!("Done!");
 }
