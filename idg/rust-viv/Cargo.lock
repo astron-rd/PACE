@@ -135,6 +135,7 @@ dependencies = [
  "clap",
  "ndarray",
  "ndarray-rand",
+ "num-complex",
  "num-traits",
 ]
 

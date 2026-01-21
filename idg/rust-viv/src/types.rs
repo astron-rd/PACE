@@ -1,3 +1,4 @@
+use num_complex::Complex64;
 use std::ops::Add;
 
 use ndarray::Array2;
@@ -44,3 +45,21 @@ impl Zero for Uvw {
 }
 
 pub type UvwArray = Array2<Uvw>;
+
+pub struct Metadata {
+    pub baseline: usize,
+    pub time_index: usize,
+    pub timestep_count: usize,
+    pub channel_begin: usize,
+    pub channel_end: usize,
+    pub coordinate: Coordinate,
+}
+
+#[derive(Clone, Copy)]
+pub struct Coordinate {
+    pub x: usize,
+    pub y: usize,
+    pub z: usize,
+}
+
+pub type Visibility = Complex64;
