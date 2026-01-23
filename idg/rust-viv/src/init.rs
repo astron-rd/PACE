@@ -2,7 +2,7 @@
 
 use std::f64::consts::PI;
 
-use ndarray::{Array, Array1, Array2, Array4, ArrayView1, array, linspace, s};
+use ndarray::{Array, Array1, Array2, Array4, ArrayView1, linspace, s};
 use ndarray_rand::{
     RandomExt,
     rand::{Rng, SeedableRng, rngs::StdRng},
@@ -333,15 +333,15 @@ pub fn evaluate_spheroidal(x: f64) -> f64 {
     let del_x_squared = x_squared - end.powi(2);
     let mut del_x_squared_pow = del_x_squared;
     let mut top = p[part][0];
-    for k in 1..5 {
-        top += p[part][k] * del_x_squared_pow;
+    for p in p[part].iter().skip(1) {
+        top += p * del_x_squared_pow;
         del_x_squared_pow *= del_x_squared;
     }
 
     let mut btm = q[part][0];
     del_x_squared_pow = del_x_squared;
-    for k in 1..3 {
-        btm += q[part][k] * del_x_squared_pow;
+    for q in q[part].iter().skip(1) {
+        btm += q * del_x_squared_pow;
         del_x_squared_pow *= del_x_squared;
     }
 
@@ -350,18 +350,4 @@ pub fn evaluate_spheroidal(x: f64) -> f64 {
     } else {
         (1.0 - x_squared) * (top / btm)
     }
-}
-
-pub fn polyval(coefficients: &Array1<f64>, x: &Array1<f64>) -> Array1<f64> {
-    let mut result = Array1::zeros(x.len());
-
-    for i in 0..x.len() {
-        let mut val = coefficients[0];
-        for j in 1..coefficients.len() {
-            val *= x[i] + coefficients[j];
-        }
-        result[i] = val;
-    }
-
-    result
 }

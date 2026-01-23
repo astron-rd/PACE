@@ -46,7 +46,7 @@ fn main() {
     );
     let subgrid_count = metadata.len();
 
-    let visibilities = generate_visibilities(
+    let _visibilities = generate_visibilities(
         NR_CORRELATIONS_IN,
         cli.channel_count,
         cli.timestep_count(),
@@ -60,16 +60,16 @@ fn main() {
         None,
     );
 
-    let taper = get_taper(cli.subgrid_size);
+    let _taper = get_taper(cli.subgrid_size);
 
-    let mut subgrids: Array4<Complex64> = Array4::zeros((
+    let _subgrids: Array4<Complex64> = Array4::zeros((
         subgrid_count,
         NR_CORRELATIONS_OUT,
         cli.subgrid_size,
         cli.subgrid_size,
     ));
 
-    let gridder = Gridder::new(NR_CORRELATIONS_IN, cli.subgrid_size);
+    let _gridder = Gridder::new(NR_CORRELATIONS_IN, cli.subgrid_size);
 
     println!("Done!");
 }
