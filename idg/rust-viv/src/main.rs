@@ -8,7 +8,7 @@ use crate::{
     init::{
         generate_frequencies, generate_metadata, generate_uvw, generate_visibilities, get_taper,
     },
-    util::print_header,
+    util::{print_header},
 };
 
 mod cli;
@@ -22,7 +22,6 @@ fn main() {
     let cli = cli::Cli::parse();
 
     print_header!("INITIALIZATION");
-    println!("Get simulated UVW coords.");
     let uvw = generate_uvw(
         cli.timestep_count(),
         cli.baseline_count(),

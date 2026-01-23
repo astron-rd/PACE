@@ -2,6 +2,7 @@
 
 use std::f64::consts::PI;
 
+use code_timing_macros::time_function;
 use ndarray::{Array, Array1, Array2, Array4, ArrayView1, linspace, s};
 use ndarray_rand::{
     RandomExt,
@@ -25,6 +26,7 @@ use crate::{
 /// - `seed`: Random seed for generating baseline ratios and starting angles (Optional, default = 2)
 ///
 ///  Returns a UVW array of size (`baseline_count` * `timestep_count`)
+#[time_function]
 pub fn generate_uvw(
     timestep_count: usize,
     baseline_count: usize,
@@ -95,6 +97,7 @@ pub fn generate_uvw(
 /// - `channel_count`: Number of frequency channels
 ///
 /// Returns frequencies array, shape (`channel_count`)
+#[time_function]
 pub fn generate_frequencies(
     start_frequency: f64,
     frequency_increment: f64,
@@ -117,6 +120,7 @@ pub fn generate_frequencies(
 /// - `max_group_size`: maximum number of visibilities (timesteps) in a group
 ///
 /// Returns a metadata array, shape (`nr_subgrids`)
+#[time_function]
 pub fn generate_metadata(
     channel_count: usize,
     subgrid_size: usize,
@@ -212,6 +216,7 @@ pub fn compute_metadata(
     metadata
 }
 
+#[time_function]
 pub fn generate_visibilities(
     correlation_count: usize,
     channel_count: usize,
@@ -297,6 +302,7 @@ pub fn add_point_source_to_baseline(
     }
 }
 
+#[time_function]
 pub fn get_taper(subgrid_size: usize) -> Array2<f64> {
     let x: Array1<f64> = linspace(-1.0, 1.0, subgrid_size).collect();
     let spheroidal = x.map(|x| evaluate_spheroidal(*x));
@@ -328,7 +334,7 @@ pub fn evaluate_spheroidal(x: f64) -> f64 {
     };
 
     // TODO: This bit is kinda ugly, might be able to use some cleaning up
-    // Potentially split off `evaluate_polynomial` function
+    // TODO: Potentially split off `evaluate_polynomial` function
     let x_squared = x.powi(2);
     let del_x_squared = x_squared - end.powi(2);
     let mut del_x_squared_pow = del_x_squared;
