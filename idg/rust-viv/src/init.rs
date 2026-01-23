@@ -1,6 +1,6 @@
-//! Functions to initialize dummy data
+//! Functions to initialize dummy data.
 
-use std::f64::consts::PI;
+use std::f32::consts::PI;
 
 use code_timing_macros::time_function;
 use ndarray::{Array, Array1, Array2, Array4, ArrayView1, linspace, s};
@@ -9,7 +9,7 @@ use ndarray_rand::{
     rand::{Rng, SeedableRng, rngs::StdRng},
     rand_distr::{Beta, Uniform},
 };
-use num_complex::Complex64;
+use num_complex::Complex32;
 
 use crate::{
     constants::SPEED_OF_LIGHT,
@@ -31,7 +31,7 @@ pub fn generate_uvw(
     timestep_count: usize,
     baseline_count: usize,
     grid_size: usize,
-    ellipticity: Option<f64>,
+    ellipticity: Option<f32>,
     seed: Option<u64>,
 ) -> UvwArray {
     let ellipticity = ellipticity.unwrap_or(0.1);
@@ -39,16 +39,16 @@ pub fn generate_uvw(
     let mut rng = StdRng::seed_from_u64(seed);
 
     // Initialize time_samples array with incrementing floats
-    let time_samples = Array::from_iter(0..timestep_count).mapv(|x| x as f64);
+    let time_samples = Array::from_iter(0..timestep_count).mapv(|x| x as f32);
 
     // Initialize uvw array with zeroes
     let mut uvw: UvwArray = UvwArray::zeros((baseline_count, timestep_count));
 
-    let max_uv = 0.7 * (grid_size / 2) as f64;
+    let max_uv = 0.7 * (grid_size / 2) as f32;
 
     // Generate baseline ratios with more short baselines (beta distribution)
     // Beta distribution with alpha=1, beta=3 peaks at 0 and decreases
-    let beta_distribution = Beta::new(1.0f64, 3.0f64).expect("Should be a valid distribution.");
+    let beta_distribution = Beta::new(1.0f32, 3.0f32).expect("Should be a valid distribution.");
     let baseline_ratios = Array::random_using(baseline_count, beta_distribution, &mut rng);
 
     // Generate random starting angles for each baseline
@@ -74,7 +74,7 @@ pub fn generate_uvw(
 
         // Calculate angular velocity (complete circle in 24 hours)
         // For shorter observations, we get an arc instead of full circle
-        let angular_velocity = (2.0 * PI) / f64::from(24 * 3600);
+        let angular_velocity = (2.0 * PI) / (24 * 3600) as f32;
 
         // Generate UV coordinates with random starting angle
         let angle = start_angles[baseline] + angular_velocity * &time_samples;
@@ -99,13 +99,13 @@ pub fn generate_uvw(
 /// Returns frequencies array, shape (`channel_count`)
 #[time_function]
 pub fn generate_frequencies(
-    start_frequency: f64,
-    frequency_increment: f64,
+    start_frequency: f32,
+    frequency_increment: f32,
     channel_count: usize,
-) -> Array1<f64> {
+) -> Array1<f32> {
     Array::range(
         start_frequency,
-        start_frequency + (channel_count as f64 * frequency_increment),
+        start_frequency + (channel_count as f32 * frequency_increment),
         frequency_increment,
     )
 }
@@ -157,14 +157,14 @@ pub fn compute_metadata(
     subgrid_size: usize,
     channel_count: usize,
     baseline: usize,
-    u_pixels: ArrayView1<f64>,
-    v_pixels: ArrayView1<f64>,
+    u_pixels: ArrayView1<f32>,
+    v_pixels: ArrayView1<f32>,
     max_group_size: usize,
 ) -> Vec<Metadata> {
     let mut metadata = Vec::new();
 
     let timestep_count = u_pixels.shape()[0];
-    let max_distance = 0.8 * subgrid_size as f64;
+    let max_distance = 0.8 * subgrid_size as f32;
 
     let mut timestep = 0;
     while timestep < timestep_count {
@@ -222,14 +222,14 @@ pub fn generate_visibilities(
     channel_count: usize,
     timestep_count: usize,
     baseline_count: usize,
-    image_size: f64,
+    image_size: f32,
     grid_size: usize,
-    frequencies: &Array1<f64>,
+    frequencies: &Array1<f32>,
     uvw: &UvwArray,
     point_sources_count: Option<usize>,
     max_pixel_offset: Option<usize>,
     seed: Option<u64>,
-) -> Array4<Complex64> {
+) -> Array4<Complex32> {
     let point_sources_count = point_sources_count.unwrap_or(4);
     let max_pixel_offset = max_pixel_offset.unwrap_or(grid_size / 3);
     let seed = seed.unwrap_or(2);
@@ -254,8 +254,8 @@ pub fn generate_visibilities(
         let amplitude = 1.0;
 
         // Convert offset from grid cells to radians (l,m)
-        let l = offset.0 as f64 * image_size / grid_size as f64;
-        let m = offset.1 as f64 * image_size / grid_size as f64;
+        let l = offset.0 as f32 * image_size / grid_size as f32;
+        let m = offset.1 as f32 * image_size / grid_size as f32;
 
         for baseline in 0..baseline_count {
             add_point_source_to_baseline(
@@ -279,11 +279,11 @@ pub fn add_point_source_to_baseline(
     baseline: usize,
     timestep_count: usize,
     channel_count: usize,
-    amplitude: f64,
-    frequencies: &Array1<f64>,
+    amplitude: f32,
+    frequencies: &Array1<f32>,
     uvw: &UvwArray,
-    l: f64,
-    m: f64,
+    l: f32,
+    m: f32,
     visibilities: &mut Array4<Visibility>,
 ) {
     for t in 0..timestep_count {
@@ -292,7 +292,7 @@ pub fn add_point_source_to_baseline(
             let v = (frequencies[c] / SPEED_OF_LIGHT) * uvw[(baseline, t)].v;
 
             let phase = -2.0 * PI * (u * l + v * m);
-            let value = amplitude * (phase * Complex64::new(0., 1.)).exp();
+            let value = amplitude * (phase * Complex32::new(0., 1.)).exp();
 
             // TODO: This is awful, please Rustify
             visibilities
@@ -303,8 +303,8 @@ pub fn add_point_source_to_baseline(
 }
 
 #[time_function]
-pub fn get_taper(subgrid_size: usize) -> Array2<f64> {
-    let x: Array1<f64> = linspace(-1.0, 1.0, subgrid_size).collect();
+pub fn get_taper(subgrid_size: usize) -> Array2<f32> {
+    let x: Array1<f32> = linspace(-1.0, 1.0, subgrid_size).collect();
     let spheroidal = x.map(|x| evaluate_spheroidal(*x));
 
     let mat_1n = spheroidal
@@ -315,19 +315,19 @@ pub fn get_taper(subgrid_size: usize) -> Array2<f64> {
     (mat_1n * mat_n1).to_owned()
 }
 
-pub fn evaluate_spheroidal(x: f64) -> f64 {
+pub fn evaluate_spheroidal(x: f32) -> f32 {
     #[rustfmt::skip]
-    let p: [[f64; 5]; 2] = [
+    let p: [[f32; 5]; 2] = [
         [8.203343e-2, -3.644705e-1, 6.278660e-1, -5.335581e-1, 2.312756e-1],
         [4.028559e-3, -3.697768e-2, 1.021332e-1, -1.201436e-1, 6.412774e-2],
     ];
     #[rustfmt::skip]
-    let q: [[f64; 3]; 2] = [
+    let q: [[f32; 3]; 2] = [
         [1.0000000e0, 8.212018e-1, 2.078043e-1],
         [1.0000000e0, 9.599102e-1, 2.918724e-1],
     ];
 
-    let (part, end): (usize, f64) = match x {
+    let (part, end): (usize, f32) = match x {
         0.0..0.75 => (0, 0.75),
         0.75..=1.0 => (1, 1.0),
         _ => return 0.0,

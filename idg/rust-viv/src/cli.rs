@@ -30,15 +30,15 @@ pub struct Cli {
 
     /// Starting frequency in hertz
     #[arg(long, default_value = "150e6")]
-    pub start_frequency: f64,
+    pub start_frequency: f32,
 
     /// Frequency increment in hertz
     #[arg(long, default_value = "1e6")]
-    pub frequency_increment: f64,
+    pub frequency_increment: f32,
 
     /// Ellipticity for simulated UVW data
     #[arg(long)]
-    pub ellipticity: Option<f64>,
+    pub ellipticity: Option<f32>,
 
     /// Random seed for RNG
     #[arg(long)]
@@ -62,12 +62,12 @@ impl Cli {
     }
 
     /// The end frequency, as derived from the start frequency, number of channels, and frequency increment
-    pub fn end_frequency(&self) -> f64 {
-        self.start_frequency + (self.channel_count as f64 * self.frequency_increment)
+    pub fn end_frequency(&self) -> f32 {
+        self.start_frequency + (self.channel_count as f32 * self.frequency_increment)
     }
 
     /// The image size, as derived from the end frequency
-    pub fn image_size(&self) -> f64 {
+    pub fn image_size(&self) -> f32 {
         constants::SPEED_OF_LIGHT / self.end_frequency()
     }
 

@@ -1,6 +1,6 @@
 use clap::Parser;
 use ndarray::Array4;
-use num_complex::Complex64;
+use num_complex::Complex32;
 
 use crate::{
     constants::{NR_CORRELATIONS_IN, NR_CORRELATIONS_OUT},
@@ -61,7 +61,7 @@ fn main() {
 
     let _taper = get_taper(cli.subgrid_size);
 
-    let _subgrids: Array4<Complex64> = Array4::zeros((
+    let _subgrids: Array4<Complex32> = Array4::zeros((
         subgrid_count,
         NR_CORRELATIONS_OUT,
         cli.subgrid_size,

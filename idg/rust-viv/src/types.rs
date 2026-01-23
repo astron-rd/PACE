@@ -1,4 +1,4 @@
-use num_complex::Complex64;
+use num_complex::Complex32;
 use std::ops::Add;
 
 use ndarray::Array2;
@@ -7,13 +7,13 @@ use num_traits::identities::Zero;
 /// 3-dimensional vector with UVW parameters
 #[derive(Clone, Copy)]
 pub struct Uvw {
-    pub u: f64,
-    pub v: f64,
-    pub w: f64,
+    pub u: f32,
+    pub v: f32,
+    pub w: f32,
 }
 
 impl Uvw {
-    pub fn new(u: f64, v: f64, w: f64) -> Self {
+    pub fn new(u: f32, v: f32, w: f32) -> Self {
         Uvw { u, v, w }
     }
 }
@@ -62,4 +62,4 @@ pub struct Coordinate {
     pub z: usize,
 }
 
-pub type Visibility = Complex64;
+pub type Visibility = Complex32;
