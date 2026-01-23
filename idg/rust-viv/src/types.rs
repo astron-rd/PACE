@@ -5,7 +5,7 @@ use ndarray::Array2;
 use num_traits::identities::Zero;
 
 /// 3-dimensional vector with UVW parameters
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct Uvw {
     pub u: f32,
     pub v: f32,

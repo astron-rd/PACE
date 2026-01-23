@@ -1,14 +1,17 @@
+use std::process::exit;
+
 use clap::Parser;
 use ndarray::Array4;
 use num_complex::Complex32;
 
 use crate::{
+    cli::Cli,
     constants::{NR_CORRELATIONS_IN, NR_CORRELATIONS_OUT},
     gridder::Gridder,
     init::{
         generate_frequencies, generate_metadata, generate_uvw, generate_visibilities, get_taper,
     },
-    util::{print_header},
+    util::{print_header, print_param},
 };
 
 mod cli;
@@ -21,6 +24,8 @@ mod util;
 fn main() {
     let cli = cli::Cli::parse();
 
+    print_parameters(&cli);
+
     print_header!("INITIALIZATION");
     let uvw = generate_uvw(
         cli.timestep_count(),
@@ -29,6 +34,10 @@ fn main() {
         cli.ellipticity,
         cli.random_seed,
     );
+
+    println!("{:?}", uvw[(0, 5)]);
+
+    exit(0);
 
     let frequencies = generate_frequencies(
         cli.start_frequency,
@@ -71,4 +80,19 @@ fn main() {
     let _gridder = Gridder::new(NR_CORRELATIONS_IN, cli.subgrid_size);
 
     println!("Done!");
+}
+
+fn print_parameters(cli: &Cli) {
+    print_header!("PARAMETERS");
+
+    print_param!("nr_correlations_in", NR_CORRELATIONS_IN);
+    print_param!("nr_correlations_out", NR_CORRELATIONS_OUT);
+    print_param!("start_frequency", cli.start_frequency * 1e-6);
+    print_param!("frequency_increment", cli.frequency_increment * 1e-6);
+    print_param!("nr_channels", cli.channel_count);
+    print_param!("nr_timesteps", cli.timestep_count());
+    print_param!("nr_stations", cli.station_count);
+    print_param!("nr_baselines", cli.baseline_count());
+    print_param!("subgrid_size", cli.subgrid_size);
+    print_param!("grid_size", cli.grid_size);
 }
