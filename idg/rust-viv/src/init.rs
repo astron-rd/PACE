@@ -2,7 +2,7 @@
 
 use std::f64::consts::PI;
 
-use ndarray::{Array, Array1, Array4, ArrayView1, s};
+use ndarray::{Array, Array1, Array2, Array4, ArrayView1, array, linspace, s};
 use ndarray_rand::{
     RandomExt,
     rand::{Rng, SeedableRng, rngs::StdRng},
@@ -224,7 +224,7 @@ pub fn generate_visibilities(
     point_sources_count: Option<usize>,
     max_pixel_offset: Option<usize>,
     seed: Option<u64>,
-) {
+) -> Array4<Complex64> {
     let point_sources_count = point_sources_count.unwrap_or(4);
     let max_pixel_offset = max_pixel_offset.unwrap_or(grid_size / 3);
     let seed = seed.unwrap_or(2);
@@ -266,6 +266,8 @@ pub fn generate_visibilities(
             )
         }
     }
+
+    visibilities
 }
 
 pub fn add_point_source_to_baseline(
@@ -288,7 +290,78 @@ pub fn add_point_source_to_baseline(
             let value = amplitude * (phase * Complex64::new(0., 1.)).exp();
 
             // TODO: This is awful, please Rustify
-            visibilities.slice_mut(s![baseline, t, c, ..]).mapv_inplace(|x| x + value);
+            visibilities
+                .slice_mut(s![baseline, t, c, ..])
+                .mapv_inplace(|x| x + value);
         }
     }
+}
+
+pub fn get_taper(subgrid_size: usize) -> Array2<f64> {
+    let x: Array1<f64> = linspace(-1.0, 1.0, subgrid_size).collect();
+    let spheroidal = x.map(|x| evaluate_spheroidal(*x));
+
+    let mat_1n = spheroidal
+        .to_shape((1, spheroidal.len()))
+        .expect("1D array should fit in 1xN matrix.");
+    let mat_n1 = mat_1n.clone().reversed_axes();
+
+    (mat_1n * mat_n1).to_owned()
+}
+
+pub fn evaluate_spheroidal(x: f64) -> f64 {
+    #[rustfmt::skip]
+    let p: [[f64; 5]; 2] = [
+        [8.203343e-2, -3.644705e-1, 6.278660e-1, -5.335581e-1, 2.312756e-1],
+        [4.028559e-3, -3.697768e-2, 1.021332e-1, -1.201436e-1, 6.412774e-2],
+    ];
+    #[rustfmt::skip]
+    let q: [[f64; 3]; 2] = [
+        [1.0000000e0, 8.212018e-1, 2.078043e-1],
+        [1.0000000e0, 9.599102e-1, 2.918724e-1],
+    ];
+
+    let (part, end): (usize, f64) = match x {
+        0.0..0.75 => (0, 0.75),
+        0.75..=1.0 => (1, 1.0),
+        _ => return 0.0,
+    };
+
+    // TODO: This bit is kinda ugly, might be able to use some cleaning up
+    // Potentially split off `evaluate_polynomial` function
+    let x_squared = x.powi(2);
+    let del_x_squared = x_squared - end.powi(2);
+    let mut del_x_squared_pow = del_x_squared;
+    let mut top = p[part][0];
+    for k in 1..5 {
+        top += p[part][k] * del_x_squared_pow;
+        del_x_squared_pow *= del_x_squared;
+    }
+
+    let mut btm = q[part][0];
+    del_x_squared_pow = del_x_squared;
+    for k in 1..3 {
+        btm += q[part][k] * del_x_squared_pow;
+        del_x_squared_pow *= del_x_squared;
+    }
+
+    if btm == 0.0 {
+        0.0
+    } else {
+        (1.0 - x_squared) * (top / btm)
+    }
+}
+
+pub fn polyval(coefficients: &Array1<f64>, x: &Array1<f64>) -> Array1<f64> {
+    let mut result = Array1::zeros(x.len());
+
+    for i in 0..x.len() {
+        let mut val = coefficients[0];
+        for j in 1..coefficients.len() {
+            val *= x[i] + coefficients[j];
+        }
+        result[i] = val;
+    }
+
+    result
 }
