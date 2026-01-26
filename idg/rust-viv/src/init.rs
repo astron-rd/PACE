@@ -82,7 +82,11 @@ pub fn generate_uvw(
         let v_coords = v_radius * angle.sin();
 
         for t in 0..timestep_count {
-            uvw[(baseline, t)] = Uvw::new(u_coords[t], v_coords[t], 0.);
+            uvw[(baseline, t)] = Uvw::new(
+                u_coords[t] + (grid_size / 2) as f32,
+                v_coords[t] + (grid_size / 2) as f32,
+                0.,
+            );
         }
     }
 
