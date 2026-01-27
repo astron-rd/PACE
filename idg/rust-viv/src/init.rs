@@ -3,7 +3,7 @@
 use std::f32::consts::PI;
 
 use code_timing_macros::time_function;
-use ndarray::{Array, Array1, Array2, Array4, ArrayView1, linspace, s};
+use ndarray::{Array, Array1, Array2, Array4, ArrayBase, ArrayView1, linspace, s};
 use ndarray_rand::{
     RandomExt,
     rand::{Rng, SeedableRng, rngs::StdRng},
@@ -28,9 +28,9 @@ use crate::{
 ///  Returns a UVW array of size (`baseline_count` * `timestep_count`)
 #[time_function]
 pub fn generate_uvw(
-    timestep_count: usize,
-    baseline_count: usize,
-    grid_size: usize,
+    timestep_count: u32,
+    baseline_count: u32,
+    grid_size: u32,
     ellipticity: Option<f32>,
     seed: Option<u64>,
 ) -> UvwArray {
@@ -42,18 +42,21 @@ pub fn generate_uvw(
     let time_samples = Array::from_iter(0..timestep_count).mapv(|x| x as f32);
 
     // Initialize uvw array with zeroes
-    let mut uvw: UvwArray = UvwArray::zeros((baseline_count, timestep_count));
+    let mut uvw: UvwArray = UvwArray::zeros((
+        baseline_count.try_into().unwrap(),
+        timestep_count.try_into().unwrap(),
+    ));
 
     let max_uv = 0.7 * (grid_size / 2) as f32;
 
     // Generate baseline ratios with more short baselines (beta distribution)
     // Beta distribution with alpha=1, beta=3 peaks at 0 and decreases
     let beta_distribution = Beta::new(1.0f32, 3.0f32).expect("Should be a valid distribution.");
-    let baseline_ratios = Array::random_using(baseline_count, beta_distribution, &mut rng);
+    let baseline_ratios = Array::random_using(baseline_count as usize, beta_distribution, &mut rng);
 
     // Generate random starting angles for each baseline
     let start_angles = Array::random_using(
-        baseline_count,
+        baseline_count as usize,
         Uniform::new(0.0, 2.0 * PI).expect("Should be a valid distribution."),
         &mut rng,
     );
@@ -81,7 +84,7 @@ pub fn generate_uvw(
         let u_coords = u_radius * angle.cos();
         let v_coords = v_radius * angle.sin();
 
-        for t in 0..timestep_count {
+        for t in 0..timestep_count as usize {
             uvw[(baseline, t)] = Uvw::new(
                 u_coords[t] + (grid_size / 2) as f32,
                 v_coords[t] + (grid_size / 2) as f32,
@@ -105,7 +108,7 @@ pub fn generate_uvw(
 pub fn generate_frequencies(
     start_frequency: f32,
     frequency_increment: f32,
-    channel_count: usize,
+    channel_count: u32,
 ) -> Array1<f32> {
     Array::range(
         start_frequency,
@@ -126,11 +129,11 @@ pub fn generate_frequencies(
 /// Returns a metadata array, shape (`nr_subgrids`)
 #[time_function]
 pub fn generate_metadata(
-    channel_count: usize,
-    subgrid_size: usize,
-    grid_size: usize,
+    channel_count: u32,
+    subgrid_size: u32,
+    grid_size: u32,
     uvw: &UvwArray,
-    max_group_size: Option<usize>,
+    max_group_size: Option<u32>,
 ) -> Vec<Metadata> {
     let max_group_size = max_group_size.unwrap_or(256);
 
@@ -146,7 +149,7 @@ pub fn generate_metadata(
             grid_size,
             subgrid_size,
             channel_count,
-            baseline,
+            baseline.try_into().unwrap(),
             u_pixels.slice(s![baseline, ..]),
             v_pixels.slice(s![baseline, ..]),
             max_group_size,
@@ -157,13 +160,13 @@ pub fn generate_metadata(
 }
 
 pub fn compute_metadata(
-    grid_size: usize,
-    subgrid_size: usize,
-    channel_count: usize,
-    baseline: usize,
+    grid_size: u32,
+    subgrid_size: u32,
+    channel_count: u32,
+    baseline: u32,
     u_pixels: ArrayView1<f32>,
     v_pixels: ArrayView1<f32>,
-    max_group_size: usize,
+    max_group_size: u32,
 ) -> Vec<Metadata> {
     let mut metadata = Vec::new();
 
@@ -178,7 +181,7 @@ pub fn compute_metadata(
         // TODO: Add better explanation for what's happening with the group_size here
         let mut group_size = 1;
         while (timestep + group_size < timestep_count)
-            && (group_size < max_group_size)
+            && ((group_size as u32) < max_group_size)
             && (((u_pixels[timestep + group_size] - current_u).powi(2)
                 + (v_pixels[timestep + group_size] - current_v).powi(2))
             .sqrt()
@@ -196,15 +199,15 @@ pub fn compute_metadata(
             .mean()
             .expect("This slice should not be empty");
 
-        let subgrid_x = group_u as usize - (subgrid_size / 2);
-        let subgrid_y = group_v as usize - (subgrid_size / 2);
+        let subgrid_x = group_u as u32 - (subgrid_size / 2);
+        let subgrid_y = group_v as u32 - (subgrid_size / 2);
         let subgrid_x = subgrid_x.clamp(0, grid_size - subgrid_size);
         let subgrid_y = subgrid_y.clamp(0, grid_size - subgrid_size);
 
         metadata.push(Metadata {
             baseline,
-            time_index: timestep,
-            timestep_count: group_size,
+            time_index: timestep.try_into().unwrap(),
+            timestep_count: group_size.try_into().unwrap(),
             channel_begin: 0,
             channel_end: channel_count,
             coordinate: Coordinate {
@@ -222,16 +225,16 @@ pub fn compute_metadata(
 
 #[time_function]
 pub fn generate_visibilities(
-    correlation_count: usize,
-    channel_count: usize,
-    timestep_count: usize,
-    baseline_count: usize,
+    correlation_count: u32,
+    channel_count: u32,
+    timestep_count: u32,
+    baseline_count: u32,
     image_size: f32,
-    grid_size: usize,
+    grid_size: u32,
     frequencies: &Array1<f32>,
     uvw: &UvwArray,
-    point_sources_count: Option<usize>,
-    max_pixel_offset: Option<usize>,
+    point_sources_count: Option<u32>,
+    max_pixel_offset: Option<u32>,
     seed: Option<u64>,
 ) -> Array4<Complex32> {
     let point_sources_count = point_sources_count.unwrap_or(4);
@@ -239,18 +242,18 @@ pub fn generate_visibilities(
     let seed = seed.unwrap_or(2);
 
     let mut visibilities: Array4<Visibility> = Array4::zeros((
-        baseline_count,
-        timestep_count,
-        channel_count,
-        correlation_count,
+        baseline_count.try_into().unwrap(),
+        timestep_count.try_into().unwrap(),
+        channel_count.try_into().unwrap(),
+        correlation_count.try_into().unwrap(),
     ));
 
     let mut offsets = Vec::new();
     let mut rng = StdRng::seed_from_u64(seed);
 
     for _ in 0..point_sources_count {
-        let x = (rng.random::<f32>() * max_pixel_offset as f32) as usize - (max_pixel_offset / 2);
-        let y = (rng.random::<f32>() * max_pixel_offset as f32) as usize - (max_pixel_offset / 2);
+        let x = (rng.random::<f32>() * max_pixel_offset as f32) as u32 - (max_pixel_offset / 2);
+        let y = (rng.random::<f32>() * max_pixel_offset as f32) as u32 - (max_pixel_offset / 2);
         offsets.push((x, y));
     }
 
@@ -280,9 +283,9 @@ pub fn generate_visibilities(
 }
 
 pub fn add_point_source_to_baseline(
-    baseline: usize,
-    timestep_count: usize,
-    channel_count: usize,
+    baseline: u32,
+    timestep_count: u32,
+    channel_count: u32,
     amplitude: f32,
     frequencies: &Array1<f32>,
     uvw: &UvwArray,
@@ -290,8 +293,9 @@ pub fn add_point_source_to_baseline(
     m: f32,
     visibilities: &mut Array4<Visibility>,
 ) {
-    for t in 0..timestep_count {
-        for c in 0..channel_count {
+    let baseline = baseline as usize;
+    for t in 0..timestep_count as usize {
+        for c in 0..channel_count as usize {
             let u = (frequencies[c] / SPEED_OF_LIGHT) * uvw[(baseline, t)].u;
             let v = (frequencies[c] / SPEED_OF_LIGHT) * uvw[(baseline, t)].v;
 
@@ -307,8 +311,8 @@ pub fn add_point_source_to_baseline(
 }
 
 #[time_function]
-pub fn get_taper(subgrid_size: usize) -> Array2<f32> {
-    let x: Array1<f32> = linspace(-1.0, 1.0, subgrid_size).collect();
+pub fn get_taper(subgrid_size: u32) -> Array2<f32> {
+    let x: Array1<f32> = linspace(-1.0, 1.0, subgrid_size.try_into().unwrap()).collect();
     let spheroidal = x.map(|x| evaluate_spheroidal(*x));
 
     let mat_1n = spheroidal

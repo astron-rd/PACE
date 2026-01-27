@@ -107,19 +107,19 @@ fn check_for_extra_bytes<R: io::Read>(reader: &mut R) -> Result<(), ReadDataErro
 pub type UvwArray = Array2<Uvw>;
 
 pub struct Metadata {
-    pub baseline: usize,
-    pub time_index: usize,
-    pub timestep_count: usize,
-    pub channel_begin: usize,
-    pub channel_end: usize,
+    pub baseline: u32,
+    pub time_index: u32,
+    pub timestep_count: u32,
+    pub channel_begin: u32,
+    pub channel_end: u32,
     pub coordinate: Coordinate,
 }
 
 #[derive(Clone, Copy)]
 pub struct Coordinate {
-    pub x: usize,
-    pub y: usize,
-    pub z: usize,
+    pub x: u32,
+    pub y: u32,
+    pub z: u32,
 }
 
 pub type Visibility = Complex32;
