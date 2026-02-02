@@ -23,7 +23,7 @@ fn main() {
     print_parameters(&cli);
 
     print_header!("INITIALIZATION");
-    let my_uvw = generate_uvw(
+    let uvw = generate_uvw(
         cli.timestep_count(),
         cli.baseline_count(),
         cli.grid_size,
@@ -31,7 +31,11 @@ fn main() {
         cli.random_seed,
     );
 
-    ndarray_npy::write_npy("uvw.npy", &my_uvw).unwrap();
+    ndarray_npy::write_npy("uvw.npy", &uvw).unwrap();
+    
+    let metadata = generate_metadata(cli.channel_count, cli.subgrid_size, cli.grid_size, &uvw, None);
+
+    ndarray_npy::write_npy("metadata.npy", &metadata).unwrap();
 }
 
 fn print_parameters(cli: &Cli) {

@@ -73,7 +73,11 @@ impl ReadableElement for Uvw {
 
 impl WritableElement for Uvw {
     fn type_descriptor() -> Value {
-        Value::String("[('u', '<f4'), ('v', '<f4'), ('w', '<f4')]".into())
+        Value::List(vec![
+            Value::Tuple(vec![Value::String("u".into()), Value::String("<f4".into())]),
+            Value::Tuple(vec![Value::String("v".into()), Value::String("<f4".into())]),
+            Value::Tuple(vec![Value::String("w".into()), Value::String("<f4".into())]),
+        ])
     }
 
     fn write<W: io::Write>(&self, mut writer: W) -> Result<(), ndarray_npy::WriteDataError> {
@@ -173,6 +177,65 @@ impl ReadableElement for Metadata {
         check_for_extra_bytes(&mut reader)?;
 
         Ok(out)
+    }
+}
+
+impl WritableElement for Metadata {
+    fn type_descriptor() -> Value {
+        Value::List(vec![
+            Value::Tuple(vec![
+                Value::String("baseline".into()),
+                Value::String("<i4".into()),
+            ]),
+            Value::Tuple(vec![
+                Value::String("time_index".into()),
+                Value::String("<i4".into()),
+            ]),
+            Value::Tuple(vec![
+                Value::String("nr_timesteps".into()),
+                Value::String("<i4".into()),
+            ]),
+            Value::Tuple(vec![
+                Value::String("channel_begin".into()),
+                Value::String("<i4".into()),
+            ]),
+            Value::Tuple(vec![
+                Value::String("channel_end".into()),
+                Value::String("<i4".into()),
+            ]),
+            Value::Tuple(vec![
+                Value::String("coordinate".into()),
+                Value::List(vec![
+                    Value::Tuple(vec![Value::String("x".into()), Value::String("<i4".into())]),
+                    Value::Tuple(vec![Value::String("y".into()), Value::String("<i4".into())]),
+                    Value::Tuple(vec![Value::String("z".into()), Value::String("<i4".into())]),
+                ]),
+            ]),
+        ])
+    }
+
+    fn write<W: io::Write>(&self, mut writer: W) -> Result<(), ndarray_npy::WriteDataError> {
+        writer.write_u32::<LittleEndian>(self.baseline)?;
+        writer.write_u32::<LittleEndian>(self.time_index)?;
+        writer.write_u32::<LittleEndian>(self.timestep_count)?;
+        writer.write_u32::<LittleEndian>(self.channel_begin)?;
+        writer.write_u32::<LittleEndian>(self.channel_end)?;
+        writer.write_u32::<LittleEndian>(self.coordinate.x)?;
+        writer.write_u32::<LittleEndian>(self.coordinate.y)?;
+        writer.write_u32::<LittleEndian>(self.coordinate.z)?;
+
+        Ok(())
+    }
+
+    fn write_slice<W: io::Write>(
+        slice: &[Self],
+        mut writer: W,
+    ) -> Result<(), ndarray_npy::WriteDataError> {
+        for item in slice {
+            WritableElement::write(item, &mut writer)?;
+        }
+
+        Ok(())
     }
 }
 
