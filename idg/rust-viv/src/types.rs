@@ -1,5 +1,5 @@
-use byteorder::{BigEndian, LittleEndian, ReadBytesExt};
-use ndarray_npy::{ReadDataError, ReadableElement};
+use byteorder::{BigEndian, LittleEndian, ReadBytesExt, WriteBytesExt};
+use ndarray_npy::{ReadDataError, ReadableElement, WritableElement};
 use num_complex::Complex32;
 use py_literal::Value;
 use std::{fs::read, io, ops::Add};
@@ -68,6 +68,29 @@ impl ReadableElement for Uvw {
         check_for_extra_bytes(&mut reader)?;
 
         Ok(out)
+    }
+}
+
+impl WritableElement for Uvw {
+    fn type_descriptor() -> Value {
+        Value::String("[('u', '<f4'), ('v', '<f4'), ('w', '<f4')]".into())
+    }
+
+    fn write<W: io::Write>(&self, mut writer: W) -> Result<(), ndarray_npy::WriteDataError> {
+        writer.write_f32::<LittleEndian>(self.u)?;
+        writer.write_f32::<LittleEndian>(self.v)?;
+        writer.write_f32::<LittleEndian>(self.w)?;
+        Ok(())
+    }
+
+    fn write_slice<W: io::Write>(
+        slice: &[Self],
+        mut writer: W,
+    ) -> Result<(), ndarray_npy::WriteDataError> {
+        for item in slice {
+            WritableElement::write(item, &mut writer)?;
+        }
+        Ok(())
     }
 }
 
