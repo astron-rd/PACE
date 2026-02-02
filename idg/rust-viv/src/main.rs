@@ -1,13 +1,13 @@
-use std::process::exit;
-
 use clap::Parser;
-use ndarray::{Array1, Array4};
+use ndarray::{Array1, Array2, Array4};
 use num_complex::Complex32;
 
 use crate::{
-    cli::Cli, constants::{NR_CORRELATIONS_IN, NR_CORRELATIONS_OUT}, gridder::Gridder, init::{
-        generate_frequencies, generate_metadata, generate_uvw, generate_visibilities, get_taper,
-    }, types::UvwArray, util::{print_header, print_param}
+    cli::Cli,
+    constants::{NR_CORRELATIONS_IN, NR_CORRELATIONS_OUT},
+    init::*,
+    types::{Metadata, UvwArray},
+    util::{print_header, print_param},
 };
 
 mod cli;
@@ -23,52 +23,62 @@ fn main() {
     print_parameters(&cli);
 
     print_header!("INITIALIZATION");
-    // let uvw = generate_uvw(
-    //     cli.timestep_count(),
-    //     cli.baseline_count(),
-    //     cli.grid_size,
-    //     cli.ellipticity,
-    //     cli.random_seed,
-    // );
+    let my_uvw = generate_uvw(
+        cli.timestep_count(),
+        cli.baseline_count(),
+        cli.grid_size,
+        cli.ellipticity,
+        cli.random_seed,
+    );
 
-    let uvw: UvwArray = ndarray_npy::read_npy("../../uvw.npy").unwrap();
-    
-    // let frequencies = generate_frequencies(
-    //     cli.start_frequency,
-    //     cli.frequency_increment,
-    //     cli.channel_count,
-    // );
+    let their_uvw: UvwArray = ndarray_npy::read_npy("../../uvw.npy").unwrap();
 
-    let frequencies: Array1<f32> = ndarray_npy::read_npy("../../frequencies.npy").unwrap();
+    // assert_eq!(my_uvw, their_uvw); // We don't expect these to be the same because the RNG implementation is different.
 
-    println!("{}", frequencies);
+    let my_frequencies = generate_frequencies(
+        cli.start_frequency,
+        cli.frequency_increment,
+        cli.channel_count,
+    );
 
-    exit(0);
+    let their_frequencies: Array1<f32> = ndarray_npy::read_npy("../../frequencies.npy").unwrap();
 
-    // let metadata = generate_metadata(
-    //     cli.channel_count,
-    //     cli.subgrid_size,
-    //     cli.grid_size,
-    //     &uvw,
-    //     None,
-    // );
-    // let subgrid_count = metadata.len();
+    assert_eq!(my_frequencies, their_frequencies);
 
-    // let _visibilities = generate_visibilities(
+    let my_metadata = generate_metadata(
+        cli.channel_count,
+        cli.subgrid_size,
+        cli.grid_size,
+        &their_uvw,
+        None,
+    );
+
+    let their_metadata: Array1<Metadata> = ndarray_npy::read_npy("../../metadata.npy").unwrap();
+
+    assert_eq!(my_metadata, their_metadata);
+
+    // let my_visibilities = generate_visibilities(
     //     NR_CORRELATIONS_IN,
     //     cli.channel_count,
     //     cli.timestep_count(),
     //     cli.baseline_count(),
     //     cli.image_size(),
     //     cli.grid_size,
-    //     &frequencies,
-    //     &uvw,
+    //     &their_frequencies,
+    //     &their_uvw,
     //     None,
     //     None,
     //     None,
     // );
 
-    // let _taper = get_taper(cli.subgrid_size);
+    let their_visibilities: Array4<Complex32> =
+        ndarray_npy::read_npy("../../visibilities.npy").unwrap();
+
+    // assert_eq!(my_visibilities, their_visibilities);
+
+    let my_taper = get_taper(cli.subgrid_size);
+
+    let their_taper: Array2<f32> = ndarray_npy::read_npy("../../taper.npy").unwrap();
 
     // let _subgrids: Array4<Complex32> = Array4::zeros((
     //     subgrid_count,
