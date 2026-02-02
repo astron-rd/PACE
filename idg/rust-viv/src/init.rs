@@ -3,7 +3,9 @@
 use std::f32::consts::PI;
 
 use code_timing_macros::time_function;
-use ndarray::{Array, Array1, Array2, Array4, ArrayBase, ArrayView1, linspace, s};
+use ndarray::{
+    Array, Array1, Array2, Array4, ArrayBase, ArrayView1, linspace, s,
+};
 use ndarray_rand::{
     RandomExt,
     rand::{Rng, SeedableRng, rngs::StdRng},
@@ -134,7 +136,7 @@ pub fn generate_metadata(
     grid_size: u32,
     uvw: &UvwArray,
     max_group_size: Option<u32>,
-) -> Vec<Metadata> {
+) -> Array1<Metadata> {
     let max_group_size = max_group_size.unwrap_or(256);
 
     let u_pixels = uvw.mapv(|x| x.u);
@@ -156,7 +158,7 @@ pub fn generate_metadata(
         ));
     }
 
-    metadata
+    metadata.into()
 }
 
 pub fn compute_metadata(
@@ -252,8 +254,8 @@ pub fn generate_visibilities(
     let mut rng = StdRng::seed_from_u64(seed);
 
     for _ in 0..point_sources_count {
-        let x = (rng.random::<f32>() * max_pixel_offset as f32) as u32 - (max_pixel_offset / 2);
-        let y = (rng.random::<f32>() * max_pixel_offset as f32) as u32 - (max_pixel_offset / 2);
+        let x = (rng.random::<f32>() * max_pixel_offset as f32) - (max_pixel_offset / 2) as f32;
+        let y = (rng.random::<f32>() * max_pixel_offset as f32) - (max_pixel_offset / 2) as f32;
         offsets.push((x, y));
     }
 
@@ -261,8 +263,8 @@ pub fn generate_visibilities(
         let amplitude = 1.0;
 
         // Convert offset from grid cells to radians (l,m)
-        let l = offset.0 as f32 * image_size / grid_size as f32;
-        let m = offset.1 as f32 * image_size / grid_size as f32;
+        let l = offset.0 * image_size / grid_size as f32;
+        let m = offset.1 * image_size / grid_size as f32;
 
         for baseline in 0..baseline_count {
             add_point_source_to_baseline(
@@ -312,7 +314,9 @@ pub fn add_point_source_to_baseline(
 
 #[time_function]
 pub fn get_taper(subgrid_size: u32) -> Array2<f32> {
-    let x: Array1<f32> = linspace(-1.0, 1.0, subgrid_size.try_into().unwrap()).collect();
+    let x: Array1<f32> = linspace(-1.0_f32..1.0, subgrid_size as usize)
+        .map(|x| x.abs())
+        .collect();
     let spheroidal = x.map(|x| evaluate_spheroidal(*x));
 
     let mat_1n = spheroidal
