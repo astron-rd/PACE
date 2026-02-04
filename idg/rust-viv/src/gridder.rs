@@ -1,6 +1,7 @@
 use std::f32::consts::PI;
 
-use ndarray::prelude::*;
+use code_timing_macros::time_function;
+use ndarray::{Zip, prelude::*};
 use num_complex::Complex32;
 
 use crate::{
@@ -23,6 +24,7 @@ impl Gridder {
         }
     }
 
+    #[time_function]
     pub fn grid_onto_subgrids(
         &self,
         w_step: f32,
@@ -33,7 +35,7 @@ impl Gridder {
         visibilities: &Array4<Complex32>,
         taper: &Array2<f32>,
         metadata: &Array1<Metadata>,
-        subgrids: &mut Array4<Complex32>,
+        subgrids: ArrayViewMut4<Complex32>,
     ) {
         assert_eq!(self.nr_correlations_in as usize, visibilities.shape()[3]);
         assert_eq!(self.nr_correlations_out as usize, subgrids.shape()[1]);
@@ -62,32 +64,30 @@ fn visibilities_to_subgrids(
     visibilities: &Array4<Complex32>,
     taper: &Array2<f32>,
     metadata: &Array1<Metadata>,
-    subgrids: &mut Array4<Complex32>,
+    mut subgrids: ArrayViewMut4<Complex32>,
 ) {
-    let subgrid_count = metadata.shape()[0];
-
-    for s in 0..subgrid_count {
-        visibilities_to_subgrid(
-            &metadata[s],
-            w_step,
-            image_size,
-            grid_size,
-            subgrids.shape()[2] as u32,
-            wavenumbers,
-            uvw,
-            visibilities,
-            taper,
-            subgrids.slice_mut(s![s as usize, .., .., ..]),
-        )
-    }
+    Zip::from(metadata)
+        .and(subgrids.axis_iter_mut(ndarray::Axis(0)))
+        .par_for_each(|metadata, subgrid| {
+            visibility_to_subgrid(
+                metadata,
+                w_step,
+                image_size,
+                grid_size,
+                wavenumbers,
+                uvw,
+                visibilities,
+                taper,
+                subgrid,
+            )
+        });
 }
 
-fn visibilities_to_subgrid(
+fn visibility_to_subgrid(
     metadata: &Metadata,
     w_step: f32,
     image_size: f32,
     grid_size: u32,
-    subgrid_size: u32,
     wavenumbers: &Array1<f32>,
     uvw: &UvwArray,
     visibilities: &Array4<Complex32>,
@@ -95,6 +95,7 @@ fn visibilities_to_subgrid(
     mut subgrid: ArrayViewMut3<Complex32>,
 ) {
     let w_offset_in_lambda = w_step * (metadata.coordinate.z as f32 + 0.5);
+    let subgrid_size = subgrid.shape()[1] as u32;
 
     let u_offset =
         (metadata.coordinate.x as f32 + subgrid_size as f32 / 2.0 - grid_size as f32 / 2.0) * (2.0 * PI / image_size);
@@ -170,7 +171,7 @@ fn compute_pixels(
 
     for time in 0..timestep_count {
         let idx = offset + time;
-        let Uvw{u, v, w} = uvw[(baseline as usize, idx as usize)];
+        let Uvw { u, v, w } = uvw[(baseline as usize, idx as usize)];
 
         let phase_index = u * l + v * m + w * n;
         let phase_offset = u_offset * l + v_offset * m + w_offset * n;
@@ -180,7 +181,12 @@ fn compute_pixels(
             let phasor = (Complex32::i() * phase).exp();
 
             for pol in 0..NR_CORRELATIONS_IN {
-                pixels[(pol % NR_CORRELATIONS_OUT) as usize] += visibilities[(baseline as usize, idx as usize, channel as usize, pol as usize)] * phasor 
+                pixels[(pol % NR_CORRELATIONS_OUT) as usize] += visibilities[(
+                    baseline as usize,
+                    idx as usize,
+                    channel as usize,
+                    pol as usize,
+                )] * phasor
             }
         }
     }

@@ -2,6 +2,7 @@ use std::f32::consts::PI;
 
 use clap::Parser;
 use ndarray::{Array1, Array2, Array3, Array4};
+use ndrustfft::Zero;
 use num_complex::Complex32;
 
 use crate::{
@@ -16,6 +17,15 @@ mod types;
 mod util;
 
 fn main() {
+    let rust_subgrids: Array4<Complex32> = ndarray_npy::read_npy("subgrids.npy").unwrap();
+    let py_subgrids: Array4<Complex32> = ndarray_npy::read_npy("../../subgrids.npy").unwrap();
+
+    for (r, p) in rust_subgrids.iter().zip(py_subgrids.iter()) {
+        println!("{}", r - p);
+    }
+}
+
+fn maine() {
     let cli = cli::Cli::parse();
 
     print_parameters(&cli);
@@ -44,7 +54,10 @@ fn main() {
 
     print_header!("MAIN");
     let gridder = Gridder::new(NR_CORRELATIONS_IN, cli.subgrid_size);
-    gridder.grid_onto_subgrids(W_STEP, cli.image_size(), cli.grid_size, &wavenumbers, &uvw, &visibilities, &taper, &metadata, &mut subgrids);
+    gridder.grid_onto_subgrids(W_STEP, cli.image_size(), cli.grid_size, &wavenumbers, &uvw, &visibilities, &taper, &metadata, subgrids.view_mut());
+    ndarray_npy::write_npy("subgrids.npy", &subgrids).unwrap();
+
+    println!("done!")
 }
 
 fn print_parameters(cli: &Cli) {
