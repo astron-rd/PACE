@@ -2,10 +2,7 @@
 
 use std::f32::consts::PI;
 
-use code_timing_macros::time_function;
-use ndarray::{
-    Array, Array1, Array2, Array4, ArrayBase, ArrayView1, linspace, s,
-};
+use ndarray::{Array, Array1, Array2, Array4, ArrayBase, ArrayView1, linspace, s};
 use ndarray_rand::{
     RandomExt,
     rand::{Rng, SeedableRng, rngs::StdRng},
@@ -28,7 +25,6 @@ use crate::{
 /// - `seed`: Random seed for generating baseline ratios and starting angles (Optional, default = 2)
 ///
 ///  Returns a UVW array of size (`baseline_count` * `timestep_count`)
-#[time_function]
 pub fn generate_uvw(
     timestep_count: u32,
     baseline_count: u32,
@@ -106,7 +102,6 @@ pub fn generate_uvw(
 /// - `channel_count`: Number of frequency channels
 ///
 /// Returns frequencies array, shape (`channel_count`)
-#[time_function]
 pub fn generate_frequencies(
     start_frequency: f32,
     frequency_increment: f32,
@@ -129,7 +124,6 @@ pub fn generate_frequencies(
 /// - `max_group_size`: maximum number of visibilities (timesteps) in a group
 ///
 /// Returns a metadata array, shape (`nr_subgrids`)
-#[time_function]
 pub fn generate_metadata(
     channel_count: u32,
     subgrid_size: u32,
@@ -225,7 +219,6 @@ pub fn compute_metadata(
     metadata
 }
 
-#[time_function]
 pub fn generate_visibilities(
     correlation_count: u32,
     channel_count: u32,
@@ -312,7 +305,6 @@ pub fn add_point_source_to_baseline(
     }
 }
 
-#[time_function]
 pub fn get_taper(subgrid_size: u32) -> Array2<f32> {
     let x: Array1<f32> = linspace(-1.0_f32..1.0, subgrid_size as usize)
         .map(|x| x.abs())

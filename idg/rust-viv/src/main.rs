@@ -2,11 +2,15 @@ use std::f32::consts::PI;
 
 use clap::Parser;
 use ndarray::{Array1, Array2, Array3, Array4};
-use ndrustfft::Zero;
 use num_complex::Complex32;
 
 use crate::{
-    cli::Cli, constants::{NR_CORRELATIONS_IN, NR_CORRELATIONS_OUT, SPEED_OF_LIGHT, W_STEP}, gridder::Gridder, init::*, types::{Metadata, UvwArray}, util::{print_header, print_param}
+    cli::Cli,
+    constants::{NR_CORRELATIONS_IN, NR_CORRELATIONS_OUT, SPEED_OF_LIGHT, W_STEP},
+    gridder::Gridder,
+    init::*,
+    types::{Metadata, UvwArray},
+    util::{print_header, print_param, time_function},
 };
 
 mod cli;
@@ -17,15 +21,6 @@ mod types;
 mod util;
 
 fn main() {
-    let rust_subgrids: Array4<Complex32> = ndarray_npy::read_npy("subgrids.npy").unwrap();
-    let py_subgrids: Array4<Complex32> = ndarray_npy::read_npy("../../subgrids.npy").unwrap();
-
-    for (r, p) in rust_subgrids.iter().zip(py_subgrids.iter()) {
-        println!("{}", r - p);
-    }
-}
-
-fn maine() {
     let cli = cli::Cli::parse();
 
     print_parameters(&cli);
@@ -38,7 +33,8 @@ fn maine() {
     let wavenumbers = (frequencies * 2.0 * PI) / SPEED_OF_LIGHT;
     let metadata: Array1<Metadata> = ndarray_npy::read_npy("../../data/metadata.npy").unwrap();
     let subgrid_count = metadata.len();
-    let visibilities: Array4<Complex32> = ndarray_npy::read_npy("../../data/visibilities.npy").unwrap();
+    let visibilities: Array4<Complex32> =
+        ndarray_npy::read_npy("../../data/visibilities.npy").unwrap();
     let grid: Array3<Complex32> = Array3::zeros((
         NR_CORRELATIONS_OUT as usize,
         cli.grid_size as usize,
@@ -54,7 +50,20 @@ fn maine() {
 
     print_header!("MAIN");
     let gridder = Gridder::new(NR_CORRELATIONS_IN, cli.subgrid_size);
-    gridder.grid_onto_subgrids(W_STEP, cli.image_size(), cli.grid_size, &wavenumbers, &uvw, &visibilities, &taper, &metadata, subgrids.view_mut());
+    time_function!(
+        "grid onto subgrids",
+        gridder.grid_onto_subgrids(
+            W_STEP,
+            cli.image_size(),
+            cli.grid_size,
+            &wavenumbers,
+            &uvw,
+            &visibilities,
+            &taper,
+            &metadata,
+            subgrids.view_mut()
+        )
+    );
     ndarray_npy::write_npy("subgrids.npy", &subgrids).unwrap();
 
     println!("done!")

@@ -6,7 +6,6 @@ edition = "2024"
 [dependencies]
 byteorder = "1.5.0"
 clap = { version = "4.5.54", features = ["derive"] }
-code-timing-macros = "0.0.6"
 ndarray = { version = "0.17.2", features = ["serde"] }
 ndarray-npy = "0.10.0"
 ndarray-rand = "0.16.0"

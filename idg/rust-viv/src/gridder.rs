@@ -1,6 +1,5 @@
 use std::f32::consts::PI;
 
-use code_timing_macros::time_function;
 use ndarray::{Zip, prelude::*};
 use num_complex::Complex32;
 
@@ -24,7 +23,6 @@ impl Gridder {
         }
     }
 
-    #[time_function]
     pub fn grid_onto_subgrids(
         &self,
         w_step: f32,
