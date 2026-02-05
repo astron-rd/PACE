@@ -1,10 +1,17 @@
+#  Copyright (C) 2026 ASTRON (Netherlands Institute for Radio Astronomy)
+#  Copyright (C) 2026 Researchable
+#  SPDX-License-Identifier: Apache-2.0
+
 import random
-import numpy as np
-import numba as nb
 
 import idgtypes
-
-from kernels import add_pt_src_to_baseline, evaluate_spheroidal, compute_metadata
+import numba as nb
+import numpy as np
+from idg.python.kernels.kernels import (
+    add_pt_src_to_baseline,
+    compute_metadata,
+    evaluate_spheroidal,
+)
 
 
 def get_uvw(

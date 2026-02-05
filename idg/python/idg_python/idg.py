@@ -1,12 +1,17 @@
-import numpy as np
-import numba as nb
+#  Copyright (C) 2026 ASTRON (Netherlands Institute for Radio Astronomy)
+#  Copyright (C) 2026 Researchable
+#  SPDX-License-Identifier: Apache-2.0
 
 import idgtypes
-from kernels import add_subgrid_to_grid, compute_phasor, visibilities_to_subgrids
+import numpy as np
+from idg.python.kernels.kernels import (
+    add_subgrid_to_grid,
+    compute_phasor,
+    visibilities_to_subgrids,
+)
 
 
 class Gridder:
-
     def __init__(self, nr_correlations_in: int, subgrid_size: int):
         self.nr_correlations_in = nr_correlations_in
         self.nr_correlations_out = 4 if nr_correlations_in == 4 else 1
