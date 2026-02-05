@@ -1,3 +1,7 @@
+#  Copyright (C) 2026 ASTRON (Netherlands Institute for Radio Astronomy)
+#  Copyright (C) 2026 Researchable
+#  SPDX-License-Identifier: Apache-2.0
+
 import numpy
 
 visibilitiestype = numpy.complex64
