@@ -1,7 +1,7 @@
 use std::f32::consts::PI;
 
 use clap::Parser;
-use ndarray::{Array1, Array2, Array3, Array4};
+use ndarray::{Array, Array1, Array2, Array3, Array4, s};
 use num_complex::Complex32;
 
 use crate::{
@@ -21,6 +21,15 @@ mod types;
 mod util;
 
 fn main() {
+    let sg: Array4<Complex32> = ndarray_npy::read_npy("../../subgrids.npy").unwrap();
+    let sgd = sg.slice(s![0, 0, .., ..]).to_owned();
+
+    println!("IN");
+    println!("{}", &sgd);
+
+}
+
+fn maine() {
     let cli = cli::Cli::parse();
 
     print_parameters(&cli);
