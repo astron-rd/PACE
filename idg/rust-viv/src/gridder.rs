@@ -1,5 +1,10 @@
 use std::f32::consts::PI;
 
+use fftw::{
+    array::AlignedVec,
+    plan::{C2CPlan, C2CPlan32},
+    types::{Flag, Sign},
+};
 use ndarray::{Zip, prelude::*};
 use num_complex::Complex32;
 
@@ -33,7 +38,7 @@ impl Gridder {
         visibilities: &Array4<Complex32>,
         taper: &Array2<f32>,
         metadata: &Array1<Metadata>,
-        subgrids: ArrayViewMut4<Complex32>,
+        mut subgrids: ArrayViewMut4<Complex32>,
     ) {
         assert_eq!(self.nr_correlations_in as usize, visibilities.shape()[3]);
         assert_eq!(self.nr_correlations_out as usize, subgrids.shape()[1]);
@@ -48,8 +53,32 @@ impl Gridder {
             visibilities,
             taper,
             metadata,
-            subgrids,
+            &mut subgrids,
         );
+    }
+
+    pub fn ifft_subgrids(&self, mut subgrids: ArrayViewMut4<Complex32>) {
+        let subgrid_size = subgrids.shape()[2];
+        let mut plan: C2CPlan32 =
+            C2CPlan::aligned(&[subgrid_size, subgrid_size], Sign::Backward, Flag::MEASURE).unwrap();
+
+        let mut _in: AlignedVec<Complex32> = AlignedVec::new(subgrid_size * subgrid_size);
+        let mut _out: AlignedVec<Complex32> = AlignedVec::new(subgrid_size * subgrid_size);
+
+        for mut correlations in subgrids.outer_iter_mut() {
+            for mut subgrid in correlations.outer_iter_mut() {
+                for (dst, src) in _in.iter_mut().zip(subgrid.iter()) {
+                    *dst = *src;
+                }
+
+                plan.c2c(&mut _in, &mut _out).unwrap();
+
+                for (dst, src) in subgrid.iter_mut().zip(_out.iter()) {
+                    *dst = *src;
+                }
+                subgrid /= Complex32::new((subgrid_size * subgrid_size) as f32, 0.0); // Normalize
+            }
+        }
     }
 }
 
@@ -62,7 +91,7 @@ fn visibilities_to_subgrids(
     visibilities: &Array4<Complex32>,
     taper: &Array2<f32>,
     metadata: &Array1<Metadata>,
-    mut subgrids: ArrayViewMut4<Complex32>,
+    subgrids: &mut ArrayViewMut4<Complex32>,
 ) {
     Zip::from(metadata)
         .and(subgrids.axis_iter_mut(ndarray::Axis(0)))
@@ -95,10 +124,12 @@ fn visibility_to_subgrid(
     let w_offset_in_lambda = w_step * (metadata.coordinate.z as f32 + 0.5);
     let subgrid_size = subgrid.shape()[1] as u32;
 
-    let u_offset =
-        (metadata.coordinate.x as f32 + subgrid_size as f32 / 2.0 - grid_size as f32 / 2.0) * (2.0 * PI / image_size);
-    let v_offset =
-        (metadata.coordinate.y as f32 + subgrid_size as f32 / 2.0 - grid_size as f32 / 2.0) * (2.0 * PI / image_size);
+    let u_offset = (metadata.coordinate.x as f32 + subgrid_size as f32 / 2.0
+        - grid_size as f32 / 2.0)
+        * (2.0 * PI / image_size);
+    let v_offset = (metadata.coordinate.y as f32 + subgrid_size as f32 / 2.0
+        - grid_size as f32 / 2.0)
+        * (2.0 * PI / image_size);
     let w_offset = 2.0 * PI * w_offset_in_lambda;
 
     for y in 0..subgrid_size {
@@ -121,7 +152,7 @@ fn visibility_to_subgrid(
                 metadata.channel_begin,
                 metadata.channel_end,
                 wavenumbers,
-                visibilities
+                visibilities,
             );
 
             let sph = taper[(y as usize, x as usize)];
