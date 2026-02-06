@@ -1,10 +1,10 @@
 [project]
 name = "imaging-python"
 version = "0.1.0"
-requires-python = "==3.10"
+requires-python = ">=3.10"
 dependencies = [
     "numba>=0.61.2",
-    "numpy>=1.26.4",
+    "numpy<2",
     "nptyping",
     "jax"
 ]
