@@ -1,6 +1,6 @@
 [project]
 name = "idg-python"
-description = "IDG kernels rewritten in Python for PACE project"
+description = "Image-Domain Gridding (IDG) kernels implemented in Python"
 version = "0.0.1"
 readme = "README.md"
 requires-python = ">=3.12"
