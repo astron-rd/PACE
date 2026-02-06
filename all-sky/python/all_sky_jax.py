@@ -1,7 +1,3 @@
-#  Copyright (C) 2026 ASTRON (Netherlands Institute for Radio Astronomy)
-#  Copyright (C) 2024 Corne Lukken
-#  SPDX-License-Identifier: Apache-2.0
-
 import jax
 from nptyping import NDArray, Shape, Float64, Float32, Bool, Complex64
 from jax import numpy as jnp

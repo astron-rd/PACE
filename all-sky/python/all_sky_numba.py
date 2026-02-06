@@ -1,7 +1,3 @@
-#  Copyright (C) 2026 ASTRON (Netherlands Institute for Radio Astronomy)
-#  Copyright (C) 2025 Corne Lukken
-#  SPDX-License-Identifer: Apache-2.0
-
 import numpy as np
 import numba
 from nptyping import NDArray, Shape, Float64, Complex64
