@@ -1,4 +1,4 @@
-use std::f32::consts::PI;
+use std::{f32::consts::PI, ops::Index};
 
 use fftw::{
     array::AlignedVec,
@@ -58,7 +58,7 @@ impl Gridder {
     }
 
     pub fn ifft_subgrids(&self, mut subgrids: ArrayViewMut4<Complex32>) {
-        let subgrid_size = subgrids.shape()[2];
+        let subgrid_size = self.subgrid_size.try_into().unwrap();
         let mut plan: C2CPlan32 =
             C2CPlan::aligned(&[subgrid_size, subgrid_size], Sign::Backward, Flag::MEASURE).unwrap();
 
@@ -78,6 +78,52 @@ impl Gridder {
                 }
                 subgrid /= Complex32::new((subgrid_size * subgrid_size) as f32, 0.0); // Normalize
             }
+        }
+    }
+
+    pub fn add_subgrids_to_grid(
+        &self,
+        metadata: ArrayView1<Metadata>,
+        subgrids: ArrayView4<Complex32>,
+        mut grid: ArrayViewMut3<Complex32>,
+    ) {
+        let phasor = compute_phasor(self.subgrid_size);
+
+        for (subgrid, metadata) in subgrids.outer_iter().zip(metadata.iter()) {
+            add_subgrid_to_grid(subgrid, metadata, &mut grid, phasor.view());
+        }
+    }
+
+    pub fn transform(&self, direction: Sign, mut grid: ArrayViewMut3<Complex32>) {
+        assert_eq!(self.nr_correlations_out, grid.shape()[0] as u32);
+        let height = grid.shape()[1];
+        let width = grid.shape()[2];
+        assert_eq!(height, width);
+
+        let mut plan: C2CPlan32 =
+            C2CPlan::aligned(&[height, width], direction, Flag::MEASURE).unwrap();
+
+        let mut _in: AlignedVec<Complex32> = AlignedVec::new(height * width);
+        let mut _out: AlignedVec<Complex32> = AlignedVec::new(height * width);
+
+        for mut correlation in grid.outer_iter_mut() {
+            for ((x, y), src) in correlation.indexed_iter() {
+                let dst_x = (x + width / 2) % width;
+                let dst_y = (y + height / 2) % height;
+                let dst = dst_y * width + dst_x;
+                _in[dst] = *src;
+            }
+
+            plan.c2c(&mut _in, &mut _out).unwrap();
+
+            for ((x, y), dst) in correlation.indexed_iter_mut() {
+                let src_x = (x + width / 2) % width;
+                let src_y = (y + height / 2) % height;
+                let src = src_y * width + src_x;
+                *dst = _out[src];
+            }
+            correlation /= Complex32::new((width * height) as f32, 0.0); // Normalize
+            correlation *= Complex32::new(2.0, 0.0);
         }
     }
 }
@@ -221,4 +267,40 @@ fn compute_pixels(
     }
 
     pixels
+}
+
+fn compute_phasor(subgrid_size: u32) -> Array2<Complex32> {
+    Array2::<Complex32>::from_shape_fn((subgrid_size as usize, subgrid_size as usize), |(x, y)| {
+        let phase = PI * (x as f32 + y as f32 - subgrid_size as f32) / subgrid_size as f32;
+        Complex32::new(0.0, phase).exp()
+    })
+}
+
+fn add_subgrid_to_grid(
+    subgrid: ArrayView3<Complex32>,
+    metadata: &Metadata,
+    grid: &mut ArrayViewMut3<Complex32>,
+    phasor: ArrayView2<Complex32>,
+) {
+    let grid_size = grid.shape()[1];
+    let subgrid_size = subgrid.shape()[1];
+    let correlation_count = subgrid.shape()[0];
+
+    assert!(metadata.coordinate.x < (grid_size - subgrid_size) as u32);
+    assert!(metadata.coordinate.y < (grid_size - subgrid_size) as u32);
+
+    for y in 0..subgrid_size {
+        for x in 0..subgrid_size {
+            let x_src = (x + (subgrid_size / 2)) % subgrid_size;
+            let y_src = (y + (subgrid_size / 2)) % subgrid_size;
+
+            for p in 0..correlation_count {
+                grid[(
+                    p,
+                    metadata.coordinate.y as usize + y,
+                    metadata.coordinate.x as usize + x,
+                )] += subgrid[(p, y_src, x_src)] * phasor[(y, x)];
+            }
+        }
+    }
 }

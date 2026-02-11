@@ -35,40 +35,56 @@ fn main() {
     let subgrid_count = metadata.len();
     let visibilities: Array4<Complex32> =
         ndarray_npy::read_npy("../../data/visibilities.npy").unwrap();
-    let grid: Array3<Complex32> = Array3::zeros((
+    let mut grid: Array3<Complex32> = Array3::zeros((
         NR_CORRELATIONS_OUT as usize,
         cli.grid_size as usize,
         cli.grid_size as usize,
     ));
     let taper: Array2<f32> = ndarray_npy::read_npy("../../data/taper.npy").unwrap();
-    let mut subgrids: Array4<Complex32> = Array4::zeros((
-        subgrid_count as usize,
-        NR_CORRELATIONS_OUT as usize,
-        cli.subgrid_size as usize,
-        cli.subgrid_size as usize,
-    ));
+    // let mut subgrids: Array4<Complex32> = Array4::zeros((
+    //     subgrid_count as usize,
+    //     NR_CORRELATIONS_OUT as usize,
+    //     cli.subgrid_size as usize,
+    //     cli.subgrid_size as usize,
+    // ));
 
     print_header!("MAIN");
     let gridder = Gridder::new(NR_CORRELATIONS_IN, cli.subgrid_size);
-    time_function!(
-        "grid onto subgrids",
-        gridder.grid_onto_subgrids(
-            W_STEP,
-            cli.image_size(),
-            cli.grid_size,
-            &wavenumbers,
-            &uvw,
-            &visibilities,
-            &taper,
-            &metadata,
-            subgrids.view_mut()
-        )
-    );
+    // time_function!(
+    //     "grid onto subgrids",
+    //     gridder.grid_onto_subgrids(
+    //         W_STEP,
+    //         cli.image_size(),
+    //         cli.grid_size,
+    //         &wavenumbers,
+    //         &uvw,
+    //         &visibilities,
+    //         &taper,
+    //         &metadata,
+    //         subgrids.view_mut()
+    //     )
+    // );
+
+    let mut subgrids: Array4<Complex32> = ndarray_npy::read_npy("../../subgrids.npy").unwrap();
 
     time_function!(
         "ifft the subgrids",
-        gridder.ifft_subgrids(subgrids.view_mut(),)
+        gridder.ifft_subgrids(subgrids.view_mut())
     );
+
+    time_function!(
+        "add subgrids to grid",
+        gridder.add_subgrids_to_grid(metadata.view(), subgrids.view(), grid.view_mut())
+    );
+
+    time_function!(
+        "transform grid",
+        gridder.transform(fftw::types::Sign::Backward, grid.view_mut())
+    );
+
+    ndarray_npy::write_npy("grid.npy", &grid).unwrap();
+
+    println!("{}", &grid);
 
     println!("done!")
 }
