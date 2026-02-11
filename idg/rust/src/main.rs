@@ -1,36 +1,149 @@
-use std::f64::consts::PI;
+use std::f32::consts::PI;
 
-mod idgtypes;
+use clap::Parser;
+use ndarray::prelude::*;
+use num_complex::Complex32;
+
+use crate::{
+    cli::Cli,
+    constants::{NR_CORRELATIONS_IN, NR_CORRELATIONS_OUT, SPEED_OF_LIGHT, W_STEP},
+    gridder::Gridder,
+    init::*,
+    types::{Metadata, UvwArray},
+    util::{print_header, print_param, time_function},
+};
+
+mod cli;
+mod constants;
+mod gridder;
 mod init;
-
-const NR_CORRELATIONS_IN: usize = 2; // XX, YY
-const NR_CORRELATIONS_OUT: usize = 1; // I
-const SUBGRID_SIZE: usize = 32; // size of each subgrid
-const GRID_SIZE: usize = 1024; // size of the full grid
-const OBSERVATION_HOURS: usize = 4; // total observation time in hours
-const NR_TIMESTEPS: usize = OBSERVATION_HOURS * 3600;
-const NR_CHANNELS: usize = 16; // number of frequency channels
-const W_STEP: f64 = 1.0; // w step in wavelengths
-
-const START_FREQUENCY: f64 = 150e6; // 150 MHz
-const FREQUENCY_INCREMENT: f64 = 1e6; // 1 MHz
-const END_FREQUENCY: f64 = START_FREQUENCY + NR_CHANNELS as f64 * FREQUENCY_INCREMENT;
-
-const SPEED_OF_LIGHT: f64 = 299792458.0;
-const IMAGE_SIZE: f64 = SPEED_OF_LIGHT / END_FREQUENCY;
-
-const NR_STATIONS: usize = 20;
-const NR_BASELINES: usize = NR_STATIONS * (NR_STATIONS - 1) / 2;
+mod types;
+mod util;
 
 fn main() {
-    let _uvw = init::get_uvw(OBSERVATION_HOURS, NR_BASELINES, GRID_SIZE, None, None);
-    // TODO: Save uvw to file
+    let cli = cli::Cli::parse();
 
-    println!("Initialize frequencies");
-    let frequencies = init::get_frequencies(START_FREQUENCY, FREQUENCY_INCREMENT, NR_CHANNELS);
-    let _wavenumbers = (frequencies * 2. * PI) / SPEED_OF_LIGHT;
-    // TODO: Save frequencies to file
+    print_parameters(&cli);
 
-    print!("Initialize metadata");
-    // TODO: Get metadata and save to file
+    print_header!("INITIALIZATION");
+
+    let uvw: UvwArray = time_function!(
+        "generate uvws",
+        generate_uvw(
+            cli.timestep_count(),
+            cli.baseline_count(),
+            cli.grid_size,
+            cli.ellipticity,
+            cli.random_seed,
+        )
+    );
+    let frequencies: Array1<f32> = time_function!(
+        "generate frequencies",
+        generate_frequencies(
+            cli.start_frequency,
+            cli.frequency_increment,
+            cli.channel_count,
+        )
+    );
+    let wavenumbers = time_function!(
+        "derive wavenumbers",
+        (&frequencies * 2.0 * PI) / SPEED_OF_LIGHT
+    );
+    let metadata: Array1<Metadata> = time_function!(
+        "generate metadata",
+        generate_metadata(
+            cli.channel_count,
+            cli.subgrid_size,
+            cli.grid_size,
+            &uvw,
+            None,
+        )
+    );
+    let subgrid_count = metadata.len();
+    let visibilities: Array4<Complex32> = time_function!(
+        "generate visibilities",
+        generate_visibilities(
+            NR_CORRELATIONS_IN,
+            cli.channel_count,
+            cli.timestep_count(),
+            cli.baseline_count(),
+            cli.image_size(),
+            cli.grid_size,
+            &frequencies,
+            &uvw,
+            None,
+            None,
+            cli.random_seed,
+        )
+    );
+    let mut grid: Array3<Complex32> = time_function!(
+        "initialize grid",
+        Array3::zeros((
+            NR_CORRELATIONS_OUT as usize,
+            cli.grid_size as usize,
+            cli.grid_size as usize,
+        ))
+    );
+    let mut subgrids: Array4<Complex32> = time_function!(
+        "initialize subgrids",
+        Array4::zeros((
+            subgrid_count as usize,
+            NR_CORRELATIONS_OUT as usize,
+            cli.subgrid_size as usize,
+            cli.subgrid_size as usize,
+        ))
+    );
+    let taper: Array2<f32> = time_function!("get taper", get_taper(cli.subgrid_size));
+
+    print_header!("MAIN");
+    let gridder = Gridder::new(NR_CORRELATIONS_IN, cli.subgrid_size);
+
+    time_function!(
+        "grid onto subgrids",
+        gridder.grid_onto_subgrids(
+            W_STEP,
+            cli.image_size(),
+            cli.grid_size,
+            &wavenumbers,
+            &uvw,
+            &visibilities,
+            &taper,
+            &metadata,
+            subgrids.view_mut()
+        )
+    );
+
+    time_function!(
+        "ifft the subgrids",
+        gridder.ifft_subgrids(subgrids.view_mut())
+    );
+
+    time_function!(
+        "add subgrids to grid",
+        gridder.add_subgrids_to_grid(metadata.view(), subgrids.view(), grid.view_mut())
+    );
+
+    time_function!(
+        "transform grid",
+        gridder.transform(fftw::types::Sign::Backward, grid.view_mut())
+    );
+
+    ndarray_npy::write_npy("grid.npy", &grid).unwrap();
+
+    println!("done!")
+}
+
+fn print_parameters(cli: &Cli) {
+    print_header!("PARAMETERS");
+
+    print_param!("nr_correlations_in", NR_CORRELATIONS_IN);
+    print_param!("nr_correlations_out", NR_CORRELATIONS_OUT);
+    print_param!("start_frequency", cli.start_frequency * 1e-6);
+    print_param!("frequency_increment", cli.frequency_increment * 1e-6);
+    print_param!("nr_channels", cli.channel_count);
+    print_param!("nr_timesteps", cli.timestep_count());
+    print_param!("nr_stations", cli.station_count);
+    print_param!("nr_baselines", cli.baseline_count());
+    print_param!("subgrid_size", cli.subgrid_size);
+    print_param!("grid_size", cli.grid_size);
 }

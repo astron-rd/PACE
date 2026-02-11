@@ -1,127 +1,363 @@
-use crate::idgtypes::{ArrayUVW, UVW};
+//! Functions to initialize dummy data.
 
-use ndarray::{Array, Array1};
-use ndarray_rand::RandomExt;
-use ndarray_rand::rand::{SeedableRng, rngs::StdRng};
-use ndarray_rand::rand_distr::{Beta, Uniform};
-use std::f64::consts::PI;
+use std::f32::consts::PI;
 
-const DEFAULT_ELLIPTICITY: f64 = 0.1;
-const DEFAULT_SEED: u64 = 2;
-const DEFAULT_MAX_GROUP_SIZE: usize = 256;
+use ndarray::{Array, Array1, Array2, Array4, ArrayView1, linspace, s};
+use ndarray_rand::{
+    RandomExt,
+    rand::{Rng, SeedableRng, rngs::StdRng},
+    rand_distr::{Beta, Uniform},
+};
+use num_complex::Complex32;
+
+use crate::{
+    constants::SPEED_OF_LIGHT,
+    types::{Coordinate, Metadata, Uvw, UvwArray, Visibility},
+};
 
 /// Generate simulated UVW data
 ///
-/// # Arguments
-/// * `observation_hours` - Duration of observation in hours
-/// * `nr_baselines` - Number of baselines to simulate
-/// * `grid_size` - Size of the image in pixels (assumed square)
-/// * `ellipticity` - Amount of ellipticity (0 = circular, 1 = highly elliptical)
-/// * `seed` - Random seed for generating baseline ratios and start angles
+/// ## Parameters
+/// - `timestep_count`: Number of timesteps
+/// - `baseline_count`: Number of baselines to simulate
+/// - `grid_size`: Size of the image in pixels (assumed square)
+/// - `ellipticity`: Amount of ellipticity (0=circular, 1=highly elliptical) (Optional, default = 0.1)
+/// - `seed`: Random seed for generating baseline ratios and starting angles (Optional, default = 2)
 ///
-/// # Returns
-/// * `ArrayUVW` - Array with shape (nr_baselines, nr_timesteps)
-pub fn get_uvw(
-    observation_hours: usize,
-    nr_baselines: usize,
-    grid_size: usize,
-    ellipticity: Option<f64>,
+///  Returns a UVW array of size (`baseline_count` * `timestep_count`)
+pub fn generate_uvw(
+    timestep_count: u32,
+    baseline_count: u32,
+    grid_size: u32,
+    ellipticity: Option<f32>,
     seed: Option<u64>,
-) -> ArrayUVW {
-    // Set default values if not provided
-    let ellipticity = ellipticity.unwrap_or(DEFAULT_ELLIPTICITY);
-    let seed = seed.unwrap_or(DEFAULT_SEED);
+) -> UvwArray {
+    let ellipticity = ellipticity.unwrap_or(0.1);
+    let seed = seed.unwrap_or(2);
     let mut rng = StdRng::seed_from_u64(seed);
 
-    // Convert observation time to seconds (1 sample per second)
-    let observation_seconds = observation_hours * 3600;
-    let time_samples =
-        Array::linspace(0., observation_seconds as f64, observation_seconds as usize);
-    let nr_timesteps = observation_seconds;
+    // Initialize time_samples array with incrementing floats
+    let time_samples = Array::from_iter(0..timestep_count).mapv(|x| x as f32);
 
-    // Initialize uvw array
-    let mut uvw = ArrayUVW::zeros((nr_baselines, nr_timesteps));
+    // Initialize uvw array with zeroes
+    let mut uvw: UvwArray = UvwArray::zeros((
+        baseline_count.try_into().unwrap(),
+        timestep_count.try_into().unwrap(),
+    ));
 
-    // Calculate maximum UV distance
-    let max_uv = 0.7 * (grid_size as f64) / 2.;
+    let max_uv = 0.7 * (grid_size / 2) as f32;
 
     // Generate baseline ratios with more short baselines (beta distribution)
     // Beta distribution with alpha=1, beta=3 peaks at 0 and decreases
-    let beta = Beta::new(1., 3.).unwrap();
-    let baseline_ratios = Array::random_using(nr_baselines, beta, &mut rng);
+    let beta_distribution = Beta::new(1.0f32, 3.0f32).expect("Should be a valid distribution.");
+    let baseline_ratios = Array::random_using(baseline_count as usize, beta_distribution, &mut rng);
 
     // Generate random starting angles for each baseline
-    let start_angles = Array::random_using(nr_baselines, Uniform::new(0., 2. * PI), &mut rng);
+    let start_angles = Array::random_using(
+        baseline_count as usize,
+        Uniform::new(0.0, 2.0 * PI).expect("Should be a valid distribution."),
+        &mut rng,
+    );
 
     // Calculate the UV coordinates for each baseline
-    for (bl, ratio) in baseline_ratios.iter().enumerate() {
+    for (baseline, ratio) in baseline_ratios.iter().enumerate() {
         // Calculate radius for this baseline
-        let (mut radius_u, mut radius_v) = (ratio * max_uv, ratio * max_uv);
+        let mut u_radius = ratio * max_uv;
+        let mut v_radius = ratio * max_uv;
 
-        // Apply ellipticity if specified
-        if ellipticity > 0. {
+        if ellipticity > 0.0 {
             // Make the ellipse orientation depend on the baseline
             // Longer baselines have more ellipticity
-            let ellipse_factor = 1. + ellipticity * ratio;
-            radius_u = radius_u * ellipse_factor;
-            radius_v = radius_v / ellipse_factor;
+            let ellipse_factor = 1.0 + ellipticity * ratio;
+            u_radius *= ellipse_factor;
+            v_radius /= ellipse_factor;
         }
 
         // Calculate angular velocity (complete circle in 24 hours)
-        // For shorter observations, we get an arc instead of a full circle
-        let angular_velocity = 2. * PI / (24. * 3600.); // radians per second
+        // For shorter observations, we get an arc instead of full circle
+        let angular_velocity = (2.0 * PI) / (24 * 3600) as f32;
 
         // Generate UV coordinates with random starting angle
-        let angle = start_angles[bl] + angular_velocity * &time_samples;
-        let coords_u = radius_u * angle.mapv(f64::cos) + grid_size as f64 / 2.;
-        let coords_v = radius_v * angle.mapv(f64::sin) + grid_size as f64 / 2.;
+        let angle = start_angles[baseline] + angular_velocity * &time_samples;
+        let u_coords = u_radius * angle.cos();
+        let v_coords = v_radius * angle.sin();
 
-        // Store the coordinates
-        for t in 0..nr_timesteps {
-            uvw[(bl, t)] = UVW::new(coords_u[t], coords_v[t], 0.);
+        for t in 0..timestep_count as usize {
+            uvw[(baseline, t)] = Uvw::new(
+                u_coords[t] + (grid_size / 2) as f32,
+                v_coords[t] + (grid_size / 2) as f32,
+                0.,
+            );
         }
     }
 
-    return uvw;
+    uvw
 }
 
-/// Generate array of frequencies for each channel
+/// Generate array of frequencies for each channel.
 ///
-/// # Arguments
-/// * `start_frequency` - Starting frequency in Hz
-/// * `frequency_increment` - Increment in Hz between consecutive channels
-/// * `nr_channels` - Number of frequency channels
+/// ## Parameters
+/// - `start_frequency`: Starting frequency in Hz
+/// - `frequency_increment`: Increment in Hz between consecutive channels
+/// - `channel_count`: Number of frequency channels
 ///
-/// # Returns
-/// * `Array1<f64>` - Array of frequencies with shape (nr_channels)
-pub fn get_frequencies(
-    start_frequency: f64,
-    frequency_increment: f64,
-    nr_channels: usize,
-) -> Array1<f64> {
-    Array1::range(
+/// Returns frequencies array, shape (`channel_count`)
+pub fn generate_frequencies(
+    start_frequency: f32,
+    frequency_increment: f32,
+    channel_count: u32,
+) -> Array1<f32> {
+    Array::range(
         start_frequency,
-        start_frequency + nr_channels as f64 * frequency_increment,
+        start_frequency + (channel_count as f32 * frequency_increment),
         frequency_increment,
     )
 }
 
-/// Compute metadata for all baselines
+/// Compute metadata for all baselines.
 ///
-/// # Arguments
-/// * `nr_channels` - Number of frequency channels
-/// * `subgrid_size` - Size of each subgrid
-/// * `uvw` - Array of uvw coordinates, shape (nr_baselines, nr_timesteps, 3)
-/// * `max_group_size` - Maximum number of visibilities (timesteps) in a group
+/// ## Parameters
+/// - `nr_channels`: number of frequency channels
+/// - `subgrid_size`: size of the subgrid
+/// - `grid_size`: size of the grid
+/// - `uvw`: array of uvw coordinates, shape (nr_baselines, nr_timesteps, 3)
+/// - `max_group_size`: maximum number of visibilities (timesteps) in a group
 ///
-/// # Returns
-/// `Array1<f64>` - Array of metadata with shape (nr_subgrids)
-pub fn get_metadata(
-    nr_channels: usize,
-    subgrid_size: usize,
-    uvw: &ArrayUVW,
-    max_group_size: Option<usize>,
+/// Returns a metadata array, shape (`nr_subgrids`)
+pub fn generate_metadata(
+    channel_count: u32,
+    subgrid_size: u32,
+    grid_size: u32,
+    uvw: &UvwArray,
+    max_group_size: Option<u32>,
+) -> Array1<Metadata> {
+    let max_group_size = max_group_size.unwrap_or(256);
+
+    let u_pixels = uvw.mapv(|x| x.u);
+    let v_pixels = uvw.mapv(|x| x.v);
+
+    let baseline_count = uvw.shape()[0];
+
+    let mut metadata = Vec::new();
+
+    for baseline in 0..baseline_count {
+        metadata.extend(compute_metadata(
+            grid_size,
+            subgrid_size,
+            channel_count,
+            baseline.try_into().unwrap(),
+            u_pixels.slice(s![baseline, ..]),
+            v_pixels.slice(s![baseline, ..]),
+            max_group_size,
+        ));
+    }
+
+    metadata.into()
+}
+
+pub fn compute_metadata(
+    grid_size: u32,
+    subgrid_size: u32,
+    channel_count: u32,
+    baseline: u32,
+    u_pixels: ArrayView1<f32>,
+    v_pixels: ArrayView1<f32>,
+    max_group_size: u32,
+) -> Vec<Metadata> {
+    let mut metadata = Vec::new();
+
+    let timestep_count = u_pixels.shape()[0];
+    let max_distance = 0.8 * subgrid_size as f32;
+
+    let mut timestep = 0;
+    while timestep < timestep_count {
+        let current_u = u_pixels[timestep];
+        let current_v = v_pixels[timestep];
+
+        // TODO: Add better explanation for what's happening with the group_size here
+        let mut group_size = 1;
+        while (timestep + group_size < timestep_count)
+            && ((group_size as u32) < max_group_size)
+            && (((u_pixels[timestep + group_size] - current_u).powi(2)
+                + (v_pixels[timestep + group_size] - current_v).powi(2))
+            .sqrt()
+                <= max_distance)
+        {
+            group_size += 1;
+        }
+
+        let group_u = u_pixels
+            .slice(s![timestep..timestep + group_size])
+            .mean()
+            .expect("This slice should not be empty");
+        let group_v = v_pixels
+            .slice(s![timestep..timestep + group_size])
+            .mean()
+            .expect("This slice should not be empty");
+
+        let subgrid_x = group_u as u32 - (subgrid_size / 2);
+        let subgrid_y = group_v as u32 - (subgrid_size / 2);
+        let subgrid_x = subgrid_x.clamp(0, grid_size - subgrid_size);
+        let subgrid_y = subgrid_y.clamp(0, grid_size - subgrid_size);
+
+        metadata.push(Metadata {
+            baseline,
+            time_index: timestep.try_into().unwrap(),
+            timestep_count: group_size.try_into().unwrap(),
+            channel_begin: 0,
+            channel_end: channel_count,
+            coordinate: Coordinate {
+                x: subgrid_x,
+                y: subgrid_y,
+                z: 0,
+            },
+        });
+
+        timestep += group_size;
+    }
+
+    metadata
+}
+
+pub fn generate_visibilities(
+    correlation_count: u32,
+    channel_count: u32,
+    timestep_count: u32,
+    baseline_count: u32,
+    image_size: f32,
+    grid_size: u32,
+    frequencies: &Array1<f32>,
+    uvw: &UvwArray,
+    point_sources_count: Option<u32>,
+    max_pixel_offset: Option<u32>,
+    seed: Option<u64>,
+) -> Array4<Complex32> {
+    let point_sources_count = point_sources_count.unwrap_or(4);
+    let max_pixel_offset = max_pixel_offset.unwrap_or(grid_size / 3);
+    let seed = seed.unwrap_or(2);
+
+    let mut visibilities: Array4<Visibility> = Array4::zeros((
+        baseline_count.try_into().unwrap(),
+        timestep_count.try_into().unwrap(),
+        channel_count.try_into().unwrap(),
+        correlation_count.try_into().unwrap(),
+    ));
+
+    let mut offsets = Vec::new();
+    let mut rng = StdRng::seed_from_u64(seed);
+
+    for _ in 0..point_sources_count {
+        let x = (rng.random::<f32>() * max_pixel_offset as f32) - (max_pixel_offset / 2) as f32;
+        let y = (rng.random::<f32>() * max_pixel_offset as f32) - (max_pixel_offset / 2) as f32;
+        offsets.push((x, y));
+    }
+
+    for offset in offsets {
+        let amplitude = 1.0;
+
+        // Convert offset from grid cells to radians (l,m)
+        let l = offset.0 * image_size / grid_size as f32;
+        let m = offset.1 * image_size / grid_size as f32;
+
+        for baseline in 0..baseline_count {
+            add_point_source_to_baseline(
+                baseline,
+                timestep_count,
+                channel_count,
+                amplitude,
+                frequencies,
+                uvw,
+                l,
+                m,
+                &mut visibilities,
+            )
+        }
+    }
+
+    visibilities
+}
+
+pub fn add_point_source_to_baseline(
+    baseline: u32,
+    timestep_count: u32,
+    channel_count: u32,
+    amplitude: f32,
+    frequencies: &Array1<f32>,
+    uvw: &UvwArray,
+    l: f32,
+    m: f32,
+    visibilities: &mut Array4<Visibility>,
 ) {
-    let pixels_u = uvw.map(|coord| coord.u);
-    let pixels_v = uvw.map(|coord| coord.v);
+    let baseline = baseline as usize;
+    for t in 0..timestep_count as usize {
+        for c in 0..channel_count as usize {
+            let u = (frequencies[c] / SPEED_OF_LIGHT) * uvw[(baseline, t)].u;
+            let v = (frequencies[c] / SPEED_OF_LIGHT) * uvw[(baseline, t)].v;
+
+            let phase = -2.0 * PI * (u * l + v * m);
+            let value = amplitude * (phase * Complex32::new(0., 1.)).exp();
+
+            // TODO: This is awful, please Rustify
+            visibilities
+                .slice_mut(s![baseline, t, c, ..])
+                .mapv_inplace(|x| x + value);
+        }
+    }
+}
+
+pub fn get_taper(subgrid_size: u32) -> Array2<f32> {
+    let x: Array1<f32> = linspace(-1.0_f32..1.0, subgrid_size as usize)
+        .map(|x| x.abs())
+        .collect();
+    let spheroidal = x.map(|x| evaluate_spheroidal(*x));
+
+    let mat_1n = spheroidal
+        .to_shape((1, spheroidal.len()))
+        .expect("1D array should fit in 1xN matrix.");
+    let mat_n1 = mat_1n.clone().reversed_axes();
+
+    (mat_1n * mat_n1).to_owned()
+}
+
+pub fn evaluate_spheroidal(x: f32) -> f32 {
+    #[rustfmt::skip]
+    let p: [[f32; 5]; 2] = [
+        [8.203343e-2, -3.644705e-1, 6.278660e-1, -5.335581e-1, 2.312756e-1],
+        [4.028559e-3, -3.697768e-2, 1.021332e-1, -1.201436e-1, 6.412774e-2],
+    ];
+    #[rustfmt::skip]
+    let q: [[f32; 3]; 2] = [
+        [1.0000000e0, 8.212018e-1, 2.078043e-1],
+        [1.0000000e0, 9.599102e-1, 2.918724e-1],
+    ];
+
+    let (part, end): (usize, f32) = match x {
+        0.0..0.75 => (0, 0.75),
+        0.75..=1.0 => (1, 1.0),
+        _ => return 0.0,
+    };
+
+    // TODO: This bit is kinda ugly, might be able to use some cleaning up
+    // TODO: Potentially split off `evaluate_polynomial` function
+    let x_squared = x.powi(2);
+    let del_x_squared = x_squared - end.powi(2);
+    let mut del_x_squared_pow = del_x_squared;
+    let mut top = p[part][0];
+    for p in p[part].iter().skip(1) {
+        top += p * del_x_squared_pow;
+        del_x_squared_pow *= del_x_squared;
+    }
+
+    let mut btm = q[part][0];
+    del_x_squared_pow = del_x_squared;
+    for q in q[part].iter().skip(1) {
+        btm += q * del_x_squared_pow;
+        del_x_squared_pow *= del_x_squared;
+    }
+
+    if btm == 0.0 {
+        0.0
+    } else {
+        (1.0 - x_squared) * (top / btm)
+    }
 }
