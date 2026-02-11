@@ -1,8 +1,8 @@
-use byteorder::{BigEndian, LittleEndian, ReadBytesExt, WriteBytesExt};
+use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use ndarray_npy::{ReadDataError, ReadableElement, WritableElement};
 use num_complex::Complex32;
 use py_literal::Value;
-use std::{fs::read, io, ops::Add};
+use std::{io, ops::Add};
 
 use ndarray::Array2;
 use num_traits::identities::Zero;

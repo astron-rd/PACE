@@ -1,4 +1,4 @@
-use std::{f32::consts::PI, ops::Index};
+use std::f32::consts::PI;
 
 use fftw::{
     array::AlignedVec,

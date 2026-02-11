@@ -27,45 +27,91 @@ fn main() {
 
     print_header!("INITIALIZATION");
 
-    let uvw: UvwArray = ndarray_npy::read_npy("../../data/uvw.npy").unwrap();
-    let frequencies64: Array1<f64> = ndarray_npy::read_npy("../../data/frequencies.npy").unwrap();
-    let frequencies: Array1<f32> = frequencies64.mapv(|x| x as f32);
-    let wavenumbers = (frequencies * 2.0 * PI) / SPEED_OF_LIGHT;
-    let metadata: Array1<Metadata> = ndarray_npy::read_npy("../../data/metadata.npy").unwrap();
+    let uvw: UvwArray = time_function!(
+        "generate uvws",
+        generate_uvw(
+            cli.timestep_count(),
+            cli.baseline_count(),
+            cli.grid_size,
+            cli.ellipticity,
+            cli.random_seed,
+        )
+    );
+    let frequencies: Array1<f32> = time_function!(
+        "generate frequencies",
+        generate_frequencies(
+            cli.start_frequency,
+            cli.frequency_increment,
+            cli.channel_count,
+        )
+    );
+    let wavenumbers = time_function!(
+        "derive wavenumbers",
+        (&frequencies * 2.0 * PI) / SPEED_OF_LIGHT
+    );
+    let metadata: Array1<Metadata> = time_function!(
+        "generate metadata",
+        generate_metadata(
+            cli.channel_count,
+            cli.subgrid_size,
+            cli.grid_size,
+            &uvw,
+            None,
+        )
+    );
     let subgrid_count = metadata.len();
-    let visibilities: Array4<Complex32> =
-        ndarray_npy::read_npy("../../data/visibilities.npy").unwrap();
-    let mut grid: Array3<Complex32> = Array3::zeros((
-        NR_CORRELATIONS_OUT as usize,
-        cli.grid_size as usize,
-        cli.grid_size as usize,
-    ));
-    let taper: Array2<f32> = ndarray_npy::read_npy("../../data/taper.npy").unwrap();
-    // let mut subgrids: Array4<Complex32> = Array4::zeros((
-    //     subgrid_count as usize,
-    //     NR_CORRELATIONS_OUT as usize,
-    //     cli.subgrid_size as usize,
-    //     cli.subgrid_size as usize,
-    // ));
+    let visibilities: Array4<Complex32> = time_function!(
+        "generate visibilities",
+        generate_visibilities(
+            NR_CORRELATIONS_IN,
+            cli.channel_count,
+            cli.timestep_count(),
+            cli.baseline_count(),
+            cli.image_size(),
+            cli.grid_size,
+            &frequencies,
+            &uvw,
+            None,
+            None,
+            cli.random_seed,
+        )
+    );
+    let mut grid: Array3<Complex32> = time_function!(
+        "initialize grid",
+        Array3::zeros((
+            NR_CORRELATIONS_OUT as usize,
+            cli.grid_size as usize,
+            cli.grid_size as usize,
+        ))
+    );
+    let mut subgrids: Array4<Complex32> = time_function!(
+        "initialize subgrids",
+        Array4::zeros((
+            subgrid_count as usize,
+            NR_CORRELATIONS_OUT as usize,
+            cli.subgrid_size as usize,
+            cli.subgrid_size as usize,
+        ))
+    );
+    let taper: Array2<f32> = time_function!("get taper", get_taper(cli.subgrid_size));
 
     print_header!("MAIN");
     let gridder = Gridder::new(NR_CORRELATIONS_IN, cli.subgrid_size);
-    // time_function!(
-    //     "grid onto subgrids",
-    //     gridder.grid_onto_subgrids(
-    //         W_STEP,
-    //         cli.image_size(),
-    //         cli.grid_size,
-    //         &wavenumbers,
-    //         &uvw,
-    //         &visibilities,
-    //         &taper,
-    //         &metadata,
-    //         subgrids.view_mut()
-    //     )
-    // );
 
-    let mut subgrids: Array4<Complex32> = ndarray_npy::read_npy("../../subgrids.npy").unwrap();
+    time_function!(
+        "grid onto subgrids",
+        gridder.grid_onto_subgrids(
+            W_STEP,
+            cli.image_size(),
+            cli.grid_size,
+            &wavenumbers,
+            &uvw,
+            &visibilities,
+            &taper,
+            &metadata,
+            subgrids.view_mut()
+        )
+    );
 
     time_function!(
         "ifft the subgrids",
@@ -83,8 +129,6 @@ fn main() {
     );
 
     ndarray_npy::write_npy("grid.npy", &grid).unwrap();
-
-    println!("{}", &grid);
 
     println!("done!")
 }

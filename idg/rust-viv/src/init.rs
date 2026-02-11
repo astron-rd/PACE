@@ -2,7 +2,7 @@
 
 use std::f32::consts::PI;
 
-use ndarray::{Array, Array1, Array2, Array4, ArrayBase, ArrayView1, linspace, s};
+use ndarray::{Array, Array1, Array2, Array4, ArrayView1, linspace, s};
 use ndarray_rand::{
     RandomExt,
     rand::{Rng, SeedableRng, rngs::StdRng},
