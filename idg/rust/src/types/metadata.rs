@@ -1,131 +1,12 @@
+use std::io;
+
+use crate::{cli::Cli, types::UvwArray};
+
+use super::{check_for_extra_bytes, check_type_desc};
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
+use ndarray::prelude::*;
 use ndarray_npy::{ReadDataError, ReadableElement, WritableElement};
-use num_complex::Complex32;
 use py_literal::Value;
-use std::{io, ops::Add};
-
-use ndarray::Array2;
-use num_traits::identities::Zero;
-
-/// 3-dimensional vector with UVW parameters
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub struct Uvw {
-    pub u: f32,
-    pub v: f32,
-    pub w: f32,
-}
-
-impl Uvw {
-    pub fn new(u: f32, v: f32, w: f32) -> Self {
-        Uvw { u, v, w }
-    }
-}
-
-impl Add for Uvw {
-    type Output = Self;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        Uvw {
-            u: self.u + rhs.u,
-            v: self.v + rhs.u,
-            w: self.w + rhs.u,
-        }
-    }
-}
-
-impl Zero for Uvw {
-    fn zero() -> Self {
-        Self {
-            u: 0.0,
-            v: 0.0,
-            w: 0.0,
-        }
-    }
-
-    fn is_zero(&self) -> bool {
-        self.u == 0.0 && self.v == 0.0 && self.w == 0.0
-    }
-}
-
-impl ReadableElement for Uvw {
-    fn read_to_end_exact_vec<R: std::io::Read>(
-        mut reader: R,
-        type_desc: &py_literal::Value,
-        len: usize,
-    ) -> Result<Vec<Self>, ReadDataError> {
-        check_type_desc(type_desc, "[('u', '<f4'), ('v', '<f4'), ('w', '<f4')]")?;
-
-        let mut out = Vec::with_capacity(len);
-
-        for _ in 0..len {
-            let u = reader.read_f32::<LittleEndian>()?;
-            let v = reader.read_f32::<LittleEndian>()?;
-            let w = reader.read_f32::<LittleEndian>()?;
-
-            out.push(Uvw::new(u, v, w));
-        }
-
-        check_for_extra_bytes(&mut reader)?;
-
-        Ok(out)
-    }
-}
-
-impl WritableElement for Uvw {
-    fn type_descriptor() -> Value {
-        Value::List(vec![
-            Value::Tuple(vec![Value::String("u".into()), Value::String("<f4".into())]),
-            Value::Tuple(vec![Value::String("v".into()), Value::String("<f4".into())]),
-            Value::Tuple(vec![Value::String("w".into()), Value::String("<f4".into())]),
-        ])
-    }
-
-    fn write<W: io::Write>(&self, mut writer: W) -> Result<(), ndarray_npy::WriteDataError> {
-        writer.write_f32::<LittleEndian>(self.u)?;
-        writer.write_f32::<LittleEndian>(self.v)?;
-        writer.write_f32::<LittleEndian>(self.w)?;
-        Ok(())
-    }
-
-    fn write_slice<W: io::Write>(
-        slice: &[Self],
-        mut writer: W,
-    ) -> Result<(), ndarray_npy::WriteDataError> {
-        for item in slice {
-            WritableElement::write(item, &mut writer)?;
-        }
-        Ok(())
-    }
-}
-
-fn check_type_desc(type_desc: &Value, expected: &str) -> Result<(), ReadDataError> {
-    // Is this cheating? Potentially.
-    // Does it really matter in this context? I don't think so.
-    let signature = format!("{}", type_desc);
-
-    if signature == expected {
-        Ok(())
-    } else {
-        Err(ReadDataError::WrongDescriptor(type_desc.clone()))
-    }
-}
-
-/// Returns `Ok(_)` iff the `reader` had no more bytes on entry to this
-/// function.
-///
-/// This function is taken from `ndarray-npy`, file `src/npy/elements/mod.rs`.
-///
-/// **Warning** This will consume the remainder of the reader.
-fn check_for_extra_bytes<R: io::Read>(reader: &mut R) -> Result<(), ReadDataError> {
-    let num_extra_bytes = reader.read_to_end(&mut Vec::new())?;
-    if num_extra_bytes == 0 {
-        Ok(())
-    } else {
-        Err(ReadDataError::ExtraBytes(num_extra_bytes))
-    }
-}
-
-pub type UvwArray = Array2<Uvw>;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Metadata {
@@ -246,4 +127,118 @@ pub struct Coordinate {
     pub z: u32,
 }
 
-pub type Visibility = Complex32;
+pub type MetadataArray = Array1<Metadata>;
+
+pub trait MetadataArrayExtension {
+    fn generate(cli: &Cli, uvw: &UvwArray) -> Self;
+    fn from_file(path: &str) -> Result<Self, ndarray_npy::ReadNpyError>
+    where
+        Self: Sized;
+}
+
+impl MetadataArrayExtension for MetadataArray {
+    /// Compute metadata for all baselines.
+    ///
+    /// Returns a metadata array, shape (`subgrid_count`)
+    fn generate(cli: &Cli, uvw: &UvwArray) -> Self {
+        let max_group_size = 256; // TODO: Add this to CLI struct
+
+        let u_pixels = uvw.mapv(|x| x.u);
+        let v_pixels = uvw.mapv(|x| x.v);
+
+        let baseline_count = uvw.shape()[0];
+
+        let mut metadata = Vec::new();
+
+        for baseline in 0..baseline_count {
+            metadata.extend(compute_metadata(
+                cli.grid_size,
+                cli.subgrid_size,
+                cli.channel_count,
+                baseline.try_into().unwrap(),
+                u_pixels.slice(s![baseline, ..]),
+                v_pixels.slice(s![baseline, ..]),
+                max_group_size,
+            ));
+        }
+
+        metadata.into()
+    }
+
+    /// Read metadata data from npy file
+    ///
+    /// ## Parameters
+    /// - `path`: Path to the npy file
+    ///
+    /// Returns a metadata array, shape (`subgrid_count`)
+    fn from_file(path: &str) -> Result<Self, ndarray_npy::ReadNpyError>
+    where
+        Self: Sized,
+    {
+        ndarray_npy::read_npy(path)
+    }
+}
+
+fn compute_metadata(
+    grid_size: u32,
+    subgrid_size: u32,
+    channel_count: u32,
+    baseline: u32,
+    u_pixels: ArrayView1<f32>,
+    v_pixels: ArrayView1<f32>,
+    max_group_size: u32,
+) -> Vec<Metadata> {
+    let mut metadata = Vec::new();
+
+    let timestep_count = u_pixels.shape()[0];
+    let max_distance = 0.8 * subgrid_size as f32;
+
+    let mut timestep = 0;
+    while timestep < timestep_count {
+        let current_u = u_pixels[timestep];
+        let current_v = v_pixels[timestep];
+
+        // TODO: Add better explanation for what's happening with the group_size here
+        let mut group_size = 1;
+        while (timestep + group_size < timestep_count)
+            && ((group_size as u32) < max_group_size)
+            && (((u_pixels[timestep + group_size] - current_u).powi(2)
+                + (v_pixels[timestep + group_size] - current_v).powi(2))
+            .sqrt()
+                <= max_distance)
+        {
+            group_size += 1;
+        }
+
+        let group_u = u_pixels
+            .slice(s![timestep..timestep + group_size])
+            .mean()
+            .expect("This slice should not be empty");
+        let group_v = v_pixels
+            .slice(s![timestep..timestep + group_size])
+            .mean()
+            .expect("This slice should not be empty");
+
+        let subgrid_x = group_u as u32 - (subgrid_size / 2);
+        let subgrid_y = group_v as u32 - (subgrid_size / 2);
+        let subgrid_x = subgrid_x.clamp(0, grid_size - subgrid_size);
+        let subgrid_y = subgrid_y.clamp(0, grid_size - subgrid_size);
+
+        metadata.push(Metadata {
+            baseline,
+            time_index: timestep.try_into().unwrap(),
+            timestep_count: group_size.try_into().unwrap(),
+            channel_begin: 0,
+            channel_end: channel_count,
+            coordinate: Coordinate {
+                x: subgrid_x,
+                y: subgrid_y,
+                z: 0,
+            },
+        });
+
+        timestep += group_size;
+    }
+
+    metadata
+}

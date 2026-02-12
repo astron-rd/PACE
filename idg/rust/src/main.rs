@@ -1,22 +1,16 @@
-use std::f32::consts::PI;
-
 use clap::Parser;
-use ndarray::prelude::*;
-use num_complex::Complex32;
 
 use crate::{
     cli::Cli,
-    constants::{NR_CORRELATIONS_IN, NR_CORRELATIONS_OUT, SPEED_OF_LIGHT, W_STEP},
+    constants::{NR_CORRELATIONS_IN, NR_CORRELATIONS_OUT, W_STEP},
     gridder::Gridder,
-    init::*,
-    types::{Metadata, UvwArray},
+    types::*,
     util::{print_header, print_param, time_function},
 };
 
 mod cli;
 mod constants;
 mod gridder;
-mod init;
 mod types;
 mod util;
 
@@ -27,73 +21,34 @@ fn main() {
 
     print_header!("INITIALIZATION");
 
-    let uvw: UvwArray = time_function!(
-        "generate uvws",
-        generate_uvw(
-            cli.timestep_count(),
-            cli.baseline_count(),
-            cli.grid_size,
-            cli.ellipticity,
-            cli.random_seed,
-        )
-    );
-    let frequencies: Array1<f32> = time_function!(
-        "generate frequencies",
-        generate_frequencies(
-            cli.start_frequency,
-            cli.frequency_increment,
-            cli.channel_count,
-        )
-    );
-    let wavenumbers = time_function!(
+    let uvw: UvwArray = time_function!("generate uvws", UvwArray::generate(&cli));
+
+    let frequencies: FrequencyArray =
+        time_function!("generate frequencies", FrequencyArray::generate(&cli));
+
+    let wavenumbers: WavenumberArray = time_function!(
         "derive wavenumbers",
-        (&frequencies * 2.0 * PI) / SPEED_OF_LIGHT
+        WavenumberArray::from_frequencies(&frequencies)
     );
-    let metadata: Array1<Metadata> = time_function!(
-        "generate metadata",
-        generate_metadata(
-            cli.channel_count,
-            cli.subgrid_size,
-            cli.grid_size,
-            &uvw,
-            None,
-        )
-    );
+
+    let metadata: MetadataArray =
+        time_function!("generate metadata", MetadataArray::generate(&cli, &uvw));
+
     let subgrid_count = metadata.len();
-    let visibilities: Array4<Complex32> = time_function!(
+
+    let visibilities: VisibilityArray = time_function!(
         "generate visibilities",
-        generate_visibilities(
-            NR_CORRELATIONS_IN,
-            cli.channel_count,
-            cli.timestep_count(),
-            cli.baseline_count(),
-            cli.image_size(),
-            cli.grid_size,
-            &frequencies,
-            &uvw,
-            None,
-            None,
-            cli.random_seed,
-        )
+        VisibilityArray::generate(&cli, &frequencies, &uvw, None, None)
     );
-    let mut grid: Array3<Complex32> = time_function!(
-        "initialize grid",
-        Array3::zeros((
-            NR_CORRELATIONS_OUT as usize,
-            cli.grid_size as usize,
-            cli.grid_size as usize,
-        ))
-    );
-    let mut subgrids: Array4<Complex32> = time_function!(
+
+    let mut subgrids: Subgrids = time_function!(
         "initialize subgrids",
-        Array4::zeros((
-            subgrid_count as usize,
-            NR_CORRELATIONS_OUT as usize,
-            cli.subgrid_size as usize,
-            cli.subgrid_size as usize,
-        ))
+        Subgrids::initialize(&cli, subgrid_count)
     );
-    let taper: Array2<f32> = time_function!("get taper", get_taper(cli.subgrid_size));
+
+    let mut grid: Grid = time_function!("initialize grid", Grid::initialize(&cli));
+
+    let taper: Taper = time_function!("get taper", Taper::generate(&cli));
 
     print_header!("MAIN");
     let gridder = Gridder::new(NR_CORRELATIONS_IN, cli.subgrid_size);
