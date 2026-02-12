@@ -53,7 +53,6 @@ pub struct Cli {
     pub timing_output: Option<PathBuf>,
 }
 
-#[allow(unused)] // These functions are here for potential future use
 impl Cli {
     // Derived values:
     /// The number of timesteps, as derived from the observation time.

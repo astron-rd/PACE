@@ -41,49 +41,37 @@ fn main() {
         VisibilityArray::generate(&cli, &frequencies, &uvw, None, None)
     );
 
-    let mut subgrids: Subgrids = time_function!(
-        "initialize subgrids",
-        Subgrids::initialize(&cli, subgrid_count)
-    );
-
-    let mut grid: Grid = time_function!("initialize grid", Grid::initialize(&cli));
-
     let taper: Taper = time_function!("get taper", Taper::generate(&cli));
 
     print_header!("MAIN");
-    let gridder = Gridder::new(NR_CORRELATIONS_IN, cli.subgrid_size);
+    let mut gridder = Gridder::new_empty(&cli, subgrid_count);
 
     time_function!(
         "grid onto subgrids",
         gridder.grid_onto_subgrids(
+            &cli,
             W_STEP,
-            cli.image_size(),
-            cli.grid_size,
             &wavenumbers,
             &uvw,
             &visibilities,
             &taper,
             &metadata,
-            subgrids.view_mut()
         )
     );
 
-    time_function!(
-        "ifft the subgrids",
-        gridder.ifft_subgrids(subgrids.view_mut())
-    );
+    time_function!("ifft the subgrids", gridder.ifft_subgrids());
 
     time_function!(
         "add subgrids to grid",
-        gridder.add_subgrids_to_grid(metadata.view(), subgrids.view(), grid.view_mut())
+        gridder.add_subgrids_to_grid(metadata.view())
     );
 
     time_function!(
         "transform grid",
-        gridder.transform(fftw::types::Sign::Backward, grid.view_mut())
+        gridder.transform(fftw::types::Sign::Backward)
     );
 
-    ndarray_npy::write_npy("grid.npy", &grid).unwrap();
+    ndarray_npy::write_npy("grid.npy", gridder.grid()).unwrap();
 
     println!("done!")
 }

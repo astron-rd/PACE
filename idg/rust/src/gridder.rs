@@ -9,55 +9,71 @@ use ndarray::{Zip, prelude::*};
 use num_complex::Complex32;
 
 use crate::{
+    cli::Cli,
     constants::{NR_CORRELATIONS_IN, NR_CORRELATIONS_OUT},
-    types::{Metadata, Uvw, UvwArray},
+    types::{Grid, GridExtension, Metadata, Subgrids, SubgridsExtension, Uvw, UvwArray},
 };
 
 pub struct Gridder {
     nr_correlations_in: u32,
     nr_correlations_out: u32,
     subgrid_size: u32,
+
+    subgrids: Subgrids,
+    grid: Grid,
 }
 
 impl Gridder {
-    pub fn new(nr_correlations_in: u32, subgrid_size: u32) -> Self {
+    pub fn subgrids(&self) -> &Subgrids {
+        &self.subgrids
+    }
+
+    pub fn grid(&self) -> &Grid {
+        &self.grid
+    }
+
+    pub fn into_grid_subgrids(self) -> (Grid, Subgrids) {
+        (self.grid, self.subgrids)
+    }
+    
+    pub fn new_empty(cli: &Cli, subgrid_count: usize) -> Self {
         Self {
-            nr_correlations_in,
-            nr_correlations_out: if nr_correlations_in == 4 { 4 } else { 1 },
-            subgrid_size,
+            nr_correlations_in: NR_CORRELATIONS_IN,
+            nr_correlations_out: if NR_CORRELATIONS_IN == 4 { 4 } else { 1 },
+            subgrid_size: cli.subgrid_size,
+            subgrids: Subgrids::initialize(&cli, subgrid_count),
+            grid: Grid::initialize(&cli),
         }
     }
 
     pub fn grid_onto_subgrids(
-        &self,
+        &mut self,
+        cli: &Cli,
         w_step: f32,
-        image_size: f32,
-        grid_size: u32,
         wavenumbers: &Array1<f32>,
         uvw: &UvwArray,
         visibilities: &Array4<Complex32>,
         taper: &Array2<f32>,
         metadata: &Array1<Metadata>,
-        mut subgrids: ArrayViewMut4<Complex32>,
     ) {
         assert_eq!(self.nr_correlations_in as usize, visibilities.shape()[3]);
-        assert_eq!(self.nr_correlations_out as usize, subgrids.shape()[1]);
-        assert_eq!(self.subgrid_size as usize, subgrids.shape()[2]);
+        assert_eq!(self.nr_correlations_out as usize, self.subgrids.shape()[1]);
+        assert_eq!(self.subgrid_size as usize, self.subgrids.shape()[2]);
 
         visibilities_to_subgrids(
             w_step,
-            image_size,
-            grid_size,
+            cli.image_size(),
+            cli.grid_size,
             wavenumbers,
             uvw,
             visibilities,
             taper,
             metadata,
-            &mut subgrids,
+            self.subgrids.view_mut(),
         );
     }
 
-    pub fn ifft_subgrids(&self, mut subgrids: ArrayViewMut4<Complex32>) {
+    pub fn ifft_subgrids(&mut self) {
         let subgrid_size = self.subgrid_size.try_into().unwrap();
         let mut plan: C2CPlan32 =
             C2CPlan::aligned(&[subgrid_size, subgrid_size], Sign::Backward, Flag::MEASURE).unwrap();
@@ -65,7 +81,7 @@ impl Gridder {
         let mut _in: AlignedVec<Complex32> = AlignedVec::new(subgrid_size * subgrid_size);
         let mut _out: AlignedVec<Complex32> = AlignedVec::new(subgrid_size * subgrid_size);
 
-        for mut correlations in subgrids.outer_iter_mut() {
+        for mut correlations in self.subgrids.outer_iter_mut() {
             for mut subgrid in correlations.outer_iter_mut() {
                 for (dst, src) in _in.iter_mut().zip(subgrid.iter()) {
                     *dst = *src;
@@ -81,23 +97,18 @@ impl Gridder {
         }
     }
 
-    pub fn add_subgrids_to_grid(
-        &self,
-        metadata: ArrayView1<Metadata>,
-        subgrids: ArrayView4<Complex32>,
-        mut grid: ArrayViewMut3<Complex32>,
-    ) {
+    pub fn add_subgrids_to_grid(&mut self, metadata: ArrayView1<Metadata>) {
         let phasor = compute_phasor(self.subgrid_size);
 
-        for (subgrid, metadata) in subgrids.outer_iter().zip(metadata.iter()) {
-            add_subgrid_to_grid(subgrid, metadata, &mut grid, phasor.view());
+        for (subgrid, metadata) in self.subgrids.outer_iter().zip(metadata.iter()) {
+            add_subgrid_to_grid(subgrid, metadata, self.grid.view_mut(), phasor.view());
         }
     }
 
-    pub fn transform(&self, direction: Sign, mut grid: ArrayViewMut3<Complex32>) {
-        assert_eq!(self.nr_correlations_out, grid.shape()[0] as u32);
-        let height = grid.shape()[1];
-        let width = grid.shape()[2];
+    pub fn transform(&mut self, direction: Sign) {
+        assert_eq!(self.nr_correlations_out, self.grid.shape()[0] as u32);
+        let height = self.grid.shape()[1];
+        let width = self.grid.shape()[2];
         assert_eq!(height, width);
 
         let mut plan: C2CPlan32 =
@@ -106,7 +117,7 @@ impl Gridder {
         let mut _in: AlignedVec<Complex32> = AlignedVec::new(height * width);
         let mut _out: AlignedVec<Complex32> = AlignedVec::new(height * width);
 
-        for mut correlation in grid.outer_iter_mut() {
+        for mut correlation in self.grid.outer_iter_mut() {
             for ((x, y), src) in correlation.indexed_iter() {
                 let dst_x = (x + width / 2) % width;
                 let dst_y = (y + height / 2) % height;
@@ -137,7 +148,7 @@ fn visibilities_to_subgrids(
     visibilities: &Array4<Complex32>,
     taper: &Array2<f32>,
     metadata: &Array1<Metadata>,
-    subgrids: &mut ArrayViewMut4<Complex32>,
+    mut subgrids: ArrayViewMut4<Complex32>,
 ) {
     Zip::from(metadata)
         .and(subgrids.axis_iter_mut(ndarray::Axis(0)))
@@ -279,7 +290,7 @@ fn compute_phasor(subgrid_size: u32) -> Array2<Complex32> {
 fn add_subgrid_to_grid(
     subgrid: ArrayView3<Complex32>,
     metadata: &Metadata,
-    grid: &mut ArrayViewMut3<Complex32>,
+    mut grid: ArrayViewMut3<Complex32>,
     phasor: ArrayView2<Complex32>,
 ) {
     let grid_size = grid.shape()[1];
