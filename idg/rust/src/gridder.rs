@@ -1,6 +1,10 @@
+#[cfg(not(feature = "f64"))]
+use fftw::plan::C2CPlan32;
+#[cfg(feature = "f64")]
+use fftw::plan::C2CPlan64;
 use fftw::{
     array::AlignedVec,
-    plan::{C2CPlan, C2CPlan32, C2CPlan64},
+    plan::C2CPlan,
     types::{Flag, Sign},
 };
 use ndarray::{Zip, prelude::*};
