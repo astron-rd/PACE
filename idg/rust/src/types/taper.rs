@@ -1,16 +1,16 @@
 use ndarray::{linspace, prelude::*};
 
-use crate::{cli::Cli, constants::Float};
+use crate::constants::Float;
 
 pub type Taper = Array2<Float>;
 
 pub trait TaperExtension {
-    fn generate(cli: &Cli) -> Self;
+    fn generate(subgrid_size: u32) -> Self;
 }
 
 impl TaperExtension for Taper {
-    fn generate(cli: &Cli) -> Self {
-        let x: Array1<Float> = linspace::<_, Float>(-1.0..1.0, cli.subgrid_size as usize)
+    fn generate(subgrid_size: u32) -> Self {
+        let x: Array1<Float> = linspace::<_, Float>(-1.0..1.0, subgrid_size as usize)
             .map(|x| x.abs())
             .collect();
         let spheroidal = x.map(|x| evaluate_spheroidal(*x));

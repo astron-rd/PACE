@@ -1,9 +1,6 @@
 use std::{io, ops::Add};
 
-use crate::{
-    cli::Cli,
-    constants::{Float, PI},
-};
+use crate::constants::{Float, PI};
 
 use super::{check_for_extra_bytes, check_type_desc};
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
@@ -141,7 +138,13 @@ impl WritableElement for Uvw {
 pub type UvwArray = Array2<Uvw>;
 
 pub trait UvwArrayExtension {
-    fn generate(cli: &Cli) -> Self;
+    fn generate(
+        ellipticity: Float,
+        random_seed: u64,
+        timestep_count: u32,
+        baseline_count: u32,
+        grid_size: u32,
+    ) -> Self;
     fn from_file(path: &str) -> Result<Self, ndarray_npy::ReadNpyError>
     where
         Self: Sized;
@@ -151,31 +154,35 @@ impl UvwArrayExtension for UvwArray {
     /// Generate simulated UVW data
     ///
     ///  Returns a UVW array of size (`baseline_count` * `timestep_count`)
-    fn generate(cli: &Cli) -> Self {
-        let ellipticity = cli.ellipticity.unwrap_or(0.1);
-        let seed = cli.random_seed.unwrap_or(2);
-        let mut rng = StdRng::seed_from_u64(seed);
+    fn generate(
+        ellipticity: Float,
+        random_seed: u64,
+        timestep_count: u32,
+        baseline_count: u32,
+        grid_size: u32,
+    ) -> Self {
+        let mut rng = StdRng::seed_from_u64(random_seed);
 
         // Initialize time_samples array with incrementing floats
-        let time_samples = Array::from_iter(0..cli.timestep_count()).mapv(|x| x as Float);
+        let time_samples = Array::from_iter(0..timestep_count).mapv(|x| x as Float);
 
         // Initialize uvw array with zeroes
         let mut uvw: UvwArray = UvwArray::zeros((
-            cli.baseline_count().try_into().unwrap(),
-            cli.timestep_count().try_into().unwrap(),
+            baseline_count.try_into().unwrap(),
+            timestep_count.try_into().unwrap(),
         ));
 
-        let max_uv = 0.7 * (cli.grid_size / 2) as Float;
+        let max_uv = 0.7 * (grid_size / 2) as Float;
 
         // Generate baseline ratios with more short baselines (beta distribution)
         // Beta distribution with alpha=1, beta=3 peaks at 0 and decreases
         let beta_distribution = Beta::new(1.0, 3.0).expect("Should be a valid distribution.");
         let baseline_ratios =
-            Array::random_using(cli.baseline_count() as usize, beta_distribution, &mut rng);
+            Array::random_using(baseline_count as usize, beta_distribution, &mut rng);
 
         // Generate random starting angles for each baseline
         let start_angles = Array::random_using(
-            cli.baseline_count() as usize,
+            baseline_count as usize,
             Uniform::new(0.0, 2.0 * PI).expect("Should be a valid distribution."),
             &mut rng,
         );
@@ -203,10 +210,10 @@ impl UvwArrayExtension for UvwArray {
             let u_coords = u_radius * angle.cos();
             let v_coords = v_radius * angle.sin();
 
-            for t in 0..cli.timestep_count() as usize {
+            for t in 0..timestep_count as usize {
                 uvw[(baseline, t)] = Uvw::new(
-                    u_coords[t] + (cli.grid_size / 2) as Float,
-                    v_coords[t] + (cli.grid_size / 2) as Float,
+                    u_coords[t] + (grid_size / 2) as Float,
+                    v_coords[t] + (grid_size / 2) as Float,
                     0.,
                 );
             }

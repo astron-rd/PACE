@@ -10,16 +10,12 @@ use fftw::{
 use ndarray::{Zip, prelude::*};
 
 use crate::{
-    cli::Cli,
-    constants::{Complex, Float, NR_CORRELATIONS_IN, NR_CORRELATIONS_OUT, PI},
-    types::{Grid, GridExtension, Metadata, Subgrids, SubgridsExtension, Uvw, UvwArray},
+    constants::{Complex, Float, PI},
+    input::Input,
+    types::*,
 };
 
 pub struct Gridder {
-    nr_correlations_in: u32,
-    nr_correlations_out: u32,
-    subgrid_size: u32,
-
     subgrids: Subgrids,
     grid: Grid,
 }
@@ -37,45 +33,45 @@ impl Gridder {
         (self.grid, self.subgrids)
     }
 
-    pub fn new_empty(cli: &Cli, subgrid_count: usize) -> Self {
+    pub fn new_empty(input: &Input) -> Self {
         Self {
-            nr_correlations_in: NR_CORRELATIONS_IN,
-            nr_correlations_out: if NR_CORRELATIONS_IN == 4 { 4 } else { 1 },
-            subgrid_size: cli.subgrid_size,
-            subgrids: Subgrids::initialize(&cli, subgrid_count),
-            grid: Grid::initialize(&cli),
+            subgrids: Subgrids::initialize(
+                input.subgrid_count,
+                input.correlation_count_out,
+                input.subgrid_size,
+            ),
+            grid: Grid::initialize(input.correlation_count_out, input.grid_size),
         }
     }
 
-    pub fn grid_onto_subgrids(
-        &mut self,
-        cli: &Cli,
-        w_step: Float,
-        wavenumbers: &Array1<Float>,
-        uvw: &UvwArray,
-        visibilities: &Array4<Complex>,
-        taper: &Array2<Float>,
-        metadata: &Array1<Metadata>,
-    ) {
-        assert_eq!(self.nr_correlations_in as usize, visibilities.shape()[3]);
-        assert_eq!(self.nr_correlations_out as usize, self.subgrids.shape()[1]);
-        assert_eq!(self.subgrid_size as usize, self.subgrids.shape()[2]);
+    pub fn grid_onto_subgrids(&mut self, input: &Input) {
+        assert_eq!(
+            input.correlation_count_in as usize,
+            input.visibilities.shape()[3]
+        );
+        assert_eq!(
+            input.correlation_count_out as usize,
+            self.subgrids.shape()[1]
+        );
+        assert_eq!(input.subgrid_size as usize, self.subgrids.shape()[2]);
 
         visibilities_to_subgrids(
-            w_step,
-            cli.image_size(),
-            cli.grid_size,
-            wavenumbers,
-            uvw,
-            visibilities,
-            taper,
-            metadata,
+            input.w_step,
+            input.image_size,
+            input.grid_size,
+            input.correlation_count_in,
+            input.correlation_count_out,
+            &input.wavenumbers,
+            &input.uvw,
+            &input.visibilities,
+            &input.taper,
+            &input.metadata,
             self.subgrids.view_mut(),
         );
     }
 
-    pub fn ifft_subgrids(&mut self) {
-        let subgrid_size = self.subgrid_size.try_into().unwrap();
+    pub fn ifft_subgrids(&mut self, input: &Input) {
+        let subgrid_size = input.subgrid_size.try_into().unwrap();
         #[cfg(not(feature = "f64"))]
         let mut plan: C2CPlan32 =
             C2CPlan::aligned(&[subgrid_size, subgrid_size], Sign::Backward, Flag::MEASURE).unwrap();
@@ -102,16 +98,16 @@ impl Gridder {
         }
     }
 
-    pub fn add_subgrids_to_grid(&mut self, metadata: ArrayView1<Metadata>) {
-        let phasor = compute_phasor(self.subgrid_size);
+    pub fn add_subgrids_to_grid(&mut self, input: &Input) {
+        let phasor = compute_phasor(input.subgrid_size);
 
-        for (subgrid, metadata) in self.subgrids.outer_iter().zip(metadata.iter()) {
+        for (subgrid, metadata) in self.subgrids.outer_iter().zip(input.metadata.iter()) {
             add_subgrid_to_grid(subgrid, metadata, self.grid.view_mut(), phasor.view());
         }
     }
 
-    pub fn transform(&mut self, direction: Sign) {
-        assert_eq!(self.nr_correlations_out, self.grid.shape()[0] as u32);
+    pub fn transform(&mut self, input: &Input, direction: Sign) {
+        assert_eq!(input.correlation_count_out, self.grid.shape()[0] as u32);
         let height = self.grid.shape()[1];
         let width = self.grid.shape()[2];
         assert_eq!(height, width);
@@ -152,11 +148,13 @@ fn visibilities_to_subgrids(
     w_step: Float,
     image_size: Float,
     grid_size: u32,
-    wavenumbers: &Array1<Float>,
+    correlation_count_in: u32,
+    correlation_count_out: u32,
+    wavenumbers: &WavenumberArray,
     uvw: &UvwArray,
-    visibilities: &Array4<Complex>,
-    taper: &Array2<Float>,
-    metadata: &Array1<Metadata>,
+    visibilities: &VisibilityArray,
+    taper: &Taper,
+    metadata: &MetadataArray,
     mut subgrids: ArrayViewMut4<Complex>,
 ) {
     Zip::from(metadata)
@@ -167,6 +165,8 @@ fn visibilities_to_subgrids(
                 w_step,
                 image_size,
                 grid_size,
+                correlation_count_in,
+                correlation_count_out,
                 wavenumbers,
                 uvw,
                 visibilities,
@@ -181,10 +181,12 @@ fn visibility_to_subgrid(
     w_step: Float,
     image_size: Float,
     grid_size: u32,
-    wavenumbers: &Array1<Float>,
+    correlation_count_in: u32,
+    correlation_count_out: u32,
+    wavenumbers: &WavenumberArray,
     uvw: &UvwArray,
-    visibilities: &Array4<Complex>,
-    taper: &Array2<Float>,
+    visibilities: &VisibilityArray,
+    taper: &Taper,
     mut subgrid: ArrayViewMut3<Complex>,
 ) {
     let w_offset_in_lambda = w_step * (metadata.coordinate.z as Float + 0.5);
@@ -217,6 +219,8 @@ fn visibility_to_subgrid(
                 w_offset,
                 metadata.channel_begin,
                 metadata.channel_end,
+                correlation_count_in,
+                correlation_count_out,
                 wavenumbers,
                 visibilities,
             );
@@ -225,7 +229,7 @@ fn visibility_to_subgrid(
             let x_dst = (x + (subgrid_size / 2)) % subgrid_size;
             let y_dst = (y + (subgrid_size / 2)) % subgrid_size;
 
-            for pol in 0..NR_CORRELATIONS_OUT {
+            for pol in 0..correlation_count_out {
                 subgrid[(pol as usize, y_dst as usize, x_dst as usize)] = pixels[pol as usize] * sph
             }
         }
@@ -259,10 +263,12 @@ fn compute_pixels(
     w_offset: Float,
     channel_begin: u32,
     channel_end: u32,
+    correlation_count_in: u32,
+    correlation_count_out: u32,
     wavenumbers: &Array1<Float>,
     visibilities: &Array4<Complex>,
 ) -> Array1<Complex> {
-    let mut pixels: Array1<Complex> = Array1::zeros(NR_CORRELATIONS_OUT as usize);
+    let mut pixels: Array1<Complex> = Array1::zeros(correlation_count_out as usize);
 
     for time in 0..timestep_count {
         let idx = offset + time;
@@ -275,8 +281,8 @@ fn compute_pixels(
             let phase = phase_offset - (phase_index * wavenumbers[channel as usize]);
             let phasor = (Complex::i() * phase).exp();
 
-            for pol in 0..NR_CORRELATIONS_IN {
-                pixels[(pol % NR_CORRELATIONS_OUT) as usize] += visibilities[(
+            for pol in 0..correlation_count_in {
+                pixels[(pol % correlation_count_out) as usize] += visibilities[(
                     baseline as usize,
                     idx as usize,
                     channel as usize,

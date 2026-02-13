@@ -1,22 +1,19 @@
 use ndarray::prelude::*;
 
-use crate::{
-    cli::Cli,
-    constants::{Complex, NR_CORRELATIONS_OUT},
-};
+use crate::constants::Complex;
 
 pub type Grid = Array3<Complex>;
 
 pub trait GridExtension {
-    fn initialize(cli: &Cli) -> Self;
+    fn initialize(correlation_count_out: u32, grid_size: u32) -> Self;
 }
 
 impl GridExtension for Grid {
-    fn initialize(cli: &Cli) -> Self {
+    fn initialize(correlation_count_out: u32, grid_size: u32) -> Self {
         Array3::zeros((
-            NR_CORRELATIONS_OUT as usize,
-            cli.grid_size as usize,
-            cli.grid_size as usize,
+            correlation_count_out as usize,
+            grid_size as usize,
+            grid_size as usize,
         ))
     }
 }

@@ -2,9 +2,8 @@ use ndarray::prelude::*;
 use ndarray_rand::rand::{Rng, SeedableRng, rngs::StdRng};
 
 use crate::{
-    cli::Cli,
-    constants::{Complex, Float, NR_CORRELATIONS_IN, PI, SPEED_OF_LIGHT},
-    types::{FrequencyArray, UvwArray},
+    constants::{Complex, Float, PI, SPEED_OF_LIGHT},
+    types::*,
 };
 
 pub type Visibility = Complex;
@@ -13,11 +12,17 @@ pub type VisibilityArray = Array4<Visibility>;
 
 pub trait VisibilityArrayExtension {
     fn generate(
-        cli: &Cli,
+        point_sources_count: u32,
+        max_pixel_offset: u32,
+        random_seed: u64,
+        baseline_count: u32,
+        timestep_count: u32,
+        channel_count: u32,
+        correlation_count_in: u32,
+        image_size: Float,
+        grid_size: u32,
         frequencies: &FrequencyArray,
         uvw: &UvwArray,
-        point_sources_count: Option<u32>,
-        max_pixel_offset: Option<u32>,
     ) -> Self;
     fn from_file(path: &str) -> Result<Self, ndarray_npy::ReadNpyError>
     where
@@ -26,25 +31,27 @@ pub trait VisibilityArrayExtension {
 
 impl VisibilityArrayExtension for VisibilityArray {
     fn generate(
-        cli: &Cli,
+        point_sources_count: u32,
+        max_pixel_offset: u32,
+        random_seed: u64,
+        baseline_count: u32,
+        timestep_count: u32,
+        channel_count: u32,
+        correlation_count_in: u32,
+        image_size: Float,
+        grid_size: u32,
         frequencies: &FrequencyArray,
         uvw: &UvwArray,
-        point_sources_count: Option<u32>,
-        max_pixel_offset: Option<u32>,
     ) -> Self {
-        let point_sources_count = point_sources_count.unwrap_or(4);
-        let max_pixel_offset = max_pixel_offset.unwrap_or(cli.grid_size / 3);
-        let seed = cli.random_seed.unwrap_or(2);
-
         let mut visibilities: Array4<Visibility> = Array4::zeros((
-            cli.baseline_count().try_into().unwrap(),
-            cli.timestep_count().try_into().unwrap(),
-            cli.channel_count.try_into().unwrap(),
-            NR_CORRELATIONS_IN.try_into().unwrap(),
+            baseline_count.try_into().unwrap(),
+            timestep_count.try_into().unwrap(),
+            channel_count.try_into().unwrap(),
+            correlation_count_in.try_into().unwrap(),
         ));
 
         let mut offsets = Vec::new();
-        let mut rng = StdRng::seed_from_u64(seed);
+        let mut rng = StdRng::seed_from_u64(random_seed);
 
         for _ in 0..point_sources_count {
             let x = (rng.random::<Float>() * max_pixel_offset as Float)
@@ -58,14 +65,14 @@ impl VisibilityArrayExtension for VisibilityArray {
             let amplitude = 1.0;
 
             // Convert offset from grid cells to radians (l,m)
-            let l = offset.0 * cli.image_size() / cli.grid_size as Float;
-            let m = offset.1 * cli.image_size() / cli.grid_size as Float;
+            let l = offset.0 * image_size / grid_size as Float;
+            let m = offset.1 * image_size / grid_size as Float;
 
-            for baseline in 0..cli.baseline_count() {
+            for baseline in 0..baseline_count {
                 add_point_source_to_baseline(
                     baseline,
-                    cli.timestep_count(),
-                    cli.channel_count,
+                    timestep_count,
+                    channel_count,
                     amplitude,
                     frequencies,
                     uvw,

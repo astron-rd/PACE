@@ -1,11 +1,11 @@
 use ndarray::prelude::*;
 
-use crate::{cli::Cli, constants::Float};
+use crate::constants::Float;
 
 pub type FrequencyArray = Array1<Float>;
 
 pub trait FrequencyArrayExtension {
-    fn generate(cli: &Cli) -> Self;
+    fn generate(start_frequency: Float, channel_count: u32, frequency_increment: Float) -> Self;
     fn from_file(path: &str) -> Result<Self, ndarray_npy::ReadNpyError>
     where
         Self: Sized;
@@ -15,11 +15,11 @@ impl FrequencyArrayExtension for FrequencyArray {
     /// Generate array of frequencies for each channel.
     ///
     /// Returns frequencies array, shape (`channel_count`)
-    fn generate(cli: &Cli) -> Self {
+    fn generate(start_frequency: Float, channel_count: u32, frequency_increment: Float) -> Self {
         Array::range(
-            cli.start_frequency,
-            cli.start_frequency + (cli.channel_count as Float * cli.frequency_increment),
-            cli.frequency_increment,
+            start_frequency,
+            start_frequency + (channel_count as Float * frequency_increment),
+            frequency_increment,
         )
     }
 

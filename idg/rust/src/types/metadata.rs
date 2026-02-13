@@ -1,6 +1,6 @@
 use std::io;
 
-use crate::{cli::Cli, constants::Float, types::UvwArray};
+use crate::{constants::Float, types::UvwArray};
 
 use super::{check_for_extra_bytes, check_type_desc};
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
@@ -130,7 +130,7 @@ pub struct Coordinate {
 pub type MetadataArray = Array1<Metadata>;
 
 pub trait MetadataArrayExtension {
-    fn generate(cli: &Cli, uvw: &UvwArray) -> Self;
+    fn generate(grid_size: u32, subgrid_size: u32, channel_count: u32, uvw: &UvwArray) -> Self;
     fn from_file(path: &str) -> Result<Self, ndarray_npy::ReadNpyError>
     where
         Self: Sized;
@@ -140,7 +140,7 @@ impl MetadataArrayExtension for MetadataArray {
     /// Compute metadata for all baselines.
     ///
     /// Returns a metadata array, shape (`subgrid_count`)
-    fn generate(cli: &Cli, uvw: &UvwArray) -> Self {
+    fn generate(grid_size: u32, subgrid_size: u32, channel_count: u32, uvw: &UvwArray) -> Self {
         let max_group_size = 256; // TODO: Add this to CLI struct
 
         let u_pixels = uvw.mapv(|x| x.u);
@@ -152,9 +152,9 @@ impl MetadataArrayExtension for MetadataArray {
 
         for baseline in 0..baseline_count {
             metadata.extend(compute_metadata(
-                cli.grid_size,
-                cli.subgrid_size,
-                cli.channel_count,
+                grid_size,
+                subgrid_size,
+                channel_count,
                 baseline.try_into().unwrap(),
                 u_pixels.slice(s![baseline, ..]),
                 v_pixels.slice(s![baseline, ..]),
