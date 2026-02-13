@@ -29,7 +29,7 @@ impl Gridder {
     pub fn grid(&self) -> &Grid {
         &self.grid
     }
-    
+
     #[allow(unused)] // For future use
     pub fn into_grid_subgrids(self) -> (Grid, Subgrids) {
         (self.grid, self.subgrids)

@@ -23,3 +23,6 @@ ndarray = { git = "https://github.com/rust-ndarray/ndarray.git" }
 
 [features]
 f64 = []
+
+[lints.clippy]
+excessive_precision = "allow"
