@@ -4,7 +4,6 @@ use clap::{Parser, Subcommand};
 
 use crate::constants::Float;
 
-/// Command-line options
 #[derive(Parser)]
 #[command(version, about, long_about = Some("IDG is the Image Domain Gridder"))]
 pub struct Cli {
@@ -15,8 +14,11 @@ pub struct Cli {
     pub w_step: Float,
 
     /// Output numpy data
-    #[arg(long, value_name = "OUTPUT_PATH")]
+    #[arg(short = 'o', long, value_name = "OUTPUT_PATH")]
     pub numpy_output: Option<PathBuf>,
+
+    #[arg(short = 's', long, default_value = "false")]
+    pub output_subgrids: bool,
 
     /// Output timing data
     #[arg(long, default_value=None, value_name = "OUTPUT_PATH")]

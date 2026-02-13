@@ -17,8 +17,6 @@ mod util;
 fn main() -> Result<()> {
     let cli = cli::Cli::parse();
 
-    // print_parameters(&cli);
-
     let input = Input::from_cli(&cli)?;
 
     input.print_parameters();
@@ -37,7 +35,13 @@ fn main() -> Result<()> {
         gridder.transform(&input, fftw::types::Sign::Backward)
     );
 
-    ndarray_npy::write_npy("grid.npy", gridder.grid()).unwrap();
+    let output_dir = cli.numpy_output.clone().unwrap_or(std::env::current_dir()?);
+    std::fs::create_dir_all(&output_dir)?;
+    
+    ndarray_npy::write_npy(output_dir.join("grid.npy"), gridder.grid()).unwrap();
+    if cli.output_subgrids {
+        ndarray_npy::write_npy(output_dir.join("subgrids.npy"), gridder.subgrids()).unwrap();
+    }
 
     println!("done!");
     Ok(())
