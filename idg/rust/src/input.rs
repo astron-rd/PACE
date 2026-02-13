@@ -1,4 +1,5 @@
 use anyhow::Result;
+use ndarray_npy::read_npy;
 
 use crate::{
     cli::{Cli, Commands},
@@ -81,7 +82,7 @@ impl Input {
                 let subgrid_count = metadata.len();
 
                 let end_frequency =
-                    start_frequency + (*channel_count as Float * frequency_increment);
+                    start_frequency + ((*channel_count - 1) as Float * frequency_increment);
                 let image_size = SPEED_OF_LIGHT / end_frequency;
                 let max_pixel_offset = max_pixel_offset.unwrap_or(grid_size / 3);
 
@@ -102,7 +103,7 @@ impl Input {
                     )
                 );
 
-                let taper: Taper = time_function!("get taper", Taper::generate(*subgrid_size));
+                let taper: Taper = time_function!("generate taper", Taper::generate(*subgrid_size));
 
                 Ok(Self {
                     uvw,
@@ -126,7 +127,57 @@ impl Input {
                 frequencies_file,
                 visibilities_file,
                 subgrid_size,
-            } => todo!(),
+                grid_size,
+                correlation_count_out,
+            } => {
+                print_header!("READING INPUT DATA");
+
+                let data_dir = data_dir.clone().unwrap_or(std::env::current_dir()?);
+
+                let uvw: UvwArray =
+                    time_function!("load uvws", read_npy(&data_dir.join(uvw_file))?);
+
+                let frequencies: FrequencyArray = time_function!(
+                    "load frequencies",
+                    read_npy(&data_dir.join(frequencies_file))?
+                );
+
+                let wavenumbers: WavenumberArray = time_function!(
+                    "derive wavenumbers",
+                    WavenumberArray::from_frequencies(&frequencies)
+                );
+
+                let visibilities: VisibilityArray = time_function!(
+                    "load visibilities",
+                    read_npy(&data_dir.join(visibilities_file))?
+                );
+
+                let channel_count = frequencies.shape()[0];
+
+                let metadata: MetadataArray = time_function!(
+                    "generate metadata",
+                    MetadataArray::generate(*grid_size, *subgrid_size, channel_count as u32, &uvw)
+                );
+
+                let taper: Taper = time_function!("generate taper", Taper::generate(*subgrid_size));
+
+                Ok(Self {
+                    subgrid_count: metadata.len(),
+                    image_size: SPEED_OF_LIGHT
+                        / frequencies.last().expect("frequencies should not be empty"),
+                    correlation_count_in: visibilities.shape()[3].try_into().unwrap(),
+                    correlation_count_out: *correlation_count_out,
+                    w_step: cli.w_step,
+                    uvw,
+                    frequencies,
+                    wavenumbers,
+                    visibilities,
+                    metadata,
+                    taper,
+                    grid_size: *grid_size,
+                    subgrid_size: *subgrid_size,
+                })
+            }
         }
     }
 }

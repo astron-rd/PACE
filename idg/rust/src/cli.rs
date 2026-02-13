@@ -102,5 +102,13 @@ pub enum Commands {
         /// Size of the subgrid in pixels
         #[arg(long, default_value = "32")]
         subgrid_size: u32,
+
+        /// Size of the grid in pixels
+        #[arg(long, default_value = "1024")]
+        grid_size: u32,
+
+        /// Number of correlations out
+        #[arg(long, default_value = "1")]
+        correlation_count_out: u32,
     },
 }
