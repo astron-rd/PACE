@@ -1,4 +1,4 @@
-use std::io;
+use std::{io, path::Path};
 
 use crate::{constants::Float, types::UvwArray};
 
@@ -131,7 +131,8 @@ pub type MetadataArray = Array1<Metadata>;
 
 pub trait MetadataArrayExtension {
     fn generate(grid_size: u32, subgrid_size: u32, channel_count: u32, uvw: &UvwArray) -> Self;
-    fn from_file(path: &str) -> Result<Self, ndarray_npy::ReadNpyError>
+    #[allow(unused)] // For future use
+    fn from_file(path: &Path) -> Result<Self, ndarray_npy::ReadNpyError>
     where
         Self: Sized;
 }
@@ -171,7 +172,7 @@ impl MetadataArrayExtension for MetadataArray {
     /// - `path`: Path to the npy file
     ///
     /// Returns a metadata array, shape (`subgrid_count`)
-    fn from_file(path: &str) -> Result<Self, ndarray_npy::ReadNpyError>
+    fn from_file(path: &Path) -> Result<Self, ndarray_npy::ReadNpyError>
     where
         Self: Sized,
     {

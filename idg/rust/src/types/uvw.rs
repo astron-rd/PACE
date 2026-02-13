@@ -1,4 +1,4 @@
-use std::{io, ops::Add};
+use std::{io, ops::Add, path::Path};
 
 use crate::constants::{Float, PI};
 
@@ -145,7 +145,7 @@ pub trait UvwArrayExtension {
         baseline_count: u32,
         grid_size: u32,
     ) -> Self;
-    fn from_file(path: &str) -> Result<Self, ndarray_npy::ReadNpyError>
+    fn from_file(path: &Path) -> Result<Self, ndarray_npy::ReadNpyError>
     where
         Self: Sized;
 }
@@ -228,7 +228,7 @@ impl UvwArrayExtension for UvwArray {
     /// - `path`: Path to the npy file
     ///
     ///  Returns a UVW array of size (`baseline_count` * `timestep_count`)
-    fn from_file(path: &str) -> Result<Self, ndarray_npy::ReadNpyError> {
+    fn from_file(path: &Path) -> Result<Self, ndarray_npy::ReadNpyError> {
         ndarray_npy::read_npy(path)
     }
 }

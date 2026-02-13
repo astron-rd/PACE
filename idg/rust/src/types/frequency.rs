@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use ndarray::prelude::*;
 
 use crate::constants::Float;
@@ -6,7 +8,7 @@ pub type FrequencyArray = Array1<Float>;
 
 pub trait FrequencyArrayExtension {
     fn generate(start_frequency: Float, channel_count: u32, frequency_increment: Float) -> Self;
-    fn from_file(path: &str) -> Result<Self, ndarray_npy::ReadNpyError>
+    fn from_file(path: &Path) -> Result<Self, ndarray_npy::ReadNpyError>
     where
         Self: Sized;
 }
@@ -29,7 +31,7 @@ impl FrequencyArrayExtension for FrequencyArray {
     /// - `path`: Path to the npy file
     ///
     ///  Returns a frequency array, shape (`channel_count`)
-    fn from_file(path: &str) -> Result<Self, ndarray_npy::ReadNpyError>
+    fn from_file(path: &Path) -> Result<Self, ndarray_npy::ReadNpyError>
     where
         Self: Sized,
     {

@@ -1,5 +1,4 @@
 use anyhow::Result;
-use ndarray_npy::read_npy;
 
 use crate::{
     cli::{Cli, Commands},
@@ -135,11 +134,11 @@ impl Input {
                 let data_dir = data_dir.clone().unwrap_or(std::env::current_dir()?);
 
                 let uvw: UvwArray =
-                    time_function!("load uvws", read_npy(&data_dir.join(uvw_file))?);
+                    time_function!("load uvws", UvwArray::from_file(&data_dir.join(uvw_file))?);
 
                 let frequencies: FrequencyArray = time_function!(
                     "load frequencies",
-                    read_npy(&data_dir.join(frequencies_file))?
+                    FrequencyArray::from_file(&data_dir.join(frequencies_file))?
                 );
 
                 let wavenumbers: WavenumberArray = time_function!(
@@ -149,7 +148,7 @@ impl Input {
 
                 let visibilities: VisibilityArray = time_function!(
                     "load visibilities",
-                    read_npy(&data_dir.join(visibilities_file))?
+                    VisibilityArray::from_file(&data_dir.join(visibilities_file))?
                 );
 
                 let channel_count = frequencies.shape()[0];

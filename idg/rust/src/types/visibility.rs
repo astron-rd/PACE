@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use ndarray::prelude::*;
 use ndarray_rand::rand::{Rng, SeedableRng, rngs::StdRng};
 
@@ -24,7 +26,7 @@ pub trait VisibilityArrayExtension {
         frequencies: &FrequencyArray,
         uvw: &UvwArray,
     ) -> Self;
-    fn from_file(path: &str) -> Result<Self, ndarray_npy::ReadNpyError>
+    fn from_file(path: &Path) -> Result<Self, ndarray_npy::ReadNpyError>
     where
         Self: Sized;
 }
@@ -86,7 +88,7 @@ impl VisibilityArrayExtension for VisibilityArray {
         visibilities
     }
 
-    fn from_file(path: &str) -> Result<Self, ndarray_npy::ReadNpyError>
+    fn from_file(path: &Path) -> Result<Self, ndarray_npy::ReadNpyError>
     where
         Self: Sized,
     {
