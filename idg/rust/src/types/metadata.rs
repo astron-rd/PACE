@@ -1,6 +1,6 @@
 use std::io;
 
-use crate::{cli::Cli, types::UvwArray};
+use crate::{cli::Cli, constants::Float, types::UvwArray};
 
 use super::{check_for_extra_bytes, check_type_desc};
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
@@ -184,14 +184,14 @@ fn compute_metadata(
     subgrid_size: u32,
     channel_count: u32,
     baseline: u32,
-    u_pixels: ArrayView1<f32>,
-    v_pixels: ArrayView1<f32>,
+    u_pixels: ArrayView1<Float>,
+    v_pixels: ArrayView1<Float>,
     max_group_size: u32,
 ) -> Vec<Metadata> {
     let mut metadata = Vec::new();
 
     let timestep_count = u_pixels.shape()[0];
-    let max_distance = 0.8 * subgrid_size as f32;
+    let max_distance = 0.8 * subgrid_size as Float;
 
     let mut timestep = 0;
     while timestep < timestep_count {

@@ -1,10 +1,11 @@
-use std::f32::consts::PI;
-
 use ndarray::prelude::*;
 
-use crate::{constants::SPEED_OF_LIGHT, types::FrequencyArray};
+use crate::{
+    constants::{Float, PI, SPEED_OF_LIGHT},
+    types::FrequencyArray,
+};
 
-pub type WavenumberArray = Array1<f32>;
+pub type WavenumberArray = Array1<Float>;
 
 pub trait WavenumberArrayExtension {
     fn from_frequencies(frequencies: &FrequencyArray) -> Self;

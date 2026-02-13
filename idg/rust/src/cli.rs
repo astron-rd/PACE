@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use clap::Parser;
 
-use crate::constants;
+use crate::constants::{self, Float};
 
 /// Command-line options
 #[derive(Parser)]
@@ -18,7 +18,7 @@ pub struct Cli {
 
     /// Length of the observation in hours
     #[arg(long, default_value = "4.0")]
-    pub observation_hours: f32,
+    pub observation_hours: Float,
 
     /// Number of frequency channels
     #[arg(long, default_value = "16")]
@@ -30,15 +30,15 @@ pub struct Cli {
 
     /// Starting frequency in hertz
     #[arg(long, default_value = "150e6")]
-    pub start_frequency: f32,
+    pub start_frequency: Float,
 
     /// Frequency increment in hertz
     #[arg(long, default_value = "1e6")]
-    pub frequency_increment: f32,
+    pub frequency_increment: Float,
 
     /// Ellipticity for simulated UVW data
     #[arg(long)]
-    pub ellipticity: Option<f32>,
+    pub ellipticity: Option<Float>,
 
     /// Random seed for RNG
     #[arg(long)]
@@ -61,12 +61,12 @@ impl Cli {
     }
 
     /// The end frequency, as derived from the start frequency, number of channels, and frequency increment
-    pub fn end_frequency(&self) -> f32 {
-        self.start_frequency + (self.channel_count as f32 * self.frequency_increment)
+    pub fn end_frequency(&self) -> Float {
+        self.start_frequency + (self.channel_count as Float * self.frequency_increment)
     }
 
     /// The image size, as derived from the end frequency
-    pub fn image_size(&self) -> f32 {
+    pub fn image_size(&self) -> Float {
         constants::SPEED_OF_LIGHT / self.end_frequency()
     }
 

@@ -1,8 +1,8 @@
 use ndarray::{linspace, prelude::*};
 
-use crate::cli::Cli;
+use crate::{cli::Cli, constants::Float};
 
-pub type Taper = Array2<f32>;
+pub type Taper = Array2<Float>;
 
 pub trait TaperExtension {
     fn generate(cli: &Cli) -> Self;
@@ -10,7 +10,7 @@ pub trait TaperExtension {
 
 impl TaperExtension for Taper {
     fn generate(cli: &Cli) -> Self {
-        let x: Array1<f32> = linspace(-1.0_f32..1.0, cli.subgrid_size as usize)
+        let x: Array1<Float> = linspace::<_, Float>(-1.0..1.0, cli.subgrid_size as usize)
             .map(|x| x.abs())
             .collect();
         let spheroidal = x.map(|x| evaluate_spheroidal(*x));
@@ -24,19 +24,19 @@ impl TaperExtension for Taper {
     }
 }
 
-fn evaluate_spheroidal(x: f32) -> f32 {
+fn evaluate_spheroidal(x: Float) -> Float {
     #[rustfmt::skip]
-    let p: [[f32; 5]; 2] = [
+    let p: [[Float; 5]; 2] = [
         [8.203343e-2, -3.644705e-1, 6.278660e-1, -5.335581e-1, 2.312756e-1],
         [4.028559e-3, -3.697768e-2, 1.021332e-1, -1.201436e-1, 6.412774e-2],
     ];
     #[rustfmt::skip]
-    let q: [[f32; 3]; 2] = [
+    let q: [[Float; 3]; 2] = [
         [1.0000000e0, 8.212018e-1, 2.078043e-1],
         [1.0000000e0, 9.599102e-1, 2.918724e-1],
     ];
 
-    let (part, end): (usize, f32) = match x {
+    let (part, end): (usize, Float) = match x {
         0.0..0.75 => (0, 0.75),
         0.75..=1.0 => (1, 1.0),
         _ => return 0.0,

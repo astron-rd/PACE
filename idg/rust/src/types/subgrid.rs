@@ -1,9 +1,11 @@
 use ndarray::prelude::*;
-use num_complex::Complex32;
 
-use crate::{cli::Cli, constants::NR_CORRELATIONS_OUT};
+use crate::{
+    cli::Cli,
+    constants::{Complex, NR_CORRELATIONS_OUT},
+};
 
-pub type Subgrids = Array4<Complex32>;
+pub type Subgrids = Array4<Complex>;
 
 pub trait SubgridsExtension {
     fn initialize(cli: &Cli, subgrid_count: usize) -> Self;

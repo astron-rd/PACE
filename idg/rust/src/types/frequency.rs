@@ -1,8 +1,8 @@
 use ndarray::prelude::*;
 
-use crate::cli::Cli;
+use crate::{cli::Cli, constants::Float};
 
-pub type FrequencyArray = Array1<f32>;
+pub type FrequencyArray = Array1<Float>;
 
 pub trait FrequencyArrayExtension {
     fn generate(cli: &Cli) -> Self;
@@ -18,7 +18,7 @@ impl FrequencyArrayExtension for FrequencyArray {
     fn generate(cli: &Cli) -> Self {
         Array::range(
             cli.start_frequency,
-            cli.start_frequency + (cli.channel_count as f32 * cli.frequency_increment),
+            cli.start_frequency + (cli.channel_count as Float * cli.frequency_increment),
             cli.frequency_increment,
         )
     }

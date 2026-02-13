@@ -1,9 +1,11 @@
 use ndarray::prelude::*;
-use num_complex::Complex32;
 
-use crate::{cli::Cli, constants::NR_CORRELATIONS_OUT};
+use crate::{
+    cli::Cli,
+    constants::{Complex, NR_CORRELATIONS_OUT},
+};
 
-pub type Grid = Array3<Complex32>;
+pub type Grid = Array3<Complex>;
 
 pub trait GridExtension {
     fn initialize(cli: &Cli) -> Self;
