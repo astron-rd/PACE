@@ -208,6 +208,7 @@ impl Input {
         print_param!("nr_channels", self.frequencies.shape()[0]);
         print_param!("nr_timesteps", self.uvw.shape()[1]);
         print_param!("nr_baselines", self.uvw.shape()[0]);
+        print_param!("image_size", self.image_size);
         print_param!("subgrid_size", self.subgrid_size);
         print_param!("grid_size", self.grid_size);
     }
