@@ -42,6 +42,7 @@ impl Input {
                 max_pixel_offset,
                 correlation_count_in,
                 correlation_count_out,
+                ..
             } => {
                 print_header!("GENERATING INPUT DATA");
 
@@ -125,6 +126,7 @@ impl Input {
                 uvw_file,
                 frequencies_file,
                 visibilities_file,
+                metadata_file,
                 subgrid_size,
                 grid_size,
                 correlation_count_out,
@@ -153,10 +155,21 @@ impl Input {
 
                 let channel_count = frequencies.shape()[0];
 
-                let metadata: MetadataArray = time_function!(
-                    "generate metadata",
-                    MetadataArray::generate(*grid_size, *subgrid_size, channel_count as u32, &uvw)
-                );
+                let metadata: MetadataArray = match metadata_file {
+                    None => time_function!(
+                        "generate metadata",
+                        MetadataArray::generate(
+                            *grid_size,
+                            *subgrid_size,
+                            channel_count as u32,
+                            &uvw
+                        )
+                    ),
+                    Some(path) => time_function!(
+                        "load metadata",
+                        MetadataArray::from_file(&data_dir.join(path))?
+                    ),
+                };
 
                 let taper: Taper = time_function!("generate taper", Taper::generate(*subgrid_size));
 

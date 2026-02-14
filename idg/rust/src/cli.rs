@@ -17,8 +17,13 @@ pub struct Cli {
     #[arg(short = 'o', long, value_name = "OUTPUT_PATH")]
     pub numpy_output: Option<PathBuf>,
 
+    /// Output intermediary subgrids
     #[arg(short = 's', long, default_value = "false")]
     pub output_subgrids: bool,
+
+    /// Output generated metadata
+    #[arg(short = 'm', long, default_value = "false")]
+    pub output_metadata: bool,
 
     /// Output timing data
     #[arg(long, default_value=None, value_name = "OUTPUT_PATH")]
@@ -82,6 +87,10 @@ pub enum Commands {
         /// Random seed for RNG
         #[arg(long, default_value = "0")]
         random_seed: u64,
+
+        /// Output generated input data
+        #[arg(long, default_value = "false")]
+        output_input: bool,
     },
     /// Load the input data from .npy files
     Load {
@@ -89,17 +98,21 @@ pub enum Commands {
         #[arg(long, short = 'd')]
         data_dir: Option<PathBuf>,
 
-        // Location of the UVW file, relative to `data_dir`
+        /// Location of the UVW file, relative to `data_dir`
         #[arg(long, default_value = "uvw.npy")]
         uvw_file: PathBuf,
 
-        // Location of the frequencies file, relative to `data_dir`
+        /// Location of the frequencies file, relative to `data_dir`
         #[arg(long, default_value = "frequencies.npy")]
         frequencies_file: PathBuf,
 
-        // Location of the visibilities file, relative to `data_dir`
+        /// Location of the visibilities file, relative to `data_dir`
         #[arg(long, default_value = "visibilities.npy")]
         visibilities_file: PathBuf,
+
+        /// Location of the metadata file, relative to `data_dir`
+        #[arg(long)]
+        metadata_file: Option<PathBuf>,
 
         /// Size of the subgrid in pixels
         #[arg(long, default_value = "32")]
