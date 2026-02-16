@@ -1,3 +1,5 @@
+default_language_version:
+  python: python3
 repos:
   - repo: https://github.com/pre-commit/mirrors-clang-format
     rev: v17.0.6
@@ -8,21 +10,31 @@ repos:
     hooks:
       - id: cmake-format
       - id: cmake-lint
-  - repo: https://github.com/psf/black
-    rev: 25.1.0
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
     hooks:
-      - id: black
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-yaml
+      - id: check-toml
+      - id: detect-private-key
   - repo: https://github.com/executablebooks/mdformat
     rev: 0.7.22
     hooks:
       - id: mdformat
         args: ['--wrap=80']
-  - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.35.1
-    hooks:
-      - id: yamllint
-        args: [--config-file, .yamllint.yaml]
   - repo: https://github.com/google/yamlfmt
     rev: v0.16.0
     hooks:
       - id: yamlfmt
+  # To learn more about Tox you can read:
+  # https://github.com/astron-rd/PACE/wiki/Python
+  - repo: local
+    hooks:
+      - id: tox-lint
+        name: tox-lint (local)
+        entry: pre-commit hazmat cd idg/python tox -e lint --
+        files: ^idg/python/
+        language: python
+        types: [python]
+        args: ["--"]

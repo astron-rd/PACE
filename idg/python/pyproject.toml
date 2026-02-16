@@ -1,8 +1,106 @@
 [project]
 name = "idg-python"
-version = "0.1.0"
+description = "Image-Domain Gridding (IDG) kernels implemented in Python"
+version = "0.0.1"
+readme = "README.md"
 requires-python = ">=3.12"
-dependencies = [
-    "numba>=0.61.2",
-    "numpy>=1.26.4",
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Astronomy",
 ]
+dynamic = [
+    "dependencies",
+]
+
+[project.urls]
+homepage = "https://github.com/astron-rd/pace"
+
+[build-system]
+requires = [
+    "setuptools>=70.0"
+]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages]
+find = {}
+
+[tool.setuptools.dynamic]
+dependencies = { file = "requirements.txt" }
+
+[tool.ruff]
+exclude = [
+    ".venv",
+    ".git",
+    ".tox",
+    "dist",
+    "docs",
+    "*lib/python*",
+    "*egg",
+]
+
+[tool.ruff.lint]
+# Expand basic rules with name and style checks roughly equivalent to flake8 + black + pylint
+# Some additional functional errors such as `await` on none async or wrong return types / args.
+# More info https://docs.astral.sh/ruff/rules/
+select = ["N", "A", "E", "F", "B", "W", "Q", "ASYNC", "S", "G", "RET", "ARG", "I"]
+ignore = ["E203", "E741", "E501", "N806", "S101", "S311"]
+
+[tool.coverage.run]
+branch = true
+
+# To learn more about tox you can read: https://github.com/astron-rd/PACE/wiki/Python
+[tool.tox]
+# Generative environment list to test all supported Python versions
+requires = ["tox>=4.21"]
+env_list = ["fix", "coverage", "lint", "format", "py{14, 13, 12}"]
+
+[tool.tox.env_run_base]
+package = "editable"
+deps = [
+    "-r{toxinidir}/requirements.txt",
+    "-r{toxinidir}/tests/requirements.txt"]
+set_env = { LANGUAGE = "en_US", LC_ALL = "en_US.UTF-8", PYTHONWARNINGS = "default::DeprecationWarning" }
+commands = [["python", "--version"], ["python", "-m", "pytest", "tests/{posargs}"]]
+
+[tool.tox.env.fix]
+description = "format the code base to adhere to our styles, and complain about what we cannot do automatically"
+skip_install = true
+deps = ["pre-commit-uv>=4.1.1"]
+commands = [["pre-commit", "run", "--all-files", "--show-diff-on-failure"]]
+
+[tool.tox.env.coverage]
+commands = [
+    ["python", "--version"],
+    ["python", "-m", "pytest", "--cov-report", "term", "--cov-report", "xml", "--cov-report", "html", "--cov=idg_python", "tests/{posargs}"]]
+
+# Command prefixes to reuse the same virtualenv for all linting jobs.
+[tool.tox.env.lint]
+deps = [
+    "ruff",
+    "-r{toxinidir}/tests/requirements.txt"]
+commands = [
+    ["python", "-m", "ruff", "--version"],
+    ["python", "-m", "ruff", "check", { replace = "posargs", default = ["idg_python", "tests"], extend = true }]
+]
+
+[tool.tox.env.format]
+deps = [
+    "ruff",
+    "-r{toxinidir}/tests/requirements.txt"]
+commands = [
+    ["python", "-m", "ruff", "format", "-v", { replace = "posargs", default = ["idg_python", "tests"], extend = true }],
+    ["python", "-m", "ruff", "check", "--fix-only", "-v", { replace = "posargs", default = ["idg_python", "tests"], extend = true }]
+]
+
+[tool.tox.env.build]
+package = "wheel"
+deps = ["build>=0.8.0"]
+commands = [["python", "-m", "build"]]
