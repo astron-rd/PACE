@@ -4,6 +4,7 @@ from jax import numpy as jnp
 
 SPEED_OF_LIGHT = 299792458.0
 
+# https://github.com/astron-rd/PACE/wiki/Jax
 # https://docs.jax.dev/en/latest/installation.html
 # https://docs.jax.dev/en/latest/config_options.html#jax_platforms
 jax.config.update("jax_platform_name", "cpu")
