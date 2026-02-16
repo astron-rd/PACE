@@ -27,6 +27,8 @@ repos:
     rev: v0.16.0
     hooks:
       - id: yamlfmt
+  # To learn more about Tox you can read:
+  # https://github.com/astron-rd/PACE/wiki/Python
   - repo: local
     hooks:
       - id: tox-lint

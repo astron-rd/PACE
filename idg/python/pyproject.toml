@@ -56,6 +56,7 @@ ignore = ["E203", "E741", "E501", "N806", "S101", "S311"]
 [tool.coverage.run]
 branch = true
 
+# To learn more about tox you can read: https://github.com/astron-rd/PACE/wiki/Python
 [tool.tox]
 # Generative environment list to test all supported Python versions
 requires = ["tox>=4.21"]
