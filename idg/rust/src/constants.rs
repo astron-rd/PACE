@@ -1,10 +1,6 @@
-#![allow(unused)]
-
 #[cfg(not(feature = "f64"))]
 pub use f32::*;
-#[cfg(feature = "f64")]
-pub use f64::*;
-
+#[cfg(not(feature = "f64"))]
 mod f32 {
     use num_complex::Complex32;
 
@@ -15,6 +11,9 @@ mod f32 {
     pub const SPEED_OF_LIGHT: f32 = 299_792_458.0;
 }
 
+#[cfg(feature = "f64")]
+pub use f64::*;
+#[cfg(feature = "f64")]
 mod f64 {
     use num_complex::Complex64;
 

@@ -1,7 +1,11 @@
 use std::path::Path;
 
+use itertools::Itertools;
 use ndarray::prelude::*;
-use ndarray_rand::rand::{Rng, SeedableRng, rngs::StdRng};
+use ndarray_rand::{
+    rand::{SeedableRng, rngs::StdRng},
+    rand_distr::{Distribution, Uniform},
+};
 
 use crate::{
     constants::{Complex, Float, PI, SPEED_OF_LIGHT},
@@ -10,6 +14,7 @@ use crate::{
 
 pub type Visibility = Complex;
 
+/// Shape (baselines, timestep, channels, correlations)
 pub type VisibilityArray = Array4<Visibility>;
 
 pub trait VisibilityArrayExtension {
@@ -45,43 +50,40 @@ impl VisibilityArrayExtension for VisibilityArray {
         frequencies: &FrequencyArray,
         uvw: &UvwArray,
     ) -> Self {
-        let mut visibilities: Array4<Visibility> = Array4::zeros((
+        let mut visibilities: VisibilityArray = Array4::zeros((
             baseline_count.try_into().unwrap(),
             timestep_count.try_into().unwrap(),
             channel_count.try_into().unwrap(),
             correlation_count_in.try_into().unwrap(),
         ));
 
-        let mut offsets = Vec::new();
         let mut rng = StdRng::seed_from_u64(random_seed);
+        let distribution = Uniform::new_inclusive(
+            -(max_pixel_offset as Float / 2.0),
+            max_pixel_offset as Float / 2.0,
+        )
+        .expect("max_pixel_offset is unsigned, so this should not go wrong");
 
-        for _ in 0..point_sources_count {
-            let x = (rng.random::<Float>() * max_pixel_offset as Float)
-                - (max_pixel_offset / 2) as Float;
-            let y = (rng.random::<Float>() * max_pixel_offset as Float)
-                - (max_pixel_offset / 2) as Float;
-            offsets.push((x, y));
-        }
+        let freq_div_sol = frequencies / SPEED_OF_LIGHT;
+
+        let offsets: Vec<Offset> = distribution
+            .sample_iter(&mut rng)
+            .map(|x| x * image_size / grid_size as Float)
+            .tuples()
+            .map(|tup: (Float, Float)| Offset(tup.0, tup.1))
+            .take(point_sources_count as usize)
+            .collect();
 
         for offset in offsets {
-            let amplitude = 1.0;
+            for ((baseline, timestep, channel, _), visibility) in visibilities.indexed_iter_mut() {
+                let f = freq_div_sol[channel];
+                let u = f * uvw[(baseline, timestep)].u;
+                let v = f * uvw[(baseline, timestep)].v;
 
-            // Convert offset from grid cells to radians (l,m)
-            let l = offset.0 * image_size / grid_size as Float;
-            let m = offset.1 * image_size / grid_size as Float;
+                let phase = -2.0 * PI * (u * offset.l() + v * offset.m());
+                let value = Complex::new(0., phase).exp();
 
-            for baseline in 0..baseline_count {
-                add_point_source_to_baseline(
-                    baseline,
-                    timestep_count,
-                    channel_count,
-                    amplitude,
-                    frequencies,
-                    uvw,
-                    l,
-                    m,
-                    &mut visibilities,
-                )
+                *visibility += value;
             }
         }
 
@@ -96,30 +98,17 @@ impl VisibilityArrayExtension for VisibilityArray {
     }
 }
 
-fn add_point_source_to_baseline(
-    baseline: u32,
-    timestep_count: u32,
-    channel_count: u32,
-    amplitude: Float,
-    frequencies: &Array1<Float>,
-    uvw: &UvwArray,
-    l: Float,
-    m: Float,
-    visibilities: &mut Array4<Visibility>,
-) {
-    let baseline = baseline as usize;
-    for t in 0..timestep_count as usize {
-        for c in 0..channel_count as usize {
-            let u = (frequencies[c] / SPEED_OF_LIGHT) * uvw[(baseline, t)].u;
-            let v = (frequencies[c] / SPEED_OF_LIGHT) * uvw[(baseline, t)].v;
+#[derive(Clone, Copy)]
+struct Offset(pub Float, pub Float);
 
-            let phase = -2.0 * PI * (u * l + v * m);
-            let value = amplitude * (phase * Complex::new(0., 1.)).exp();
+impl Offset {
+    #[inline]
+    fn l(&self) -> Float {
+        self.0
+    }
 
-            // TODO: This is awful, please Rustify
-            visibilities
-                .slice_mut(s![baseline, t, c, ..])
-                .mapv_inplace(|x| x + value);
-        }
+    #[inline]
+    fn m(&self) -> Float {
+        self.1
     }
 }
