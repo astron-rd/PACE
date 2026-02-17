@@ -1,5 +1,7 @@
 #include <chrono>
+#include <iomanip>
 #include <iostream>
+#include <vector>
 
 #include <cxxopts.hpp>
 #include <xtensor/containers/xarray.hpp>
@@ -135,6 +137,31 @@ public:
   bool report_timing;
 };
 
+// Helper functions for printing
+void print_header(const std::string &title) {
+  std::cout << "\n==================================================\n";
+  if (!title.empty()) {
+    std::cout << title << "\n";
+    std::cout << "==================================================\n";
+  }
+}
+
+void print_timing(const std::string &name, double seconds) {
+  std::cout << std::left << std::setw(38) << name << std::right << std::setw(10)
+            << std::fixed << std::setprecision(6) << seconds << " s\n";
+}
+
+void print_timing(std::pair<const std::string, double> timing) {
+  print_timing(timing.first, timing.second);
+}
+
+void print_timing(const std::string &name, double seconds, double percent) {
+  std::cout << std::left << std::setw(31) << name << std::fixed
+            << std::setprecision(3) << std::right << std::setw(8) << seconds
+            << " s (" << std::setw(5) << std::setprecision(1) << percent
+            << "%)\n";
+}
+
 int main(int argc, const char *argv[]) {
 
   // Constants
@@ -162,54 +189,94 @@ int main(int argc, const char *argv[]) {
   const double image_size = speed_of_light / end_frequency;
 
   // Print parameters
-  std::cout << "Parameters:" << std::endl;
-  std::cout << "\tnr_correlations_in: " << nr_correlations_in << std::endl;
-  std::cout << "\tnr_correlations_out: " << nr_correlations_out << std::endl;
-  std::cout << "\tstart_frequency: " << start_frequency * 1e-6 << " MHz"
-            << std::endl;
-  std::cout << "\tfrequency_increment: " << frequency_increment * 1e-6 << " MHz"
-            << std::endl;
-  std::cout << "\tnr_channels: " << nr_channels << std::endl;
-  std::cout << "\tnr_timesteps: " << nr_timesteps << std::endl;
-  std::cout << "\tnr_stations: " << nr_stations << std::endl;
-  std::cout << "\tnr_baselines: " << nr_baselines << std::endl;
-  std::cout << "\tsubgrid_size: " << subgrid_size << std::endl;
-  std::cout << "\tgrid_size: " << grid_size << std::endl;
+  print_header("PARAMETERS");
+  std::cout << std::left << std::setw(40) << "nr_correlations_in" << std::right
+            << std::setw(10) << nr_correlations_in << "\n";
+  std::cout << std::left << std::setw(40) << "nr_correlations_out" << std::right
+            << std::setw(10) << nr_correlations_out << "\n";
+  std::cout << std::left << std::setw(40) << "start_frequency" << std::right
+            << std::setw(10) << std::fixed << std::setprecision(1)
+            << start_frequency * 1e-6 << "\n";
+  std::cout << std::left << std::setw(40) << "frequency_increment" << std::right
+            << std::setw(10) << std::fixed << std::setprecision(1)
+            << frequency_increment * 1e-6 << "\n";
+  std::cout << std::left << std::setw(40) << "nr_channels" << std::right
+            << std::setw(10) << nr_channels << "\n";
+  std::cout << std::left << std::setw(40) << "nr_timesteps" << std::right
+            << std::setw(10) << nr_timesteps << "\n";
+  std::cout << std::left << std::setw(40) << "nr_stations" << std::right
+            << std::setw(10) << nr_stations << "\n";
+  std::cout << std::left << std::setw(40) << "nr_baselines" << std::right
+            << std::setw(10) << nr_baselines << "\n";
+  std::cout << std::left << std::setw(40) << "subgrid_size" << std::right
+            << std::setw(10) << subgrid_size << "\n";
+  std::cout << std::left << std::setw(40) << "grid_size" << std::right
+            << std::setw(10) << grid_size << "\n";
+
+  std::vector<std::pair<const std::string, double>> timings;
+
+  if (arguments.report_timing) {
+    print_header("INITIALIZATION");
+  }
 
   // Generate UVW coordinates
-  std::cout << "Initialize UVW" << std::endl;
+  auto init_start = std::chrono::high_resolution_clock::now();
   xt::xarray<UVW> uvw = get_uvw(observation_hours, nr_baselines, grid_size);
+  auto init_end = std::chrono::high_resolution_clock::now();
+  double uvw_time =
+      std::chrono::duration<double>(init_end - init_start).count();
+  timings.push_back({"Initialize UVW coordinates", uvw_time});
+  if (arguments.report_timing) {
+    print_timing("Initialize UVW coordinates", uvw_time);
+  }
   const std::array<size_t, 3> shape_uvw = {nr_baselines, nr_timesteps, 3};
   if (arguments.output_uvw) {
     xt::dump_npy("uvw.npy", uvw);
   }
 
   // Generate frequencies
-  std::cout << "Initialize frequencies" << std::endl;
+  init_start = std::chrono::high_resolution_clock::now();
   xt::xarray<float> frequencies =
       get_frequencies(static_cast<float>(start_frequency),
                       static_cast<float>(frequency_increment), nr_channels);
+  init_end = std::chrono::high_resolution_clock::now();
+  double freq_time =
+      std::chrono::duration<double>(init_end - init_start).count();
+  timings.push_back({"Initialize frequencies", freq_time});
+  if (arguments.report_timing) {
+    print_timing(timings.back());
+  }
   xt::xarray<float> wavenumbers = (frequencies * static_cast<float>(2 * M_PI)) /
                                   static_cast<float>(speed_of_light);
 
   // Generate metadata
-  std::cout << "Initialize metadata" << std::endl;
+  init_start = std::chrono::high_resolution_clock::now();
   xt::xarray<Metadata> metadata =
       get_metadata(nr_channels, subgrid_size, grid_size, uvw);
+  init_end = std::chrono::high_resolution_clock::now();
+  double meta_time =
+      std::chrono::duration<double>(init_end - init_start).count();
+  timings.push_back({"Initialize metadata", meta_time});
+  if (arguments.report_timing) {
+    print_timing(timings.back());
+  }
   const size_t nr_subgrids = metadata.size();
   if (arguments.output_metadata) {
     xt::dump_npy("metadata.npy", metadata);
   }
 
   // Generate visibilities
-  std::cout << "Initialize visibilities" << std::endl;
-  auto start = std::chrono::high_resolution_clock::now();
+  init_start = std::chrono::high_resolution_clock::now();
   xt::xarray<VisibilityType> visibilities = get_visibilities(
       nr_correlations_in, nr_channels, nr_timesteps, nr_baselines,
       static_cast<float>(image_size), grid_size, frequencies, uvw);
-  auto end = std::chrono::high_resolution_clock::now();
-  std::cout << "runtime: " << std::chrono::duration<double>(end - start).count()
-            << " seconds" << std::endl;
+  init_end = std::chrono::high_resolution_clock::now();
+  double vis_time =
+      std::chrono::duration<double>(init_end - init_start).count();
+  timings.push_back({"Initialize visibilities", vis_time});
+  if (arguments.report_timing) {
+    print_timing(timings.back());
+  }
   if (arguments.output_visibilities) {
     xt::dump_npy("visibilities.npy", visibilities);
   }
@@ -219,8 +286,15 @@ int main(int argc, const char *argv[]) {
       {nr_correlations_out, grid_size, grid_size});
 
   // Taper
-  std::cout << "Initialize taper" << std::endl;
+  init_start = std::chrono::high_resolution_clock::now();
   xt::xarray<float> taper = get_taper(subgrid_size);
+  init_end = std::chrono::high_resolution_clock::now();
+  double taper_time =
+      std::chrono::duration<double>(init_end - init_start).count();
+  timings.push_back({"Initialize taper", taper_time});
+  if (arguments.report_timing) {
+    print_timing(timings.back());
+  }
   if (arguments.output_taper) {
     xt::dump_npy("taper.npy", taper);
   }
@@ -230,40 +304,74 @@ int main(int argc, const char *argv[]) {
       {nr_subgrids, nr_correlations_out, subgrid_size, subgrid_size});
 
   // Gridder
-  std::cout << "Initialize gridder" << std::endl;
+  init_start = std::chrono::high_resolution_clock::now();
   Gridder gridder(nr_correlations_in, subgrid_size);
+  init_end = std::chrono::high_resolution_clock::now();
+  double gridder_time =
+      std::chrono::duration<double>(init_end - init_start).count();
+  timings.push_back({"Initialize gridder", gridder_time});
+  if (arguments.report_timing) {
+    print_timing(timings.back());
+    print_header("MAIN");
+  }
 
   // Grid visibilities onto subgrids
-  std::cout << "Grid visibilities onto subgrids" << std::endl;
-  start = std::chrono::high_resolution_clock::now();
+  auto main_start = std::chrono::high_resolution_clock::now();
   gridder.grid_onto_subgrids(w_step, static_cast<float>(image_size), grid_size,
                              frequencies, uvw, visibilities, taper, metadata,
                              subgrids);
-  end = std::chrono::high_resolution_clock::now();
-  std::cout << "runtime: " << std::chrono::duration<double>(end - start).count()
-            << " seconds" << std::endl;
+  auto main_end = std::chrono::high_resolution_clock::now();
+  double grid_time =
+      std::chrono::duration<double>(main_end - main_start).count();
+  timings.push_back({"Grid visibilities", grid_time});
+  if (arguments.report_timing) {
+    print_timing(timings.back());
+  }
   if (arguments.output_subgrids) {
     xt::dump_npy("subgrids.npy", subgrids);
   }
 
   // Add subgrids to grid
-  std::cout << "Add subgrids to grid" << std::endl;
-  start = std::chrono::high_resolution_clock::now();
+  main_start = std::chrono::high_resolution_clock::now();
   gridder.add_subgrids_to_grid(metadata, subgrids, grid);
-  end = std::chrono::high_resolution_clock::now();
-  std::cout << "runtime: " << std::chrono::duration<double>(end - start).count()
-            << " seconds" << std::endl;
+  main_end = std::chrono::high_resolution_clock::now();
+  double add_time =
+      std::chrono::duration<double>(main_end - main_start).count();
+  timings.push_back({"Add subgrids", add_time});
+  if (arguments.report_timing) {
+    print_timing(timings.back());
+  }
   if (arguments.output_grid) {
     xt::dump_npy("grid.npy", grid);
   }
 
   // Transform to image domain
-  std::cout << "Transform to image domain" << std::endl;
-  start = std::chrono::high_resolution_clock::now();
+  main_start = std::chrono::high_resolution_clock::now();
   gridder.transform(FourierDomainToImageDomain, grid);
-  end = std::chrono::high_resolution_clock::now();
-  std::cout << "runtime: " << std::chrono::duration<double>(end - start).count()
-            << " seconds" << std::endl;
+  main_end = std::chrono::high_resolution_clock::now();
+  double transform_time =
+      std::chrono::duration<double>(main_end - main_start).count();
+  timings.push_back({"Transform grid", transform_time});
+  if (arguments.report_timing) {
+    print_timing(timings.back());
+  }
+
+  // Print timings summary
+  if (arguments.report_timing) {
+    print_header("TIMINGS");
+
+    double total_time = 0.0;
+    for (const auto &timer : timings) {
+      total_time += timer.second;
+    }
+
+    for (const auto &timer : timings) {
+      double percent = (timer.second / total_time) * 100.0;
+      print_timing(timer.first, timer.second, percent);
+    }
+
+    print_timing("Total", total_time, 100.0);
+  }
   if (arguments.output_image) {
     xt::dump_npy("image.npy", grid);
   }
