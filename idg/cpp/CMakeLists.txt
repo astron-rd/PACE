@@ -12,6 +12,8 @@ include(FetchContent)
 set(XTENSOR_LIBRARIES xtl xtensor xtensor-fftw xtensor-io)
 include("${CMAKE_SOURCE_DIR}/cmake/FetchXTensor.cmake")
 
+include("${CMAKE_SOURCE_DIR}/cmake/FetchCxxopts.cmake")
+
 find_package(OpenMP)
 
 add_subdirectory(src)
