@@ -66,15 +66,13 @@ impl VisibilityArrayExtension for VisibilityArray {
 
         let freq_div_sol = frequencies / SPEED_OF_LIGHT;
 
-        let offsets: Vec<Offset> = distribution
+        for offset in distribution
             .sample_iter(&mut rng)
             .map(|x| x * image_size / grid_size as Float)
             .tuples()
             .map(|tup: (Float, Float)| Offset(tup.0, tup.1))
             .take(point_sources_count as usize)
-            .collect();
-
-        for offset in offsets {
+        {
             for ((baseline, timestep, channel, _), visibility) in visibilities.indexed_iter_mut() {
                 let f = freq_div_sol[channel];
                 let u = f * uvw[(baseline, timestep)].u;
