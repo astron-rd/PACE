@@ -7,6 +7,8 @@
 #include "IDG.h"
 #include "init.h"
 
+#include "idgtypes-io.h"
+
 int main() {
   // Parameters
   const size_t nr_correlations_in = 2;  // XX, YY
@@ -32,7 +34,8 @@ int main() {
   // Generate UVW coordinates
   std::cout << "Initialize UVW" << std::endl;
   xt::xarray<UVW> uvw = get_uvw(observation_hours, nr_baselines, grid_size);
-//   xt::dump_npy("uvw.npy", uvw);
+  const std::array<size_t, 3> shape_uvw = {nr_baselines, nr_timesteps, 3};
+  xt::dump_npy("uvw.npy", uvw);
 
   // Generate frequencies
   std::cout << "Initialize frequencies" << std::endl;
@@ -44,16 +47,10 @@ int main() {
 
   // Generate metadata
   std::cout << "Initialize metadata" << std::endl;
-  std::vector<Metadata> metadata =
+  xt::xarray<Metadata> metadata =
       get_metadata(nr_channels, subgrid_size, grid_size, uvw);
-  size_t nr_subgrids = metadata.size();
-  const std::array<size_t, 2> shape = {nr_subgrids, 2};
-  xt::xarray<size_t> subgrid_coordinates = xt::zeros<size_t>(shape);
-  for (size_t s = 0; s < nr_subgrids; ++s) {
-    subgrid_coordinates(s, 0) = metadata[s].coordinate.x;
-    subgrid_coordinates(s, 1) = metadata[s].coordinate.y;
-  }
-  xt::dump_npy("subgrid_coordinates.npy", subgrid_coordinates);
+  const size_t nr_subgrids = metadata.size();
+  xt::dump_npy("metadata.npy", metadata);
 
   // Print parameters
   std::cout << "Parameters:" << std::endl;
@@ -116,7 +113,7 @@ int main() {
   end = std::chrono::high_resolution_clock::now();
   std::cout << "runtime: " << std::chrono::duration<double>(end - start).count()
             << " seconds" << std::endl;
-  xt::dump_npy("grid1.npy", taper);
+  xt::dump_npy("grid1.npy", grid);
 
   // Transform to image domain
   std::cout << "Transform to image domain" << std::endl;
@@ -125,7 +122,7 @@ int main() {
   end = std::chrono::high_resolution_clock::now();
   std::cout << "runtime: " << std::chrono::duration<double>(end - start).count()
             << " seconds" << std::endl;
-  xt::dump_npy("grid2.npy", taper);
+  xt::dump_npy("grid2.npy", grid);
 
   return EXIT_SUCCESS;
 }

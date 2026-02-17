@@ -128,7 +128,7 @@ xt::xarray<std::complex<float>> compute_phasor(size_t subgrid_size) {
   return phasor;
 }
 
-void add_subgrid_to_grid(size_t s, const std::vector<Metadata> &metadata,
+void add_subgrid_to_grid(size_t s, const xt::xarray<Metadata> &metadata,
                          const xt::xarray<std::complex<float>> &subgrids,
                          xt::xarray<std::complex<float>> &grid,
                          const xt::xarray<std::complex<float>> &phasor,
@@ -211,7 +211,7 @@ std::vector<Metadata> compute_metadata(size_t grid_size, size_t subgrid_size,
   return metadata;
 }
 
-void visibilities_to_subgrid(size_t s, const std::vector<Metadata> &metadata,
+void visibilities_to_subgrid(size_t s, const xt::xarray<Metadata> &metadata,
                              float w_step, size_t grid_size, float image_size,
                              const xt::xarray<float> &wavenumbers,
                              const xt::xarray<VisibilityType> &visibilities,
@@ -304,7 +304,7 @@ xt::xarray<std::complex<float>> compute_phasor(int subgrid_size) {
   return phasor;
 }
 
-void add_subgrid_to_grid(int s, const std::vector<Metadata> &metadata,
+void add_subgrid_to_grid(int s, const xt::xarray<Metadata> &metadata,
                          const xt::xarray<std::complex<float>> &subgrids,
                          xt::xarray<std::complex<float>> &grid,
                          const xt::xarray<std::complex<float>> &phasor,
@@ -331,8 +331,8 @@ void add_subgrid_to_grid(int s, const std::vector<Metadata> &metadata,
 }
 
 void visibilities_to_subgrid(
-    size_t s, const std::vector<Metadata> &metadata, float w_step,
-    int grid_size, float image_size, const xt::xarray<float> &wavenumbers,
+    size_t s, const xt::xarray<Metadata> &metadata, float w_step, int grid_size,
+    float image_size, const xt::xarray<float> &wavenumbers,
     const xt::xarray<std::complex<float>> &visibilities,
     const xt::xarray<UVW> &uvw, const xt::xarray<float> &taper,
     size_t nr_correlations_in, size_t subgrid_size,

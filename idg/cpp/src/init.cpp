@@ -102,11 +102,11 @@ xt::xarray<float> get_frequencies(const float start_frequency,
   return xt::arange(start_frequency, end_frequency, frequency_increment);
 }
 
-std::vector<Metadata> get_metadata(const size_t nr_channels,
-                                   const size_t subgrid_size,
-                                   const size_t grid_size,
-                                   const xt::xarray<UVW> &uvw,
-                                   const size_t max_group_size = 256) {
+xt::xarray<Metadata> get_metadata(const size_t nr_channels,
+                                  const size_t subgrid_size,
+                                  const size_t grid_size,
+                                  const xt::xarray<UVW> &uvw,
+                                  const size_t max_group_size = 256) {
   const size_t nr_baselines = uvw.shape()[0];
 
   std::vector<Metadata> metadata;
@@ -120,7 +120,10 @@ std::vector<Metadata> get_metadata(const size_t nr_channels,
     metadata.insert(metadata.end(), bl_metadata.begin(), bl_metadata.end());
   }
 
-  return metadata;
+  std::vector<size_t> shape({metadata.size()});
+  xt::xarray<Metadata> result(shape);
+  std::copy(metadata.begin(), metadata.end(), result.begin());
+  return result;
 }
 
 xt::xarray<VisibilityType>

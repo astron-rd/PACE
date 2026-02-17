@@ -12,11 +12,11 @@ xt::xarray<float> get_frequencies(const float start_frequency,
                                   const float frequency_increment,
                                   const size_t nr_channels);
 
-std::vector<Metadata> get_metadata(const size_t nr_channels,
-                                   const size_t subgrid_size,
-                                   const size_t grid_size,
-                                   const xt::xarray<UVW> &uvw,
-                                   const size_t max_group_size = 256);
+xt::xarray<Metadata> get_metadata(const size_t nr_channels,
+                                  const size_t subgrid_size,
+                                  const size_t grid_size,
+                                  const xt::xarray<UVW> &uvw,
+                                  const size_t max_group_size = 256);
 
 xt::xarray<VisibilityType>
 get_visibilities(const size_t nr_correlations, const size_t nr_channels,

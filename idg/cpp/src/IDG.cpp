@@ -17,7 +17,7 @@ void Gridder::grid_onto_subgrids(
     float w_step, float image_size, size_t grid_size,
     const xt::xarray<float> &wavenumbers, const xt::xarray<UVW> &uvw,
     const xt::xarray<std::complex<float>> &visibilities,
-    const xt::xarray<float> &taper, const std::vector<Metadata> &metadata,
+    const xt::xarray<float> &taper, const xt::xarray<Metadata> &metadata,
     xt::xarray<std::complex<float>> &subgrids) const {
   assert(nr_correlations_in_ == visibilities.shape()[3]);
   assert(nr_correlations_out_ == subgrids.shape()[1]);
@@ -40,7 +40,7 @@ void Gridder::grid_onto_subgrids(
 }
 
 void Gridder::add_subgrids_to_grid(
-    const std::vector<Metadata> &metadata,
+    const xt::xarray<Metadata> &metadata,
     const xt::xarray<std::complex<float>> &subgrids,
     xt::xarray<std::complex<float>> &grid) const {
   const size_t nr_correlations = grid.shape()[0];

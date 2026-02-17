@@ -18,10 +18,10 @@ public:
                           const xt::xarray<UVW> &uvw,
                           const xt::xarray<std::complex<float>> &visibilities,
                           const xt::xarray<float> &taper,
-                          const std::vector<Metadata> &metadata,
+                          const xt::xarray<Metadata> &metadata,
                           xt::xarray<std::complex<float>> &subgrids) const;
 
-  void add_subgrids_to_grid(const std::vector<Metadata> &metadata,
+  void add_subgrids_to_grid(const xt::xarray<Metadata> &metadata,
                             const xt::xarray<std::complex<float>> &subgrids,
                             xt::xarray<std::complex<float>> &grid) const;
 

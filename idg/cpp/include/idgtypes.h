@@ -3,6 +3,9 @@
 #include <complex>
 
 using VisibilityType = std::complex<float>;
+
+#pragma pack(push, 1)
+
 struct UVW {
   float u;
   float v;
