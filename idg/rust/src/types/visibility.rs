@@ -1,7 +1,11 @@
 use std::path::Path;
 
 use itertools::Itertools;
-use ndarray::prelude::*;
+use ndarray::{
+    Zip,
+    parallel::prelude::{IntoParallelIterator, ParallelIterator},
+    prelude::*,
+};
 use ndarray_rand::{
     rand::{SeedableRng, rngs::StdRng},
     rand_distr::{Distribution, Uniform},
@@ -66,23 +70,24 @@ impl VisibilityArrayExtension for VisibilityArray {
 
         let freq_div_sol = frequencies / SPEED_OF_LIGHT;
 
-        for offset in distribution
+        for (offset_l, offset_m) in distribution
             .sample_iter(&mut rng)
             .map(|x| x * image_size / grid_size as Float)
             .tuples()
-            .map(|tup: (Float, Float)| Offset(tup.0, tup.1))
             .take(point_sources_count as usize)
         {
-            for ((baseline, timestep, channel, _), visibility) in visibilities.indexed_iter_mut() {
-                let f = freq_div_sol[channel];
-                let u = f * uvw[(baseline, timestep)].u;
-                let v = f * uvw[(baseline, timestep)].v;
+            Zip::indexed(visibilities.view_mut())
+                .into_par_iter()
+                .for_each(|((baseline, timestep, channel, _), visibility)| {
+                    let f = freq_div_sol[channel];
+                    let u = f * uvw[(baseline, timestep)].u;
+                    let v = f * uvw[(baseline, timestep)].v;
 
-                let phase = -2.0 * PI * (u * offset.l() + v * offset.m());
-                let value = Complex::new(0., phase).exp();
+                    let phase = -2.0 * PI * (u * offset_l + v * offset_m);
+                    let value = Complex::new(0., phase).exp();
 
-                *visibility += value;
-            }
+                    *visibility += value;
+                });
         }
 
         visibilities
@@ -93,20 +98,5 @@ impl VisibilityArrayExtension for VisibilityArray {
         Self: Sized,
     {
         ndarray_npy::read_npy(path)
-    }
-}
-
-#[derive(Clone, Copy)]
-struct Offset(pub Float, pub Float);
-
-impl Offset {
-    #[inline]
-    fn l(self) -> Float {
-        self.0
-    }
-
-    #[inline]
-    fn m(self) -> Float {
-        self.1
     }
 }
