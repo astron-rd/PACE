@@ -114,6 +114,10 @@ pub enum Commands {
         #[arg(long)]
         metadata_file: Option<PathBuf>,
 
+        /// Location of the taper file, relative to `data_dir`
+        #[arg(long)]
+        taper_file: Option<PathBuf>,
+
         /// Size of the subgrid in pixels
         #[arg(long, default_value = "32")]
         subgrid_size: u32,

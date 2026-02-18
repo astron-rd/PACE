@@ -127,6 +127,7 @@ impl Input {
                 frequencies_file,
                 visibilities_file,
                 metadata_file,
+                taper_file,
                 subgrid_size,
                 grid_size,
                 correlation_count_out,
@@ -171,7 +172,12 @@ impl Input {
                     ),
                 };
 
-                let taper: Taper = time_function!("generate taper", Taper::generate(*subgrid_size));
+                let taper: Taper = match taper_file {
+                    None => time_function!("generate taper", Taper::generate(*subgrid_size)),
+                    Some(path) => {
+                        time_function!("load taper", Taper::from_file(&data_dir.join(path))?)
+                    }
+                };
 
                 Ok(Self {
                     subgrid_count: metadata.len(),

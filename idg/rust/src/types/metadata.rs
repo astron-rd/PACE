@@ -131,7 +131,6 @@ pub type MetadataArray = Array1<Metadata>;
 
 pub trait MetadataArrayExtension {
     fn generate(grid_size: u32, subgrid_size: u32, channel_count: u32, uvw: &UvwArray) -> Self;
-    #[allow(unused)] // For future use
     fn from_file(path: &Path) -> Result<Self, ndarray_npy::ReadNpyError>
     where
         Self: Sized;
