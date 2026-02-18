@@ -156,8 +156,8 @@ impl MetadataArrayExtension for MetadataArray {
                 subgrid_size,
                 channel_count,
                 baseline.try_into().unwrap(),
-                u_pixels.slice(s![baseline, ..]),
-                v_pixels.slice(s![baseline, ..]),
+                &u_pixels.slice(s![baseline, ..]),
+                &v_pixels.slice(s![baseline, ..]),
                 max_group_size,
             ));
         }
@@ -184,8 +184,8 @@ fn compute_metadata(
     subgrid_size: u32,
     channel_count: u32,
     baseline: u32,
-    u_pixels: ArrayView1<Float>,
-    v_pixels: ArrayView1<Float>,
+    u_pixels: &ArrayView1<Float>,
+    v_pixels: &ArrayView1<Float>,
     max_group_size: u32,
 ) -> Vec<Metadata> {
     let mut metadata = Vec::new();

@@ -24,7 +24,7 @@ pub use wavenumber::*;
 fn check_type_desc(type_desc: &Value, expected: &str) -> Result<(), ReadDataError> {
     // Is this cheating? Potentially.
     // Does it really matter in this context? I don't think so.
-    let signature = format!("{}", type_desc);
+    let signature = format!("{type_desc}");
 
     if signature == expected {
         Ok(())

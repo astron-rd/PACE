@@ -101,12 +101,12 @@ struct Offset(pub Float, pub Float);
 
 impl Offset {
     #[inline]
-    fn l(&self) -> Float {
+    fn l(self) -> Float {
         self.0
     }
 
     #[inline]
-    fn m(&self) -> Float {
+    fn m(self) -> Float {
         self.1
     }
 }

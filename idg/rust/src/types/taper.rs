@@ -16,7 +16,7 @@ pub trait TaperExtension {
 impl TaperExtension for Taper {
     fn generate(subgrid_size: u32) -> Self {
         let x: Array1<Float> = linspace::<_, Float>(-1.0..1.0, subgrid_size as usize)
-            .map(|x| x.abs())
+            .map(Float::abs)
             .collect();
         let spheroidal = x.map(|x| evaluate_spheroidal(*x));
 

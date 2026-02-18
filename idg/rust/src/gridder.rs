@@ -81,18 +81,18 @@ impl Gridder {
         let mut plan: C2CPlan64 =
             C2CPlan::aligned(&[subgrid_size, subgrid_size], Sign::Backward, Flag::MEASURE).unwrap();
 
-        let mut _in: AlignedVec<Complex> = AlignedVec::new(subgrid_size * subgrid_size);
-        let mut _out: AlignedVec<Complex> = AlignedVec::new(subgrid_size * subgrid_size);
+        let mut input: AlignedVec<Complex> = AlignedVec::new(subgrid_size * subgrid_size);
+        let mut output: AlignedVec<Complex> = AlignedVec::new(subgrid_size * subgrid_size);
 
         for mut correlations in self.subgrids.outer_iter_mut() {
             for mut subgrid in correlations.outer_iter_mut() {
-                for (dst, src) in _in.iter_mut().zip(subgrid.iter()) {
+                for (dst, src) in input.iter_mut().zip(subgrid.iter()) {
                     *dst = *src;
                 }
 
-                plan.c2c(&mut _in, &mut _out).unwrap();
+                plan.c2c(&mut input, &mut output).unwrap();
 
-                for (dst, src) in subgrid.iter_mut().zip(_out.iter()) {
+                for (dst, src) in subgrid.iter_mut().zip(output.iter()) {
                     *dst = *src;
                 }
                 subgrid /= Complex::new((subgrid_size * subgrid_size) as Float, 0.0); // Normalize
@@ -104,12 +104,12 @@ impl Gridder {
         let phasor = compute_phasor(input.subgrid_size);
 
         for (subgrid, metadata) in self.subgrids.outer_iter().zip(input.metadata.iter()) {
-            add_subgrid_to_grid(subgrid, metadata, self.grid.view_mut(), phasor.view());
+            add_subgrid_to_grid(&subgrid, metadata, self.grid.view_mut(), &phasor.view());
         }
     }
 
     pub fn transform(&mut self, input: &Input, direction: Sign) {
-        assert_eq!(input.correlation_count_out, self.grid.shape()[0] as u32);
+        assert_eq!(input.correlation_count_out as usize, self.grid.shape()[0]);
         let height = self.grid.shape()[1];
         let width = self.grid.shape()[2];
         assert_eq!(height, width);
@@ -121,24 +121,24 @@ impl Gridder {
         let mut plan: C2CPlan64 =
             C2CPlan::aligned(&[height, width], direction, Flag::MEASURE).unwrap();
 
-        let mut _in: AlignedVec<Complex> = AlignedVec::new(height * width);
-        let mut _out: AlignedVec<Complex> = AlignedVec::new(height * width);
+        let mut input: AlignedVec<Complex> = AlignedVec::new(height * width);
+        let mut output: AlignedVec<Complex> = AlignedVec::new(height * width);
 
         for mut correlation in self.grid.outer_iter_mut() {
             for ((x, y), src) in correlation.indexed_iter() {
                 let dst_x = (x + width / 2) % width;
                 let dst_y = (y + height / 2) % height;
                 let dst = dst_y * width + dst_x;
-                _in[dst] = *src;
+                input[dst] = *src;
             }
 
-            plan.c2c(&mut _in, &mut _out).unwrap();
+            plan.c2c(&mut input, &mut output).unwrap();
 
             for ((x, y), dst) in correlation.indexed_iter_mut() {
                 let src_x = (x + width / 2) % width;
                 let src_y = (y + height / 2) % height;
                 let src = src_y * width + src_x;
-                *dst = _out[src];
+                *dst = output[src];
             }
             correlation /= Complex::new((width * height) as Float, 0.0); // Normalize
             correlation *= Complex::new(2.0, 0.0);
@@ -174,7 +174,7 @@ fn visibilities_to_subgrids(
                 visibilities,
                 taper,
                 subgrid,
-            )
+            );
         });
 }
 
@@ -192,7 +192,7 @@ fn visibility_to_subgrid(
     mut subgrid: ArrayViewMut3<Complex>,
 ) {
     let w_offset_in_lambda = w_step * (metadata.coordinate.z as Float + 0.5);
-    let subgrid_size = subgrid.shape()[1] as u32;
+    let subgrid_size = u32::try_from(subgrid.shape()[1]).expect("subgrid_size does not fit in u32");
 
     let u_offset = (metadata.coordinate.x as Float + subgrid_size as Float / 2.0
         - grid_size as Float / 2.0)
@@ -232,7 +232,7 @@ fn visibility_to_subgrid(
             let y_dst = (y + (subgrid_size / 2)) % subgrid_size;
 
             for pol in 0..correlation_count_out {
-                subgrid[(pol as usize, y_dst as usize, x_dst as usize)] = pixels[pol as usize] * sph
+                subgrid[(pol as usize, y_dst as usize, x_dst as usize)] = pixels[pol as usize] * sph;
             }
         }
     }
@@ -289,7 +289,7 @@ fn compute_pixels(
                     idx as usize,
                     channel as usize,
                     pol as usize,
-                )] * phasor
+                )] * phasor;
             }
         }
     }
@@ -305,10 +305,10 @@ fn compute_phasor(subgrid_size: u32) -> Array2<Complex> {
 }
 
 fn add_subgrid_to_grid(
-    subgrid: ArrayView3<Complex>,
+    subgrid: &ArrayView3<Complex>,
     metadata: &Metadata,
     mut grid: ArrayViewMut3<Complex>,
-    phasor: ArrayView2<Complex>,
+    phasor: &ArrayView2<Complex>,
 ) {
     let grid_size = grid.shape()[1];
     let subgrid_size = subgrid.shape()[1];
