@@ -35,12 +35,12 @@ impl TaperExtension for Taper {
 
 fn evaluate_spheroidal(x: Float) -> Float {
     #[rustfmt::skip]
-    let p: [[Float; 5]; 2] = [
+    const P: [[Float; 5]; 2] = [
         [8.203343e-2, -3.644705e-1, 6.278660e-1, -5.335581e-1, 2.312756e-1],
         [4.028559e-3, -3.697768e-2, 1.021332e-1, -1.201436e-1, 6.412774e-2],
     ];
     #[rustfmt::skip]
-    let q: [[Float; 3]; 2] = [
+    const Q: [[Float; 3]; 2] = [
         [1.0000000e0, 8.212018e-1, 2.078043e-1],
         [1.0000000e0, 9.599102e-1, 2.918724e-1],
     ];
@@ -56,15 +56,15 @@ fn evaluate_spheroidal(x: Float) -> Float {
     let x_squared = x.powi(2);
     let del_x_squared = x_squared - end.powi(2);
     let mut del_x_squared_pow = del_x_squared;
-    let mut top = p[part][0];
-    for p in p[part].iter().skip(1) {
+    let mut top = P[part][0];
+    for p in P[part].iter().skip(1) {
         top += p * del_x_squared_pow;
         del_x_squared_pow *= del_x_squared;
     }
 
-    let mut btm = q[part][0];
+    let mut btm = Q[part][0];
     del_x_squared_pow = del_x_squared;
-    for q in q[part].iter().skip(1) {
+    for q in Q[part].iter().skip(1) {
         btm += q * del_x_squared_pow;
         del_x_squared_pow *= del_x_squared;
     }
