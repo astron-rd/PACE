@@ -103,6 +103,18 @@ def init_metadata(
     # Initialize the metadata list
     metadata = []
 
+    coordinate_type = np.dtype([("x", np.intc), ("y", np.intc), ("z", np.intc)])
+    metadata_type = np.dtype(
+        [
+            ("baseline", np.intc),
+            ("time_index", np.intc),
+            ("nr_timesteps", np.intc),
+            ("channel_begin", np.intc),
+            ("channel_end", np.intc),
+            ("coordinate", coordinate_type),
+        ]
+    )
+
     # Compute the metadata for each baseline
     for bl in range(nr_baselines):
         for m in compute_metadata(
@@ -114,18 +126,6 @@ def init_metadata(
             v_pixels[bl, :],
             max_group_size,
         ):
-            coordinate_type = np.dtype([("x", np.intc), ("y", np.intc), ("z", np.intc)])
-            metadata_type = np.dtype(
-                [
-                    ("baseline", np.intc),
-                    ("time_index", np.intc),
-                    ("nr_timesteps", np.intc),
-                    ("channel_begin", np.intc),
-                    ("channel_end", np.intc),
-                    ("coordinate", coordinate_type),
-                ]
-            )
-
             metadata.append(np.asarray(m, dtype=metadata_type))
 
     return np.asarray(metadata)
