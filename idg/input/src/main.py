@@ -22,6 +22,16 @@ def main():
         grid_size=settings.grid_size,
         uvw=targets["uvw"],
     )
+    targets["visibilities"] = initializer.init_visibilities(
+        nr_correlations=settings.nr_correlations_in,
+        nr_channels=settings.nr_channels,
+        nr_timesteps=settings.nr_timesteps,
+        nr_baselines=settings.nr_baselines,
+        image_size=settings.image_size,
+        grid_size=settings.grid_size,
+        frequencies=targets["frequencies"],
+        uvw=targets["uvw"],
+    )
 
     serializer = Serializer()
     for name, array in targets.items():
