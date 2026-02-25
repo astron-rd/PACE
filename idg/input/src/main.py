@@ -1,5 +1,5 @@
-import constants
 import initializer
+from config import settings
 from serializer import Serializer
 
 
@@ -7,19 +7,19 @@ def main():
     targets = {}
 
     targets["uvw"] = initializer.init_uvw(
-        observation_hours=constants.OBSERVATION_HOURS,
-        nr_baselines=constants.NR_BASELINES,
-        grid_size=constants.GRID_SIZE,
+        observation_hours=settings.observation_hours,
+        nr_baselines=settings.nr_baselines,
+        grid_size=settings.grid_size,
     )
     targets["frequencies"] = initializer.init_frequencies(
-        start_frequency=constants.START_FREQUENCY,
-        frequency_increment=constants.FREQUENCY_INCREMENT,
-        nr_channels=constants.NR_CHANNELS,
+        start_frequency=settings.start_frequency,
+        frequency_increment=settings.frequency_increment,
+        nr_channels=settings.nr_channels,
     )
     targets["metadata"] = initializer.init_metadata(
-        nr_channels=constants.NR_CHANNELS,
-        subgrid_size=constants.SUBGRID_SIZE,
-        grid_size=constants.GRID_SIZE,
+        nr_channels=settings.nr_channels,
+        subgrid_size=settings.subgrid_size,
+        grid_size=settings.grid_size,
         uvw=targets["uvw"],
     )
 
