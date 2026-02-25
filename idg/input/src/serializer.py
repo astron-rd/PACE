@@ -1,12 +1,12 @@
-import os
 import numpy as np
+from pathlib import Path
 
-DIRECTORY = "artifacts"
+DIRECTORY: Path = Path("artifacts")
 
 
 class Serializer:
     def __init__(self):
-        os.makedirs(DIRECTORY, exist_ok=True)
+        DIRECTORY.mkdir(parents=True, exist_ok=True)
 
     def save(self, name: str, array: np.ndarray) -> None:
-        np.save(DIRECTORY + "/" + name + ".npy", array)
+        np.save(DIRECTORY.joinpath(name + ".npy"), array)
