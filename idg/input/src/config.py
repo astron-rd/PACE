@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     @computed_field
     @property
     def end_frequency(self) -> float:
-        return self.start_frequency + self.nr_channels * self.frequency_increment
+        return self.start_frequency + (self.nr_channels - 1) * self.frequency_increment
 
     @computed_field
     @property
