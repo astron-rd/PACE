@@ -3,5 +3,6 @@ __pycache__/
 *.py[codz]
 *$py.class
 
-# Input artifact
+# Input artifacts
+*.npy
 *.npz
