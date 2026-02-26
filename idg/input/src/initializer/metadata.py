@@ -1,8 +1,8 @@
 import numpy as np
-from numba import jit
+import numba as nb
 
 
-@jit(nopython=True, fastmath=True, cache=True)
+@nb.njit(fastmath=True)
 def compute_metadata(
     grid_size: int,
     subgrid_size: int,
