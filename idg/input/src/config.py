@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     grid_size: int = Field(1024, description="Size of the grid in pixels")
     subgrid_size: int = Field(32, description="Size of the subgrid in pixels")
     observation_hours: float = Field(4.0, description="Observation length in hours")
+    output_npy: bool = Field(False, description="Use .npy format instead of .npz")
 
     # Computed fields
     @computed_field
@@ -52,11 +53,17 @@ class Settings(BaseSettings):
             if not field.description:
                 continue
 
+            kwargs = {}
+            if field.annotation is bool:
+                kwargs["action"] = "store_true"
+            else:
+                kwargs["type"] = field.annotation
+
             parser.add_argument(
                 f"--{name}",
-                type=field.annotation or type(field.default),
                 default=field.default,
                 help=field.description,
+                **kwargs,
             )
 
         return cls(**vars(parser.parse_args()))
