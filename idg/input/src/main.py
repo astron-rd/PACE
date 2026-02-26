@@ -32,6 +32,11 @@ def main():
         uvw=uvw,
     )
 
+    np.save("uvw.npy", uvw)
+    np.save("frequencies.npy", frequencies)
+    np.save("metadata.npy", metadata)
+    np.save("visibilities.npy", visibilities)
+
     np.savez(
         "artifact.npz",
         uvw=uvw,
