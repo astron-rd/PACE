@@ -1,27 +1,27 @@
 import numpy as np
 
-import initializer
+import initializers
 from config import settings
 
 
 def main():
-    uvw = initializer.init_uvw(
+    uvw = initializers.init_uvw(
         observation_hours=settings.observation_hours,
         nr_baselines=settings.nr_baselines,
         grid_size=settings.grid_size,
     )
-    frequencies = initializer.init_frequencies(
+    frequencies = initializers.init_frequencies(
         start_frequency=settings.start_frequency,
         frequency_increment=settings.frequency_increment,
         nr_channels=settings.nr_channels,
     )
-    metadata = initializer.init_metadata(
+    metadata = initializers.init_metadata(
         nr_channels=settings.nr_channels,
         subgrid_size=settings.subgrid_size,
         grid_size=settings.grid_size,
         uvw=uvw,
     )
-    visibilities = initializer.init_visibilities(
+    visibilities = initializers.init_visibilities(
         nr_correlations=settings.nr_correlations_in,
         nr_channels=settings.nr_channels,
         nr_timesteps=settings.nr_timesteps,
