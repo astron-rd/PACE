@@ -1,0 +1,9 @@
+[project]
+name = "idg-input"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "numba>=0.62.1",
+    "numpy>=2.3.5",
+    "pydantic-settings>=2.13.1",
+]
