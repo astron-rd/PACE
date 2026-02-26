@@ -32,18 +32,19 @@ def main():
         uvw=uvw,
     )
 
-    np.save("uvw.npy", uvw)
-    np.save("frequencies.npy", frequencies)
-    np.save("metadata.npy", metadata)
-    np.save("visibilities.npy", visibilities)
-
-    np.savez(
-        "artifact.npz",
-        uvw=uvw,
-        frequencies=frequencies,
-        metadata=metadata,
-        visibilities=visibilities,
-    )
+    if settings.output_npy:
+        np.save("uvw.npy", uvw)
+        np.save("frequencies.npy", frequencies)
+        np.save("metadata.npy", metadata)
+        np.save("visibilities.npy", visibilities)
+    else:
+        np.savez(
+            "artifact.npz",
+            uvw=uvw,
+            frequencies=frequencies,
+            metadata=metadata,
+            visibilities=visibilities,
+        )
 
 
 if __name__ == "__main__":
