@@ -1,9 +1,14 @@
 import argparse
-from pydantic import computed_field
+from pydantic import Field, computed_field
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
+    """
+    Configuration settings for input data generation process.
+    Fields with descriptions are exposed as command-line arguments.
+    """
+
     # Constants
     nr_correlations_in: int = 2  # XX, XY
     nr_correlations_out: int = 1  # I
@@ -13,11 +18,11 @@ class Settings(BaseSettings):
     speed_of_light: float = 299792458.0
 
     # Arguments
-    subgrid_size: int = 32  # size of each subgrid
-    grid_size: int = 1024  # size of the full grid
-    observation_hours: float = 4.0  # total observation time in hours
-    nr_channels: int = 16  # number of frequency channels
-    nr_stations: int = 20
+    nr_stations: int = Field(20, description="Number of stations")
+    nr_channels: int = Field(16, description="Number of frequency channels")
+    grid_size: int = Field(1024, description="Size of the grid in pixels")
+    subgrid_size: int = Field(32, description="Size of the subgrid in pixels")
+    observation_hours: float = Field(4.0, description="Observation length in hours")
 
     # Computed fields
     @computed_field
@@ -43,36 +48,16 @@ class Settings(BaseSettings):
     @classmethod
     def from_args(cls) -> "Settings":
         parser = argparse.ArgumentParser()
-        parser.add_argument(
-            "--subgrid_size",
-            type=int,
-            default=cls.model_fields["subgrid_size"].default,
-            help="Size of the subgrid in pixels",
-        )
-        parser.add_argument(
-            "--grid_size",
-            type=int,
-            default=cls.model_fields["grid_size"].default,
-            help="Size of the grid in pixels",
-        )
-        parser.add_argument(
-            "--observation_hours",
-            type=float,
-            default=cls.model_fields["observation_hours"].default,
-            help="Length of the observation in hours",
-        )
-        parser.add_argument(
-            "--nr_channels",
-            type=int,
-            default=cls.model_fields["nr_channels"].default,
-            help="Number of frequency channels",
-        )
-        parser.add_argument(
-            "--nr_stations",
-            type=int,
-            default=cls.model_fields["nr_stations"].default,
-            help="Number of stations",
-        )
+        for name, field in cls.model_fields.items():
+            if not field.description:
+                continue
+
+            parser.add_argument(
+                f"--{name}",
+                type=field.annotation or type(field.default),
+                default=field.default,
+                help=field.description,
+            )
 
         return cls(**vars(parser.parse_args()))
 
