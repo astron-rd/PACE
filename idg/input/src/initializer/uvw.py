@@ -2,7 +2,7 @@ import numpy as np
 
 
 def init_uvw(
-    observation_hours: int,
+    observation_hours: float,
     nr_baselines: int,
     grid_size: int,
     ellipticity: float = 0.1,
@@ -22,7 +22,7 @@ def init_uvw(
     """
 
     # Convert observation time to seconds (1 sample per second)
-    observation_seconds = observation_hours * 3600
+    observation_seconds = int(observation_hours * 3600)
     time_samples = np.arange(observation_seconds)
     nr_timesteps = observation_seconds
 
