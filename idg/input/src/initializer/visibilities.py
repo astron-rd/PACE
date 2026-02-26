@@ -1,11 +1,9 @@
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import multiprocessing
 import random
 import numpy as np
-from numba import jit
+import numba as nb
 
 
-@jit(nopython=True, fastmath=True, cache=True, nogil=True)
+@nb.njit(fastmath=True, parallel=True)
 def add_pt_src_to_baseline(
     baseline_index: int,
     nr_time: int,  # number of timesteps
@@ -43,6 +41,7 @@ def add_pt_src_to_baseline(
             visibilities[baseline_index, t, c, :] += value
 
 
+@nb.njit(cache=True, parallel=True)
 def init_visibilities(
     nr_correlations: int,
     nr_channels: int,
@@ -99,24 +98,17 @@ def init_visibilities(
         l_coordinate = offset[0] * image_size / grid_size
         m_coordinate = offset[1] * image_size / grid_size
 
-        with ThreadPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
-            futures = []
-            for bl in range(nr_baselines):
-                future = executor.submit(
-                    add_pt_src_to_baseline,
-                    bl,
-                    nr_timesteps,
-                    nr_channels,
-                    amplitude,
-                    frequencies,
-                    uvw,
-                    l_coordinate,
-                    m_coordinate,
-                    visibilities,
-                )
-                futures.append(future)
-
-            for future in as_completed(futures):
-                pass
+        for bl in nb.prange(nr_baselines):
+            add_pt_src_to_baseline(
+                bl,
+                nr_timesteps,
+                nr_channels,
+                amplitude,
+                frequencies,
+                uvw,
+                l_coordinate,
+                m_coordinate,
+                visibilities,
+            )
 
     return visibilities
