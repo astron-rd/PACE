@@ -30,5 +30,9 @@ add_executable(testfdd bin/testfdd.cpp)
 target_link_libraries(testfdd PRIVATE dedisp)
 target_include_directories(testfdd PRIVATE ${PROJECT_SOURCE_DIR}/include)
 
+add_executable(testfil bin/testfil.cpp)
+target_link_libraries(testfil PRIVATE dedisp)
+target_include_directories(testfil PRIVATE ${PROJECT_SOURCE_DIR}/include)
+
 add_executable(simulatesignal bin/simulatesignal.cpp)
 target_link_libraries(simulatesignal PRIVATE dedisp)
