@@ -63,7 +63,8 @@ std::string format_mjd(double mjd) {
 
 } // namespace
 
-// SIGPROC filterbank header structure
+// SIGPROC filterbank header structure.
+// Reference: https://sigpyproc3.readthedocs.io/en/latest/generated/sigpyproc.header.html
 struct FilterbankHeader {
   // Sizes
   int64_t header_size = 0;
