@@ -2,7 +2,7 @@ import jax
 from nptyping import NDArray, Shape, Float64, Float32, Bool, Complex64
 from jax import numpy as jnp
 
-SPEED_OF_LIGHT = 299792458.0
+from all_sky_python.constants import SPEED_OF_LIGHT
 
 # https://github.com/astron-rd/PACE/wiki/Jax
 # https://docs.jax.dev/en/latest/installation.html
@@ -17,6 +17,13 @@ def _sky_imager_jax_ravel_real_jit(
     lt: NDArray[Shape["Ravel"], Float32],
     mt: NDArray[Shape["Ravel"], Float32],
 ):
+    """
+    Produce a linear array representing a unit circle on a 2D image from correlated
+    visibilities and antenna baselines, only computes the real component.
+
+    Takes two linear arrays lt and mt as argument that are the linear mapping of the
+    unit circle drawn unto the original square image.
+    """
     visibilities = jnp.array(visibilities)
     freq = jnp.array(freq)
     nt = jnp.sqrt(1 - lt**2 - mt**2)
@@ -49,6 +56,9 @@ def sky_imager_jax_ravel_real_jit(
     c = npix_l**2 + npix_m**2 < 1
     lt, mt = npix_l[c].ravel(), npix_m[c].ravel()
     img = jnp.full(jnp.prod(jnp.array(npix_l.shape)), jnp.nan, dtype="float32")
+
+    # Note, Jax arrays are immutable, for every xxx.at[].set() a full
+    # allocation / deallocation occurs. These are extremely costly and must be minimized
     img = img.at[c.ravel()].set(
         f_imager_ravel_real(visibilities, baselines, freq, lt, mt)
     )

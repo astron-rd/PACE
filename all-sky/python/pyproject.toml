@@ -1,10 +1,10 @@
 [project]
-name = "imaging-python"
+name = "all-sky-python"
 version = "0.1.0"
 requires-python = ">=3.10"
 dependencies = [
-    "numba>=0.61.2",
-    "numpy<2",
-    "nptyping",
+    "numba>=0.64",  # Recent numba for `nogil`
+    "numpy>2",
+    "np2typing",
     "jax"
 ]
