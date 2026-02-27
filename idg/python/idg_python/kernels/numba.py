@@ -1,5 +1,5 @@
-import numpy as np
 import numba as nb
+import numpy as np
 
 
 @nb.njit(fastmath=True)
@@ -146,13 +146,16 @@ def compute_pixels(
 
     return pixels
 
+
 @nb.njit
 def compute_l(x: int, subgrid_size: int, image_size: float) -> float:
     return (x + 0.5 - (subgrid_size / 2.0)) * image_size / subgrid_size
 
+
 @nb.njit
 def compute_m(y: int, subgrid_size: int, image_size: float) -> float:
     return compute_l(y, subgrid_size, image_size)
+
 
 @nb.njit
 def compute_n(l: float, m: float) -> float:
@@ -162,6 +165,7 @@ def compute_n(l: float, m: float) -> float:
         return 1.0
 
     return tmp / (1.0 + np.sqrt(1.0 - tmp))
+
 
 @nb.njit(cache=True)
 def visibilities_to_subgrid(

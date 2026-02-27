@@ -1,11 +1,11 @@
 import argparse
 import json
 import time
-import numpy as np
 
 import idgtypes
-from init import get_uvw, get_metadata, get_frequencies, get_visibilities, get_taper
+import numpy as np
 from idg import Gridder  # type: ignore
+from init import get_frequencies, get_metadata, get_taper, get_uvw, get_visibilities
 
 # Dictionary to store all timings
 timings = dict()
