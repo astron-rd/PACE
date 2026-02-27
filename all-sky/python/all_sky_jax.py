@@ -8,6 +8,8 @@ from all_sky_python.constants import SPEED_OF_LIGHT
 # https://docs.jax.dev/en/latest/installation.html
 # https://docs.jax.dev/en/latest/config_options.html#jax_platforms
 jax.config.update("jax_platform_name", "cpu")
+# Gives another ~60% speedup on CPU
+jax.config.update("jax_exec_time_optimization_effort", 1.0)
 
 
 def _sky_imager_jax_ravel_real_jit(
