@@ -54,6 +54,8 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
 
   generate_spin_frequency_table(n_spin_frequencies, n_samples);
 
+  std::cout << spin_frequency_table_ << std::endl;
+
   // 2. Transpose data (convert input bytes to floats)
   std::cout << "(2) Transpose data: int -> float." << std::endl;
 
@@ -65,7 +67,7 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
 
   const std::string fn_transpose{"fdd-transpose.npy"};
   xt::dump_npy(fn_transpose, frequency_data);
-  
+
   // 3. Real-to-complex FFT: time series data to frequency domain
   // Perform an FFT batched over frequency using OpenMP
   std::cout << "(3) Forward FFT: real-to-complex." << std::endl;
@@ -84,7 +86,8 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
   // 4. Run dedispersion algorithm (CPU reference or optimised version)
   std::cout << "(4) Run dedispersion algorithm." << std::endl;
 
-  const size_t in_out_stride = n_fft_frequency_bins; // n_samples_padded / 2;
+  // const size_t in_out_stride = n_fft_frequency_bins;
+  const size_t in_out_stride = n_samples_padded / 2;
   dedisp::fourier_domain_dedisperse(
     dm_count_, n_spin_frequencies, n_channels_, time_resolution_,
     spin_frequency_table_.data(), dm_table_.data(), delay_table_.data(),
@@ -105,7 +108,18 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
     xt::view(dm_data, d, xt::all()) = xt::fftw::irfft(samples);
   }
 
-  return dm_data;
+  // CLEAN UP..
+  std::cout << "dm count = " << dm_count_;
+  std::cout << " / output samps = " << n_output_samples << '\n';
+  const std::vector<size_t> computed_shape = {dm_count_, n_output_samples};
+  xt::xarray<float> computed_data(computed_shape);
+  for(size_t d = 0; d < dm_count_; ++d) {
+    for (size_t s = 0; s < n_output_samples; ++s) {
+      xt::view(computed_data, d, s) = xt::view(dm_data, d, s);
+    }
+  }
+
+  return computed_data;
 }
 
 void FDDPlan::show() const {
@@ -135,7 +149,7 @@ void FDDPlan::generate_dm_list(float dm_start, float dm_end, float pulse_width,
       a_squared * (double)(n_channels_ * n_channels_ / 16.0);
   const double tolerance_squared = tolerance * tolerance;
   const double c =
-      (time_resolution_ * time_resolution_ + pulse_width * pulse_width) *
+      (time_resolution * time_resolution + pulse_width * pulse_width) *
       (tolerance_squared - 1.0);
 
   std::vector<float> dm_list = {dm_start};
@@ -148,6 +162,26 @@ void FDDPlan::generate_dm_list(float dm_start, float dm_end, float pulse_width,
                                   (a_squared + b_squared) * k)) /
                        (a_squared + b_squared));
     dm_list.push_back(dm);
+  }
+
+  dm_count_ = dm_list.size();
+
+  // Store the DM table in memory
+  dm_table_ = xt::adapt(dm_list, {dm_count_});
+
+  // Calculate and store the maximum delay
+  const float max_dm = dm_table_(dm_count_ - 1);
+  const float max_delay = delay_table_(n_channels_ - 1);
+  max_delay_ = static_cast<size_t>(max_dm * max_delay + 0.5);
+}
+
+void FDDPlan::generate_linear_dm_list(float dm_start, float dm_end, float dm_step) {
+  assert(dm_step > 0);
+
+  // Linearly fill the DM list
+  std::vector<float> dm_list = {dm_start};
+  while (dm_list.back() < dm_end) {
+    dm_list.push_back(dm_list.back() + dm_step);
   }
 
   dm_count_ = dm_list.size();

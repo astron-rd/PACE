@@ -16,6 +16,10 @@ public:
   void generate_dm_list(float dm_start, float dm_end, float pulse_width,
                         float tolerance);
 
+  // Generate a list of linearly spaced trial dispersion measures.
+  // Note: only meant for debugging purposes!
+  void generate_linear_dm_list(float dm_start, float dm_end, float dm_step);
+
   void show() const;
 
   xt::xarray<float> get_dm_table() const { return dm_table_; };
