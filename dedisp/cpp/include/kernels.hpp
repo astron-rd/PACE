@@ -4,6 +4,9 @@
 
 namespace dedisp {
 
+/// Apply time delays to the dispersed signal in the Fourier-domain as
+/// phase shifts. Finally sum over all channels to obtain the intensity
+/// as a function of spin-frequency and DM.
 void fourier_domain_dedisperse(size_t dm_count, size_t n_frequencies,
                                size_t n_channels, float time_resolution,
                                float *spin_frequencies,
