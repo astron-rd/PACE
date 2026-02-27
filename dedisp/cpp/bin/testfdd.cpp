@@ -14,15 +14,17 @@ int main() {
   // Observation details: duration, integration time, max. frequency, bandwidth,
   // and channel count.
   const dedisp::ObservationInfo observation{30.0f, 250.0e-6, 1581.0f, 100.0f,
-                                            1024};
+                                            16};
 
   // Mock signal parameters: RMS noise floor, DM, pulse arrival time, and signal
   // amplitude.
-  const dedisp::SignalInfo mock_signal{25.0f, 41.159f, 3.14159f, 200.0f};
+  constexpr float default_intensity = 25.0f;
+  constexpr float high_intensity = 200.0f;
+  const dedisp::SignalInfo mock_signal{25.0f, 41.159f, 3.14159f, high_intensity};
 
   // Dedispersion plan constraints: start DM, end DM, pulse width (ms), smearing
   // tolerance.
-  const dedisp::DedispersionConstraints constraints{2.0f, 100.0f, 4.0f, 1.25f};
+  const dedisp::DedispersionConstraints constraints{40.0f, 45.0f, 4.0f, 1.25f};
 
   const float frequency_resolution =
       -1.0 * observation.bandwidth /
@@ -65,8 +67,10 @@ int main() {
 
   std::cout << "Generate DM list..." << std::endl;
   prep_timer->start();
-  fdd_plan.generate_dm_list(constraints.dm_start, constraints.dm_end,
-                            constraints.pulse_width, constraints.tolerance);
+  // fdd_plan.generate_dm_list(constraints.dm_start, constraints.dm_end,
+  //                           constraints.pulse_width, constraints.tolerance);
+  const float dm_step = (constraints.dm_end - constraints.dm_start) / 10;
+  fdd_plan.generate_linear_dm_list(constraints.dm_start, constraints.dm_end, dm_step);
   prep_timer->pause();
   std::cout << fdd_plan.get_dm_table() << std::endl;
   std::cout << "> runtime: " << prep_timer->duration() << " seconds "
@@ -107,32 +111,35 @@ int main() {
   const xt::xarray<float> dm_table = fdd_plan.get_dm_table();
 
   // TODO: limit output to 100 like the original dedisp code.
-  // int n_candidates = 0;
-  // for (size_t d = 0; d < fdd_plan.dm_count(); ++d) {
-  //   for (size_t s = 0; s < n_samples_computed; ++s) {
-  //     const float value = mock_output(d, s);
-  //     std::cout << "  Checking DM trial " << d << " x " << s << " => " << value - output_mean << " > " << 6.0f * output_std << std::endl;
-  //     if (value - output_mean > 6.0f * output_std) {
-  //       // printf(
-  //       //     "  DM trial %u (%.3f pc/cm^3), Samp %u (%.6f s): %f (%.2f sigma)\n",
-  //       //     d, dm_table(d), s, s * observation.sampling_period, value,
-  //       //     (value - output_mean) / output_std);
-  //       ++n_candidates;
-  //       if (n_candidates > 100) {
-  //         break;
-  //       }
-  //     }
-  //   }
-  //   if (n_candidates > 100) {
-  //     break;
-  //   }
-  // }
-  // std::cout << "\nFound " << n_candidates << " DM candidates." << std::endl;
+  int n_candidates = 0;
+  for (size_t d = 0; d < fdd_plan.dm_count(); ++d) {
+    for (size_t s = 0; s < n_samples_computed; ++s) {
+      const float value = mock_output(d, s);
+      // std::cout << "  Checking DM trial " << d << " x " << s << " => " << value - output_mean << " > " << 6.0f * output_std << std::endl;
+      if (value - output_mean > 6.0f * output_std) {
+        // printf(
+        //     "  DM trial %u (%.3f pc/cm^3), Samp %u (%.6f s): %f (%.2f sigma)\n",
+        //     d, dm_table(d), s, s * observation.sampling_period, value,
+        //     (value - output_mean) / output_std);
+        ++n_candidates;
+        if (n_candidates > 100) {
+          break;
+        }
+      }
+    }
+    if (n_candidates > 100) {
+      break;
+    }
+  }
+  std::cout << "\nFound " << n_candidates << " DM candidates.\n" << std::endl;
 
+  const std::string fn_in_float{"fddin_float.npy"};
+  xt::dump_npy(fn_in_float, mock_input);
+  std::cout << "Input (float) is written to " << fn_in_float << "." << std::endl;
 
   const std::string fn_in{"fddin.npy"};
   xt::dump_npy(fn_in, quantised_mock_input);
-  std::cout << "\nInput is written to " << fn_in << "." << std::endl;
+  std::cout << "Input is written to " << fn_in << "." << std::endl;
 
   const std::string fn_out{"fddout.npy"};
   xt::dump_npy(fn_out, mock_output);
