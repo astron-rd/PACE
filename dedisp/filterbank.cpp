@@ -121,6 +121,8 @@ static std::ostream &operator<<(std::ostream &os, const FilterbankHeader &h) {
   os << "Dec (J2000):     " << format_j2000(h.src_dej) << "\n";
   os << "Azimuth angle:   " << h.azimuth_angle << "\n";
   os << "Zenith angle:    " << h.zenith_angle << "\n";
+  os << "\n--- Source ---\n";
+  os << "Name:            " << h.source_name << "\n";
   os << "=================================\n";
   return os;
 }
@@ -208,6 +210,8 @@ public:
         header_.nbeams = read_value<int>();
       } else if (key == "ibeam") {
         header_.ibeam = read_value<int>();
+      } else if (key == "source_name") {
+        read_prefixed_string(header_.source_name);
       }
     }
 
@@ -292,6 +296,27 @@ private:
       throw std::runtime_error("Failed to read value");
     }
     return value;
+  }
+
+  void read_prefixed_string(char *string) {
+    // Read length prefix (4 bytes, little-endian)
+    int length;
+    if (std::fread(&length, sizeof(int), 1, file_) != 1) {
+      throw std::runtime_error("Failed to length");
+    }
+
+    // Sanity check
+    if (length < 0 || length >= 80) {
+      throw std::runtime_error("Invalid length");
+    }
+
+    // Clear buffer and read string data
+    std::memset(string, 0, sizeof(string));
+
+    if (length > 0) {
+      std::fread(string, 1, length, file_);
+      string[length] = '\0';
+    }
   }
 };
 
