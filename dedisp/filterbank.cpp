@@ -94,7 +94,7 @@ struct FilterbankHeader {
   double zenith_angle = 0.0;  // Zenith angle at start
 
   // Source name
-  char source_name[80] = {};
+  std::string source_name = "";
 };
 
 static std::ostream &operator<<(std::ostream &os, const FilterbankHeader &h) {
@@ -211,7 +211,7 @@ public:
       } else if (key == "ibeam") {
         header_.ibeam = read_value<int>();
       } else if (key == "source_name") {
-        read_prefixed_string(header_.source_name);
+        header_.source_name = read_prefixed_string();
       }
     }
 
@@ -298,7 +298,9 @@ private:
     return value;
   }
 
-  void read_prefixed_string(char *string) {
+  std::string read_prefixed_string() {
+    char string[80];
+
     // Read length prefix (4 bytes, little-endian)
     int length;
     if (std::fread(&length, sizeof(int), 1, file_) != 1) {
@@ -317,6 +319,8 @@ private:
       std::fread(string, 1, length, file_);
       string[length] = '\0';
     }
+
+    return string;
   }
 };
 
