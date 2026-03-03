@@ -34,8 +34,8 @@ impl Add for Uvw {
     fn add(self, rhs: Self) -> Self::Output {
         Uvw {
             u: self.u + rhs.u,
-            v: self.v + rhs.u,
-            w: self.w + rhs.u,
+            v: self.v + rhs.v,
+            w: self.w + rhs.w,
         }
     }
 }
