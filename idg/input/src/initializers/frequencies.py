@@ -13,4 +13,6 @@ def init_frequencies(
 
     :return frequencies array, shape (nr_channels)
     """
-    return start_frequency + frequency_increment * np.arange(nr_channels)
+    return start_frequency + frequency_increment * np.arange(
+        nr_channels, dtype=np.float32
+    )
