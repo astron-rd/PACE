@@ -219,8 +219,9 @@ fn compute_metadata(
             .mean()
             .expect("This slice should not be empty");
 
-        let subgrid_x = group_u as u32 - (subgrid_size / 2);
-        let subgrid_y = group_v as u32 - (subgrid_size / 2);
+        let subgrid_x = (group_u as u32).checked_sub(subgrid_size / 2).expect("shouldn't underflow");
+        let subgrid_y = (group_v as u32).checked_sub(subgrid_size / 2).expect("shouldn't underflow");
+        assert!(subgrid_size <= grid_size, "subgrid shouldn't be larger than grid");
         let subgrid_x = subgrid_x.clamp(0, grid_size - subgrid_size);
         let subgrid_y = subgrid_y.clamp(0, grid_size - subgrid_size);
 
