@@ -198,7 +198,7 @@ fn compute_metadata(
         let current_u = u_pixels[timestep];
         let current_v = v_pixels[timestep];
 
-        // TODO: Add better explanation for what's happening with the group_size here
+        // Find the largest group of UVWs that fits in a subgrid.
         let mut group_size = 1;
         while (timestep + group_size < timestep_count)
             && ((group_size as u32) < max_group_size)
@@ -219,9 +219,16 @@ fn compute_metadata(
             .mean()
             .expect("This slice should not be empty");
 
-        let subgrid_x = (group_u as u32).checked_sub(subgrid_size / 2).expect("shouldn't underflow");
-        let subgrid_y = (group_v as u32).checked_sub(subgrid_size / 2).expect("shouldn't underflow");
-        assert!(subgrid_size <= grid_size, "subgrid shouldn't be larger than grid");
+        let subgrid_x = (group_u as u32)
+            .checked_sub(subgrid_size / 2)
+            .expect("shouldn't underflow");
+        let subgrid_y = (group_v as u32)
+            .checked_sub(subgrid_size / 2)
+            .expect("shouldn't underflow");
+        assert!(
+            subgrid_size <= grid_size,
+            "subgrid shouldn't be larger than grid"
+        );
         let subgrid_x = subgrid_x.clamp(0, grid_size - subgrid_size);
         let subgrid_y = subgrid_y.clamp(0, grid_size - subgrid_size);
 
