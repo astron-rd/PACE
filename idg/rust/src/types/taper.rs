@@ -52,9 +52,9 @@ fn evaluate_spheroidal(x: Float) -> Float {
     };
 
     let x_squared = x.powi(2);
-    let del_x_squared = x_squared - end.powi(2);
-    let top = evaluate_polynomial(del_x_squared, &P[part]);
-    let btm = evaluate_polynomial(del_x_squared, &Q[part]);
+    let delta_x_squared = x_squared - end.powi(2);
+    let top = evaluate_polynomial(delta_x_squared, &P[part]);
+    let btm = evaluate_polynomial(delta_x_squared, &Q[part]);
 
     if btm == 0.0 {
         0.0
