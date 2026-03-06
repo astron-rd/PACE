@@ -51,27 +51,24 @@ fn evaluate_spheroidal(x: Float) -> Float {
         _ => return 0.0,
     };
 
-    // TODO: This bit is kinda ugly, might be able to use some cleaning up
-    // TODO: Potentially split off `evaluate_polynomial` function
     let x_squared = x.powi(2);
     let del_x_squared = x_squared - end.powi(2);
-    let mut del_x_squared_pow = del_x_squared;
-    let mut top = P[part][0];
-    for p in P[part].iter().skip(1) {
-        top += p * del_x_squared_pow;
-        del_x_squared_pow *= del_x_squared;
-    }
-
-    let mut btm = Q[part][0];
-    del_x_squared_pow = del_x_squared;
-    for q in Q[part].iter().skip(1) {
-        btm += q * del_x_squared_pow;
-        del_x_squared_pow *= del_x_squared;
-    }
+    let top = evaluate_polynomial(del_x_squared, &P[part]);
+    let btm = evaluate_polynomial(del_x_squared, &Q[part]);
 
     if btm == 0.0 {
         0.0
     } else {
         (1.0 - x_squared) * (top / btm)
     }
+}
+
+fn evaluate_polynomial(x: Float, coefficients: &[Float]) -> Float {
+    let mut val = coefficients[0];
+    let mut x_accumulator = x;
+    for p in coefficients.iter().skip(1) {
+        val += p * x_accumulator;
+        x_accumulator *= x;
+    }
+    val
 }
