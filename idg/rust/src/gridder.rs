@@ -1,7 +1,3 @@
-#[cfg(not(feature = "f64"))]
-use fftw::plan::C2CPlan32;
-#[cfg(feature = "f64")]
-use fftw::plan::C2CPlan64;
 use fftw::{
     array::AlignedVec,
     plan::C2CPlan,
@@ -10,7 +6,7 @@ use fftw::{
 use ndarray::{Zip, prelude::*};
 
 use crate::{
-    constants::{Complex, Float, PI},
+    constants::{C2CPlanFloat, Complex, Float, PI},
     input::Input,
     types::*,
 };
@@ -74,12 +70,8 @@ impl Gridder {
 
     pub fn ifft_subgrids(&mut self, input: &Input) {
         let subgrid_size = input.subgrid_size.try_into().unwrap();
-        #[cfg(not(feature = "f64"))]
-        let mut plan: C2CPlan32 =
-            C2CPlan::aligned(&[subgrid_size, subgrid_size], Sign::Backward, Flag::MEASURE).unwrap();
-        #[cfg(feature = "f64")]
-        let mut plan: C2CPlan64 =
-            C2CPlan::aligned(&[subgrid_size, subgrid_size], Sign::Backward, Flag::MEASURE).unwrap();
+        let mut plan: C2CPlanFloat =
+            C2CPlan::aligned(&[subgrid_size, subgrid_size], Sign::Backward, Flag::ESTIMATE).unwrap();
 
         let mut input: AlignedVec<Complex> = AlignedVec::new(subgrid_size * subgrid_size);
         let mut output: AlignedVec<Complex> = AlignedVec::new(subgrid_size * subgrid_size);
@@ -114,12 +106,8 @@ impl Gridder {
         let width = self.grid.shape()[2];
         assert_eq!(height, width);
 
-        #[cfg(not(feature = "f64"))]
-        let mut plan: C2CPlan32 =
-            C2CPlan::aligned(&[height, width], direction, Flag::MEASURE).unwrap();
-        #[cfg(feature = "f64")]
-        let mut plan: C2CPlan64 =
-            C2CPlan::aligned(&[height, width], direction, Flag::MEASURE).unwrap();
+        let mut plan: C2CPlanFloat =
+            C2CPlan::aligned(&[height, width], direction, Flag::ESTIMATE).unwrap();
 
         let mut input: AlignedVec<Complex> = AlignedVec::new(height * width);
         let mut output: AlignedVec<Complex> = AlignedVec::new(height * width);
