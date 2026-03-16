@@ -12,7 +12,7 @@ simulate_dispersed_signal(const dedisp::SignalInfo &signal,
       -1.0f * observation.bandwidth / observation.channels;
   const size_t n_samples = observation.duration / observation.sampling_period;
 
-  std::array<size_t, 2> shape = {observation.channels, n_samples};
+  std::array<size_t, 2> shape = {n_samples, observation.channels};
   // xt::xarray<float> data = xt::ones<float>(shape);
   xt::random::seed(0);
   xt::xarray<float> data =
@@ -33,7 +33,7 @@ simulate_dispersed_signal(const dedisp::SignalInfo &signal,
 
     // std::cout << "ns = " << sample;
     // std::cout << " / nc = " << channel << std::endl;
-    data(channel, sample) += signal.intensity;
+    data(sample, channel) += signal.intensity;
   }
 
   std::cout << data.shape(0) << " / " << data.shape(1) << std::endl;
