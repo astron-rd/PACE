@@ -26,7 +26,7 @@ int main() {
   FilterbankHeader& header = const_cast<FilterbankHeader&>(fil.header());
   std::cout << header << '\n';
 
-  constexpr size_t decimation = 8;
+  constexpr size_t decimation = 1; // use 8
   header.nchans /= decimation;
   const dedisp::ObservationInfo observation{header.nsamples * header.tsamp, header.tsamp, header.fch1, -1.0f * header.foff * header.nchans,
                                             header.nchans};
@@ -38,11 +38,12 @@ int main() {
   const float frequency_resolution = header.foff;
   const size_t n_samples = header.nsamples;
 
-  std::array<size_t, 2> shape = {static_cast<size_t>(fil.header().nchans), static_cast<size_t>(fil.header().nsamples)};
-  xt::xarray<float> raw_input = xt::adapt(fil.data_ptr(), fil.data_size() / decimation, xt::no_ownership(), shape);
+  std::array<size_t, 2> shape = {static_cast<size_t>(fil.header().nsamples), static_cast<size_t>(fil.header().nchans)};
+  std::cout << fil.header().nsamples << " / " << fil.header().nchans << '\n';
+  xt::xarray<uint8_t> fil_input = xt::adapt(fil.data_ptr(), fil.data_size() / decimation, xt::no_ownership(), shape);
 
   mock_timer->pause();
-  std::cout << raw_input << std::endl;
+  std::cout << fil_input << std::endl;
   std::cout << "> runtime: " << mock_timer->duration() << " seconds "
             << std::endl;
 
@@ -68,7 +69,7 @@ int main() {
 
   std::cout << "Execute FDD Plan..." << std::endl;
   exec_timer->start();
-  xt::xarray<float> output = fdd_plan.execute(raw_input);
+  xt::xarray<float> output = fdd_plan.execute(fil_input);
   exec_timer->pause();
   std::cout << "> runtime: " << exec_timer->duration() << " seconds "
             << std::endl;
@@ -82,8 +83,8 @@ int main() {
   fdd_plan.show();
 
   std::cout << '\n' << "Dedispersion report" << std::endl;
-  const float raw_mean = xt::mean<float>(raw_input)();
-  const float raw_std  = xt::stddev<float>(raw_input)();
+  const float raw_mean = xt::mean<float>(fil_input)();
+  const float raw_std  = xt::stddev<float>(fil_input)();
   std::cout << "  Raw RMS    : " << raw_mean << std::endl;
   std::cout << "  Raw StdDev : " << raw_std << std::endl;
 
@@ -92,7 +93,7 @@ int main() {
   std::cout << "  Output RMS    : " << output_mean << std::endl;
   std::cout << "  Output StdDev : " << output_std << std::endl;
 
-  const size_t n_samples_computed = n_samples - fdd_plan.max_delay();
+  // const size_t n_samples_computed = n_samples - fdd_plan.max_delay();
   const xt::xarray<float> dm_table = fdd_plan.get_dm_table();
 
   // TODO: limit output to 100 like the original dedisp code.
@@ -118,13 +119,16 @@ int main() {
   // }
   // std::cout << "\nFound " << n_candidates << " DM candidates." << std::endl;
 
-
   const std::string fn_in{"fddin_fil.npy"};
-  xt::dump_npy(fn_in, raw_input);
+  xt::dump_npy(fn_in, fil_input);
   std::cout << "\nInput is written to " << fn_in << "." << std::endl;
 
   const std::string fn_out{"fddout_fil.npy"};
   xt::dump_npy(fn_out, output);
   std::cout << "Output is written to " << fn_out << "." << std::endl;
+
+  const std::string fn_dm_table{"dmtable_fil.npy"};
+  xt::dump_npy(fn_dm_table, dm_table);
+  std::cout << "Trial DMs are written to " << fn_dm_table << "." << std::endl;
 }
 
