@@ -27,14 +27,29 @@ repos:
     rev: v0.16.0
     hooks:
       - id: yamlfmt
-  # To learn more about Tox you can read:
-  # https://github.com/astron-rd/PACE/wiki/Python
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.4
+    hooks:
+      # Run the linter.
+      - id: ruff-check
+        args: [--fix]
+      # Run the formatter.
+      - id: ruff-format
   - repo: local
     hooks:
-      - id: tox-lint
-        name: tox-lint (local)
-        entry: pre-commit hazmat cd idg/python tox -e lint --
-        files: ^idg/python/
-        language: python
+      - id: pytest-idg
+        name: pytest-idg
+        stages: [manual] # only run when specified manually
+        entry: bash -c 'cd idg/python; uv run --env-file=.env pytest'
+        language: system
         types: [python]
-        args: ["--"]
+        pass_filenames: false
+        always_run: false
+      - id: build-idg
+        name: build-idg
+        stages: [manual] # only run when specified manually
+        entry: bash -c 'cd idg/python; uv run --env-file=.env -m build'
+        language: system
+        types: [python]
+        pass_filenames: false
+        always_run: false

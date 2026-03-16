@@ -1,2 +1,10 @@
 .vscode
 .idea
+
+# Python project files
+uv.lock
+coverage.xml
+.coverage
+.egg-info
+.venv
+dist

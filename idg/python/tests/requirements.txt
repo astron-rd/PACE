@@ -1,2 +1,0 @@
-pytest >= 7.0.0 # MIT
-pytest-cov >= 3.0.0 # MIT
