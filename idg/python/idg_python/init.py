@@ -96,7 +96,7 @@ def get_frequencies(
         start_frequency,
         start_frequency + nr_channels * frequency_increment,
         frequency_increment,
-        dtype=np.float32
+        dtype=np.float32,
     )
 
 

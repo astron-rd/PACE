@@ -1,8 +1,7 @@
-import numpy as np
-from nptyping import NDArray, Shape, Float64, Complex64
 import numba
-from numba import set_num_threads
-from numba import prange
+import numpy as np
+from nptyping import Complex64, Float64, NDArray, Shape
+from numba import prange, set_num_threads
 
 from all_sky_python.constants import SPEED_OF_LIGHT
 
@@ -79,8 +78,8 @@ def mat_scalar_loop(m, s):
 
 @numba.njit(parallel=True, fastmath=True, nogil=True)
 def sky_imager_numba_ravel_real(
-    visibilities: NDArray[Shape["Dim, Dim"], Complex64],
-    baselines: NDArray[Shape["Dim, Dim, 3"], Float64],
+    visibilities: NDArray[Shape["Dim, Dim"], Complex64],  # noqa: F821
+    baselines: NDArray[Shape["Dim, Dim, 3"], Float64],  # noqa: F821
     freq: NDArray[Shape["1"], Float64],
     npix_l: int,
     npix_m: int,
