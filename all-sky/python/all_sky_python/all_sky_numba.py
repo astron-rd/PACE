@@ -1,8 +1,7 @@
-import numpy as np
-from nptyping import NDArray, Shape, Float64, Complex64
 import numba
-from numba import set_num_threads
-from numba import prange
+import numpy as np
+from nptyping import Complex64, Float64, NDArray, Shape
+from numba import prange, set_num_threads
 
 from all_sky_python.constants import SPEED_OF_LIGHT
 

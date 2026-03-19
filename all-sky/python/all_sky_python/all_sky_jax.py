@@ -1,6 +1,6 @@
 import jax
-from nptyping import NDArray, Shape, Float64, Float32, Complex64
 from jax import numpy as jnp
+from nptyping import Complex64, Float32, Float64, NDArray, Shape
 
 from all_sky_python.constants import SPEED_OF_LIGHT
 
