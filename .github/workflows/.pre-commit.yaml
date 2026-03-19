@@ -9,6 +9,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v3
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
       - uses: pre-commit/action@v3.0.1
         with:
           extra_args: --hook-stage manual --all
