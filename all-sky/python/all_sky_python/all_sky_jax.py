@@ -13,11 +13,11 @@ jax.config.update("jax_exec_time_optimization_effort", 1.0)
 
 
 def _sky_imager_jax_ravel_real_jit(
-    visibilities: NDArray[Shape["Dim, Dim"], Complex64],  # noqa: F821
-    baselines: NDArray[Shape["Dim, Dim, 3"], Float64],  # noqa: F821
+    visibilities: NDArray[Shape["Dim, Dim"], Complex64],
+    baselines: NDArray[Shape["Dim, Dim, 3"], Float64],
     freq: NDArray[Shape["1"], Float64],
-    lt: NDArray[Shape["Ravel"], Float32],  # noqa: F821
-    mt: NDArray[Shape["Ravel"], Float32],  # noqa: F821
+    lt: NDArray[Shape["Ravel"], Float32],
+    mt: NDArray[Shape["Ravel"], Float32],
 ):
     """
     Produce a linear array representing a unit circle on a 2D image from correlated
@@ -46,8 +46,8 @@ f_imager_ravel_real = jax.jit(_sky_imager_jax_ravel_real_jit)  # , static_argnum
 
 
 def sky_imager_jax_ravel_real_jit(
-    visibilities: NDArray[Shape["Dim, Dim"], Complex64],  # noqa: F821
-    baselines: NDArray[Shape["Dim, Dim, 3"], Float64],  # noqa: F821
+    visibilities: NDArray[Shape["Dim, Dim"], Complex64],
+    baselines: NDArray[Shape["Dim, Dim, 3"], Float64],
     freq: NDArray[Shape["1"], Float64],
     npix_l: int,
     npix_m: int,

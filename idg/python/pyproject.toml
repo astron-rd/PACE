@@ -56,6 +56,7 @@ ignore = ["E203", "E741", "E501", "N806", "S101", "S311"]
 branch = true
 
 [tool.pytest.ini_options]
+env = [{"PYTHONWARNINGS"="default::DeprecationWarning"}]
 addopts = "--cov-report term --cov-report xml --cov-report html --cov=idg_python"
 testpaths = [
     "tests",

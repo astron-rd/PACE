@@ -78,8 +78,8 @@ def mat_scalar_loop(m, s):
 
 @numba.njit(parallel=True, fastmath=True, nogil=True)
 def sky_imager_numba_ravel_real(
-    visibilities: NDArray[Shape["Dim, Dim"], Complex64],  # noqa: F821
-    baselines: NDArray[Shape["Dim, Dim, 3"], Float64],  # noqa: F821
+    visibilities: NDArray[Shape["Dim, Dim"], Complex64],
+    baselines: NDArray[Shape["Dim, Dim, 3"], Float64],
     freq: NDArray[Shape["1"], Float64],
     npix_l: int,
     npix_m: int,
