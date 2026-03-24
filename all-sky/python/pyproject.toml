@@ -1,10 +1,71 @@
 [project]
 name = "all-sky-python"
+description = "All-sky imaging kernels implemented in Python"
 version = "0.1.0"
 requires-python = ">=3.10"
+readme = "README.md"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Astronomy",
+]
 dependencies = [
     "numba>=0.64",  # Recent numba for `nogil`
     "numpy>2",
     "np2typing",
-    "jax"
+    "jax",
+    "jaxtyping"
+]
+
+[build-system]
+requires = [
+    "setuptools>=70.0"
+]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages]
+find = {}
+
+[tool.ruff]
+exclude = [
+    ".venv",
+    ".git",
+    ".tox",
+    "dist",
+    "docs",
+    "*lib/python*",
+    "*egg",
+]
+
+builtins = ["_", "Dim", "Ravel"]
+
+[tool.ruff.lint]
+# Expand basic rules with name and style checks roughly equivalent to flake8 + black + pylint
+# Some additional functional errors such as `await` on none async or wrong return types / args.
+# More info https://docs.astral.sh/ruff/rules/
+select = ["N", "A", "E", "F", "B", "W", "Q", "ASYNC", "S", "G", "RET", "ARG", "I"]
+ignore = ["E203", "E741", "E501", "N806", "S101", "S311"]
+
+[tool.coverage.run]
+branch = true
+
+[tool.pytest.ini_options]
+env = [{"PYTHONWARNINGS"="default::DeprecationWarning"}]
+addopts = "--cov-report term --cov-report xml --cov-report html --cov=all_sky_python"
+testpaths = [
+    "tests",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=3.0.0",
+    "build>=0.8.0"
 ]
