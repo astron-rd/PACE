@@ -145,7 +145,6 @@ void test_fdd_kernel() {
   std::cout << "Executing FDD kernel..." << std::endl;
   dedisp::fourier_domain_dedisperse(
       n_dms, n_spin, n_channels, time_res, spin_table.data(), dm_table.data(), delay_table.data(),
-
       stride, stride, input.data(), output.data()
   );
 
