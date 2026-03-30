@@ -4,6 +4,9 @@ project(RadioAstronomy CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# To use clangd as LSP
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 include_directories("${CMAKE_SOURCE_DIR}/include")
 include_directories("${CMAKE_SOURCE_DIR}")
 
@@ -33,6 +36,10 @@ target_include_directories(testfdd PRIVATE ${PROJECT_SOURCE_DIR}/include)
 add_executable(testfil bin/testfil.cpp)
 target_link_libraries(testfil PRIVATE dedisp)
 target_include_directories(testfil PRIVATE ${PROJECT_SOURCE_DIR}/include)
+
+add_executable(testroutines bin/testroutines.cpp)
+target_link_libraries(testroutines PRIVATE dedisp)
+target_include_directories(testroutines PRIVATE ${PROJECT_SOURCE_DIR}/include)
 
 add_executable(simulatesignal bin/simulatesignal.cpp)
 target_link_libraries(simulatesignal PRIVATE dedisp)
