@@ -78,7 +78,7 @@ int main() {
 
   std::cout << "Execute FDD Plan..." << std::endl;
   exec_timer->start();
-  xt::xarray<float> mock_output = fdd_plan.execute(mock_input);
+  xt::xarray<float> mock_output = fdd_plan.execute(quantised_mock_input);
   exec_timer->pause();
   std::cout << "> runtime: " << exec_timer->duration() << " seconds "
             << std::endl;
