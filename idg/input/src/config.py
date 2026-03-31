@@ -1,9 +1,8 @@
 import argparse
-from pydantic import Field, computed_field
-from pydantic_settings import BaseSettings
+from pydantic import Field, computed_field, BaseModel
 
 
-class Settings(BaseSettings):
+class Settings(BaseModel):
     """
     Configuration settings for input data generation process.
     Fields with descriptions are exposed as command-line arguments.
