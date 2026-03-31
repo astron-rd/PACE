@@ -45,7 +45,7 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
   // 1. Generate spin table
   std::cout << "(1) Generate the spin frequency table." << std::endl;
 
-  generate_spin_frequency_table(n_spin_frequencies, n_samples);
+  generate_spin_frequency_table(n_fft_frequency_bins, n_samples);
   #ifdef DEDISP_DEBUG
     std::cout << spin_frequency_table_ << std::endl;
   #endif
@@ -96,7 +96,7 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
 
   const size_t in_out_stride = n_fft_frequency_bins;
   dedisp::fourier_domain_dedisperse(
-    dm_count_, n_spin_frequencies, n_channels_, time_resolution_,
+    dm_count_, n_fft_frequency_bins, n_channels_, time_resolution_,
     spin_frequency_table_.data(), dm_table_.data(), delay_table_.data(),
     in_out_stride, in_out_stride, fd_scratch.data(), dm_scratch.data()
   );
