@@ -13,18 +13,21 @@
 int main() {
   // Observation details: duration, integration time, max. frequency, bandwidth,
   // and channel count.
+  // const dedisp::ObservationInfo observation{30.0f, 250.0e-6, 1581.0f, 100.0f,
+  //                                           16};
   const dedisp::ObservationInfo observation{30.0f, 250.0e-6, 1581.0f, 100.0f,
-                                            16};
+                                            1024};
 
   // Mock signal parameters: RMS noise floor, DM, pulse arrival time, and signal
   // amplitude.
   constexpr float default_intensity = 25.0f;
-  constexpr float high_intensity = 200.0f;
-  const dedisp::SignalInfo mock_signal{25.0f, 41.159f, 3.14159f, high_intensity};
+  const dedisp::SignalInfo mock_signal{25.0f, 41.159f, 3.14159f, default_intensity};
+  // constexpr float high_intensity = 200.0f;
+  // const dedisp::SignalInfo mock_signal{25.0f, 41.159f, 3.14159f, high_intensity};
 
   // Dedispersion plan constraints: start DM, end DM, pulse width (ms), smearing
   // tolerance.
-  const dedisp::DedispersionConstraints constraints{40.0f, 45.0f, 4.0f, 1.25f};
+  const dedisp::DedispersionConstraints constraints{2.0f, 100.0f, 4.0f, 1.25f};
 
   const float frequency_resolution =
       -1.0 * observation.bandwidth /
@@ -67,10 +70,10 @@ int main() {
 
   std::cout << "Generate DM list..." << std::endl;
   prep_timer->start();
-  // fdd_plan.generate_dm_list(constraints.dm_start, constraints.dm_end,
-  //                           constraints.pulse_width, constraints.tolerance);
-  const float dm_step = (constraints.dm_end - constraints.dm_start) / 10;
-  fdd_plan.generate_linear_dm_list(constraints.dm_start, constraints.dm_end, dm_step);
+  fdd_plan.generate_dm_list(constraints.dm_start, constraints.dm_end,
+                            constraints.pulse_width, constraints.tolerance);
+  // const float dm_step = (constraints.dm_end - constraints.dm_start) / 100;
+  // fdd_plan.generate_linear_dm_list(constraints.dm_start, constraints.dm_end, dm_step);
   prep_timer->pause();
   std::cout << fdd_plan.get_dm_table() << std::endl;
   std::cout << "> runtime: " << prep_timer->duration() << " seconds "
