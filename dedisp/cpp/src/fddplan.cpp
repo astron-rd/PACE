@@ -31,14 +31,11 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
   const bool use_zero_padding = true;
   const size_t n_samples_fft =
       use_zero_padding ? round_up(n_samples + 1, 16384) : n_samples;
-  const size_t n_samples_padded = round_up(n_samples_fft + 1, 1024);
-  const size_t n_fft_frequency_bins = n_samples_padded / 2 + 1;
-
+  const size_t n_fft_frequency_bins = n_samples_fft / 2 + 1;
 
   #ifdef DEDISP_DEBUG
     std::cout << "n_samples            = " << n_samples << '\n';
     std::cout << "n_samples_fft        = " << n_samples_fft << '\n';
-    std::cout << "n_samples_padded     = " << n_samples_padded << '\n';
     std::cout << "n_fft_frequency_bins = " << n_fft_frequency_bins << '\n';
   #endif
 
@@ -54,12 +51,12 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
   std::cout << "(2) Transpose data: int -> float." << std::endl;
 
   // Input is in the frequency domain, while the output is in the DM domain.
-  const std::vector<size_t> transposed_shape = {n_channels_, n_samples_padded};
+  const std::vector<size_t> transposed_shape = {n_channels_, n_samples_fft};
   xt::xarray<float> transposed_input = xt::zeros<float>(transposed_shape);
 
   constexpr float byte_offset = 127.5;
   transpose_data<uint8_t, float>(n_channels_, n_samples, n_channels_,
-                         n_samples_padded, byte_offset, n_channels_,
+                         n_samples_fft, byte_offset, n_channels_,
                          input.data(), transposed_input.data());
 
 
@@ -110,7 +107,7 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
   // Perform an FFT batched along the DM axis using OpenMP
   std::cout << "(5) Inverse FFT: complex-to-real." << std::endl;
 
-  const std::vector<size_t> output_shape = {dm_count_, n_samples_padded};
+  const std::vector<size_t> output_shape = {dm_count_, n_samples_fft};
   xt::xarray<float> dm_data = xt::zeros<float>(output_shape);
 
   // #pragma omp parallel for
