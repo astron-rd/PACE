@@ -38,7 +38,7 @@ void test_transpose_data() {
   std::cout << padded_data << std::endl;
 
   std::cout << "Transpose data..." << std::endl;
-  constexpr float byte_offset = 128;
+  constexpr float byte_offset = 127.5f;
   dedisp::transpose_data<uint8_t, float>(n_channels, n_samples, n_channels,
                          n_samples_padded, byte_offset, 1,
                          data.data(), padded_data.data());
