@@ -1,11 +1,11 @@
 import argparse
 import json
 import time
-import numpy as np
 
 import idgtypes
-from init import get_uvw, get_metadata, get_frequencies, get_visibilities, get_taper
+import numpy as np
 from idg import Gridder  # type: ignore
+from init import get_frequencies, get_metadata, get_taper, get_uvw, get_visibilities
 
 # Dictionary to store all timings
 timings = dict()
@@ -57,7 +57,7 @@ OUTPUT_FILENAME = args.json
 
 # Derived arguments
 NR_TIMESTEPS = int(OBSERVATION_HOURS * 3600)
-END_FREQUENCY = START_FREQUENCY + NR_CHANNELS * FREQUENCY_INCREMENT
+END_FREQUENCY = START_FREQUENCY + (NR_CHANNELS - 1) * FREQUENCY_INCREMENT
 IMAGE_SIZE = SPEED_OF_LIGHT / END_FREQUENCY
 NR_STATIONS = args.nr_stations
 NR_BASELINES = NR_STATIONS * (NR_STATIONS - 1) // 2

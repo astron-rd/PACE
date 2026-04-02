@@ -1,10 +1,13 @@
 import random
-import numpy as np
-import numba as nb
 
 import idgtypes
-
-from kernels import add_pt_src_to_baseline, evaluate_spheroidal, compute_metadata
+import numba as nb
+import numpy as np
+from idg.python.kernels.kernels import (
+    add_pt_src_to_baseline,
+    compute_metadata,
+    evaluate_spheroidal,
+)
 
 
 def get_uvw(
@@ -29,7 +32,7 @@ def get_uvw(
 
     # Convert observation time to seconds (1 sample per second)
     observation_seconds = int(observation_hours * 3600)
-    time_samples = np.linspace(0, observation_seconds, observation_seconds)
+    time_samples = np.linspace(0, observation_seconds - 1, observation_seconds)
     nr_timesteps = observation_seconds
 
     # Initialize uvw array
@@ -93,6 +96,7 @@ def get_frequencies(
         start_frequency,
         start_frequency + nr_channels * frequency_increment,
         frequency_increment,
+        dtype=np.float32,
     )
 
 

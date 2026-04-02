@@ -1,9 +1,9 @@
 [project]
-name = "idg-python"
-description = "Image-Domain Gridding (IDG) kernels implemented in Python"
-version = "0.0.1"
+name = "all-sky-python"
+description = "All-sky imaging kernels implemented in Python"
+version = "0.1.0"
+requires-python = ">=3.10"
 readme = "README.md"
-requires-python = ">=3.12"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
@@ -17,13 +17,12 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Astronomy",
 ]
 dependencies = [
-    "jax>=0.5",
-    "numba>=0.61.2",
-    "numpy>=1.26.4",
+    "numba>=0.64",  # Recent numba for `nogil`
+    "numpy>2",
+    "np2typing",
+    "jax",
+    "jaxtyping"
 ]
-
-[project.urls]
-homepage = "https://github.com/astron-rd/pace"
 
 [build-system]
 requires = [
@@ -45,6 +44,8 @@ exclude = [
     "*egg",
 ]
 
+builtins = ["_", "Dim", "Ravel"]
+
 [tool.ruff.lint]
 # Expand basic rules with name and style checks roughly equivalent to flake8 + black + pylint
 # Some additional functional errors such as `await` on none async or wrong return types / args.
@@ -57,7 +58,7 @@ branch = true
 
 [tool.pytest.ini_options]
 env = [{"PYTHONWARNINGS"="default::DeprecationWarning"}]
-addopts = "--cov-report term --cov-report xml --cov-report html --cov=idg_python"
+addopts = "--cov-report term --cov-report xml --cov-report html --cov=all_sky_python"
 testpaths = [
     "tests",
 ]
