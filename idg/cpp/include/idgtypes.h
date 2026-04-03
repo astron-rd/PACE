@@ -27,5 +27,7 @@ struct Metadata {
   Coordinate coordinate;
 };
 
+#pragma pack(pop)
+
 constexpr int FourierDomainToImageDomain = 0;
 constexpr int ImageDomainToFourierDomain = 1;

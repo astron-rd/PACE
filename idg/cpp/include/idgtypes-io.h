@@ -1,5 +1,6 @@
 #pragma once
 
+#include "idgtypes.h"
 #include <fstream>
 #include <xtensor/containers/xarray.hpp>
 #include <xtensor/io/xnpy.hpp>
