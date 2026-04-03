@@ -5,12 +5,15 @@
 
 #include <cxxopts.hpp>
 #include <xtensor/containers/xarray.hpp>
+#include <xtensor/core/xtensor_forward.hpp>
 #include <xtensor/io/xnpy.hpp>
 
 #include "IDG.h"
+#include "idgtypes.h"
 #include "init.h"
 
 #include "idgtypes-io.h"
+#include "npy-parser.h"
 
 cxxopts::Options setupOptions(const char *argv[]) {
   cxxopts::Options options(argv[0], "Image-Domain Gridder");
@@ -221,7 +224,8 @@ int main(int argc, const char *argv[]) {
 
   // Generate UVW coordinates
   auto init_start = std::chrono::high_resolution_clock::now();
-  xt::xarray<UVW> uvw = get_uvw(observation_hours, nr_baselines, grid_size);
+  // xt::xarray<UVW> uvw = get_uvw(observation_hours, nr_baselines, grid_size);
+  xt::xarray<UVW> uvw = npy_parser::load_npy_uvw("inputs/uvw.npy");
   auto init_end = std::chrono::high_resolution_clock::now();
   double uvw_time =
       std::chrono::duration<double>(init_end - init_start).count();
@@ -236,9 +240,10 @@ int main(int argc, const char *argv[]) {
 
   // Generate frequencies
   init_start = std::chrono::high_resolution_clock::now();
-  xt::xarray<float> frequencies =
-      get_frequencies(static_cast<float>(start_frequency),
-                      static_cast<float>(frequency_increment), nr_channels);
+  // xt::xarray<float> frequencies =
+  //     get_frequencies(static_cast<float>(start_frequency),
+  //                     static_cast<float>(frequency_increment), nr_channels);
+  xt::xarray<float> frequencies = xt::load_npy<float>("inputs/frequencies.npy");
   init_end = std::chrono::high_resolution_clock::now();
   double freq_time =
       std::chrono::duration<double>(init_end - init_start).count();
@@ -251,8 +256,9 @@ int main(int argc, const char *argv[]) {
 
   // Generate metadata
   init_start = std::chrono::high_resolution_clock::now();
-  xt::xarray<Metadata> metadata =
-      get_metadata(nr_channels, subgrid_size, grid_size, uvw);
+  // xt::xarray<Metadata> metadata =
+  //     get_metadata(nr_channels, subgrid_size, grid_size, uvw);
+  xt::xarray<Metadata> metadata = npy_parser::load_npy_metadata("inputs/metadata.npy");
   init_end = std::chrono::high_resolution_clock::now();
   double meta_time =
       std::chrono::duration<double>(init_end - init_start).count();
@@ -267,9 +273,10 @@ int main(int argc, const char *argv[]) {
 
   // Generate visibilities
   init_start = std::chrono::high_resolution_clock::now();
-  xt::xarray<VisibilityType> visibilities = get_visibilities(
-      nr_correlations_in, nr_channels, nr_timesteps, nr_baselines,
-      static_cast<float>(image_size), grid_size, frequencies, uvw);
+  // xt::xarray<VisibilityType> visibilities = get_visibilities(
+  //     nr_correlations_in, nr_channels, nr_timesteps, nr_baselines,
+  //     static_cast<float>(image_size), grid_size, frequencies, uvw);
+  xt::xarray<VisibilityType> visibilities = xt::load_npy<VisibilityType>("inputs/visibilities.npy");
   init_end = std::chrono::high_resolution_clock::now();
   double vis_time =
       std::chrono::duration<double>(init_end - init_start).count();
