@@ -330,6 +330,20 @@ void add_subgrid_to_grid(int s, const xt::xarray<Metadata> &metadata,
   }
 }
 
+float compute_lm(float x, float subgrid_size, float image_size) {
+  return (x + 0.5 - (subgrid_size / 2.0)) * image_size / subgrid_size;
+}
+
+float compute_n(float l, float m) {
+  float tmp = l * l + m * m;
+
+  if (tmp >= 1.0) {
+    return 1.0;
+  }
+
+  return tmp / (1.0 + std::sqrt(1.0 - tmp));
+}
+
 void visibilities_to_subgrid(
     size_t s, const xt::xarray<Metadata> &metadata, float w_step, int grid_size,
     float image_size, const xt::xarray<float> &wavenumbers,
@@ -364,10 +378,9 @@ void visibilities_to_subgrid(
   for (size_t y = 0; y < subgrid_size; ++y) {
     for (size_t x = 0; x < subgrid_size; ++x) {
       // Compute l, m, n
-      const float l = (x + 0.5f - half_subgrid) * image_scale;
-      const float m_val = (y + 0.5f - half_subgrid) * image_scale;
-      const float tmp = l * l + m_val * m_val;
-      const float n = tmp / (1.0f + std::sqrt(1.0f - tmp));
+      const float l = compute_lm(x, subgrid_size, image_size);
+      const float m = compute_lm(y, subgrid_size, image_size);
+      const float n = compute_n(l, m);
 
       // Compute pixels
       std::vector<std::complex<float>> pixels(nr_correlations_out,
@@ -379,12 +392,11 @@ void visibilities_to_subgrid(
         const float v = uvw(bl, idx).v;
         const float w = uvw(bl, idx).w;
 
-        const float phase_index = u * l + v * m_val + w * n;
-        const float phase_offset =
-            u_offset * l + v_offset * m_val + w_offset * n;
+        const float phase_index = u * l + v * m + w * n;
+        const float phase_offset = u_offset * l + v_offset * m + w_offset * n;
 
         for (size_t chan = channel_begin; chan < channel_end; ++chan) {
-          const float phase = phase_offset - (phase_index * wavenumbers(chan));
+          const float phase = phase_offset - (phase_index * wavenumbers[chan]);
           std::complex<float> phasor =
               std::exp(std::complex<float>(0.0f, phase));
 
