@@ -6,6 +6,7 @@
 # Supress warnings because some of the following variable names, e.g.
 # "xtensor-python_GIT_TAG", are non-standard; they are non-standard because they
 # use hyphens.
+
 # cmake-lint: disable=C0103
 if(NOT xtl_GIT_TAG)
   set(xtl_GIT_TAG 0.8.0)
