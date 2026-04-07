@@ -11,8 +11,8 @@ public:
 
   xt::xarray<float> execute(const xt::xarray<uint8_t> &input);
 
-  /// Generate a list of trial dispersion measures based on an algorithm by Lina
-  /// Levin.
+  // Generate a list of trial dispersion measures based on an algorithm by Lina
+  // Levin.
   void generate_dm_list(float dm_start, float dm_end, float pulse_width,
                         float tolerance);
 
@@ -33,10 +33,10 @@ public:
   size_t max_delay() const { return max_delay_; };
 
 private:
-  /// Fill the dispersive delay table.
+  // Fill the dispersive delay table.
   void generate_delay_table();
 
-  /// Fill the spin frequency table.
+  // Fill the spin frequency table.
   void generate_spin_frequency_table(size_t n_frequencies, size_t n_samples);
 
   // Size parameters

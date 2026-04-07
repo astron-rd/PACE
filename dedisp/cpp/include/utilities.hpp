@@ -7,21 +7,16 @@
 
 namespace dedisp {
 
-/// Generate a dispersed signal with Gaussian noise.
+// Generate a dispersed signal with Gaussian noise.
 xt::xarray<float>
 simulate_dispersed_signal(const dedisp::SignalInfo &signal,
                           const dedisp::ObservationInfo &observation);
 
-/// ...
 uint8_t quantise(float value_in);
 
-/// @brief
-/// @param offset use this to undo quantization, e.g. 128 for 8-bits
-/// @param scale  // use this to prevent overflows when summing the data
-// template <typename InputType, typename OutputType>
-// void transpose_data(size_t height, size_t width, size_t in_stride,
-//                     size_t out_stride, float offset, float scale,
-//                     const InputType *input, OutputType *output);
+// @brief
+// @param offset use this to undo quantization, e.g. 128 for 8-bits
+// @param scale  // use this to prevent overflows when summing the data
 template <typename InputType, typename OutputType>
 void transpose_data(size_t height, size_t width, size_t in_stride,
                     size_t out_stride, float offset, float scale,
@@ -36,7 +31,7 @@ void transpose_data(size_t height, size_t width, size_t in_stride,
   }
 }
 
-/// round up int a to a multiple of int b
+// round up int a to a multiple of int b
 inline int round_up(int a, int b) { return ((a + b - 1) / b) * b; }
 
 namespace benchmark {

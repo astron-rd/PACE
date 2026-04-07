@@ -132,7 +132,6 @@ void test_fdd_kernel() {
 
   // Mock freq and dm scratch arrays
   const std::vector<size_t> input_shape = {n_channels, n_fft_bins};
-  // xt::xarray<std::complex<float>> input = xt::arange<float>(0, n_channels * n_fft_bins).reshape(input_shape);
   xt::xarray<std::complex<float>> input = xt::ones<std::complex<float>>(input_shape);
 
 
@@ -151,8 +150,8 @@ void test_fdd_kernel() {
   std::cout << "\nKernel output =\n" << output << std::endl;
 }
 
-/// This is a collection of simple tests to mock the steps
-/// in FDDPlan::execute(), with the aim to verify its correctness.
+// This is a collection of simple tests to mock the steps
+// in FDDPlan::execute(), with the aim to verify its correctness.
 int main() {
   std::cout << "TEST (1) -- transpose_data" << std::endl;
   test_transpose_data();
