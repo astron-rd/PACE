@@ -3,6 +3,7 @@
 # Python
 *.npy
 *__pycache__*
+.ipynb_checkpoints
 
 # Exclude build directories
 build/
