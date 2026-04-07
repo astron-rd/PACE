@@ -329,7 +329,7 @@ int main(int argc, const char *argv[]) {
                              wavenumbers, uvw, visibilities, taper, metadata,
                              subgrids);
 
-  gridder.ifft_subgrids(metadata, subgrids);
+  gridder.ifft_subgrids(subgrids);
   auto main_end = std::chrono::high_resolution_clock::now();
   double grid_time =
       std::chrono::duration<double>(main_end - main_start).count();
