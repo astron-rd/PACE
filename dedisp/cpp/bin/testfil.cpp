@@ -26,8 +26,6 @@ int main() {
   FilterbankHeader& header = const_cast<FilterbankHeader&>(fil.header());
   std::cout << header << '\n';
 
-  constexpr size_t decimation = 1; // use 8
-  header.nchans /= decimation;
   const dedisp::ObservationInfo observation{header.nsamples * header.tsamp, header.tsamp, header.fch1, -1.0f * header.foff * header.nchans,
                                             header.nchans};
 
@@ -40,7 +38,7 @@ int main() {
 
   std::array<size_t, 2> shape = {static_cast<size_t>(fil.header().nsamples), static_cast<size_t>(fil.header().nchans)};
   std::cout << fil.header().nsamples << " / " << fil.header().nchans << '\n';
-  xt::xarray<uint8_t> fil_input = xt::adapt(fil.data_ptr(), fil.data_size() / decimation, xt::no_ownership(), shape);
+  xt::xarray<uint8_t> fil_input = xt::adapt(fil.data_ptr(), fil.data_size(), xt::no_ownership(), shape);
 
   mock_timer->pause();
   std::cout << fil_input << std::endl;
