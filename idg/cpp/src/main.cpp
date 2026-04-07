@@ -251,14 +251,14 @@ int main(int argc, const char *argv[]) {
   if (arguments.report_timing) {
     print_timing(timings.back());
   }
-  xt::xarray<float> wavenumbers = (frequencies * static_cast<float>(2 * M_PI)) /
-                                  static_cast<float>(speed_of_light);
+  xt::xarray<float> wavenumbers = (frequencies * 2.0 * M_PI) / speed_of_light;
 
   // Generate metadata
   init_start = std::chrono::high_resolution_clock::now();
   // xt::xarray<Metadata> metadata =
   //     get_metadata(nr_channels, subgrid_size, grid_size, uvw);
-  xt::xarray<Metadata> metadata = npy_parser::load_npy_metadata("inputs/metadata.npy");
+  xt::xarray<Metadata> metadata =
+      npy_parser::load_npy_metadata("inputs/metadata.npy");
   init_end = std::chrono::high_resolution_clock::now();
   double meta_time =
       std::chrono::duration<double>(init_end - init_start).count();
@@ -276,7 +276,8 @@ int main(int argc, const char *argv[]) {
   // xt::xarray<VisibilityType> visibilities = get_visibilities(
   //     nr_correlations_in, nr_channels, nr_timesteps, nr_baselines,
   //     static_cast<float>(image_size), grid_size, frequencies, uvw);
-  xt::xarray<VisibilityType> visibilities = xt::load_npy<VisibilityType>("inputs/visibilities.npy");
+  xt::xarray<VisibilityType> visibilities =
+      xt::load_npy<VisibilityType>("inputs/visibilities.npy");
   init_end = std::chrono::high_resolution_clock::now();
   double vis_time =
       std::chrono::duration<double>(init_end - init_start).count();
@@ -325,8 +326,10 @@ int main(int argc, const char *argv[]) {
   // Grid visibilities onto subgrids
   auto main_start = std::chrono::high_resolution_clock::now();
   gridder.grid_onto_subgrids(w_step, static_cast<float>(image_size), grid_size,
-                             frequencies, uvw, visibilities, taper, metadata,
+                             wavenumbers, uvw, visibilities, taper, metadata,
                              subgrids);
+
+  gridder.ifft_subgrids(metadata, subgrids);
   auto main_end = std::chrono::high_resolution_clock::now();
   double grid_time =
       std::chrono::duration<double>(main_end - main_start).count();

@@ -1,6 +1,5 @@
 #include <complex>
 #include <cstddef>
-#include <vector>
 
 #include <omp.h>
 
@@ -32,6 +31,20 @@ void Gridder::grid_onto_subgrids(
     visibilities_to_subgrid(s, metadata, w_step, grid_size, image_size,
                             wavenumbers, visibilities, uvw, taper,
                             nr_correlations_in_, subgrid_size_, subgrid);
+
+    subgrid = xt::fftw::ifft2(subgrid);
+
+    xt::view(subgrids, s, xt::all(), xt::all(), xt::all()) = subgrid;
+  }
+}
+
+void Gridder::ifft_subgrids(const xt::xarray<Metadata> &metadata,
+                            xt::xarray<std::complex<float>> &subgrids) const {
+  const size_t nr_subgrids = metadata.size();
+
+  for (size_t s = 0; s < nr_subgrids; ++s) {
+    auto subgrid =
+        xt::eval(xt::view(subgrids, s, xt::all(), xt::all(), xt::all()));
 
     subgrid = xt::fftw::ifft2(subgrid);
 

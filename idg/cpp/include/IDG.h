@@ -1,6 +1,5 @@
 #include <complex>
 #include <cstddef>
-#include <vector>
 
 #include <xtensor/containers/xarray.hpp>
 
@@ -20,6 +19,9 @@ public:
                           const xt::xarray<float> &taper,
                           const xt::xarray<Metadata> &metadata,
                           xt::xarray<std::complex<float>> &subgrids) const;
+
+  void ifft_subgrids(const xt::xarray<Metadata> &metadata,
+                     xt::xarray<std::complex<float>> &subgrids) const;
 
   void add_subgrids_to_grid(const xt::xarray<Metadata> &metadata,
                             const xt::xarray<std::complex<float>> &subgrids,
