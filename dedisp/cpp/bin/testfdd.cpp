@@ -44,8 +44,7 @@ int main() {
   xt::xarray<float> mock_input =
       dedisp::simulate_dispersed_signal(mock_signal, observation);
 
-  // Quantise the input signal. Note that this actually clips the signal...
-  // TODO: don't clip?
+  // Quantise the input signal. Note that this actually clips the signal.
   xt::xarray<uint8_t> quantised_mock_input(mock_input.shape());
   for (size_t s = 0; s < mock_input.shape(0); ++s) {
     for (size_t c = 0; c < mock_input.shape(1); ++c) {
@@ -113,7 +112,6 @@ int main() {
   const size_t n_samples_computed = n_samples - fdd_plan.max_delay();
   const xt::xarray<float> dm_table = fdd_plan.get_dm_table();
 
-  // TODO: limit output to 100 like the original dedisp code.
   int n_candidates = 0;
   for (size_t s = 0; s < n_samples_computed; ++s) {
     for (size_t d = 0; d < fdd_plan.dm_count(); ++d) {

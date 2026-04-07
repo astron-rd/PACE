@@ -79,7 +79,6 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
   #pragma omp parallel for
   for(size_t c = 0; c < n_channels_; ++c) {
     xt::xarray<float> samples = xt::eval(xt::row(transposed_input, c));
-    // time_samples = xt::fftw::fftshift(time_samples);
     xt::view(fd_scratch, c, xt::all()) = xt::fftw::rfft(samples);
   }
 
@@ -113,14 +112,13 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
   const std::vector<size_t> output_shape = {dm_count_, n_samples_padded};
   xt::xarray<float> dm_data = xt::zeros<float>(output_shape);
 
-  // #pragma omp parallel for
+  #pragma omp parallel for
   for(size_t d = 0; d < dm_count_; ++d) {
     xt::xarray<std::complex<float>> samples = xt::eval(xt::row(dm_scratch, d));
-    // samples = xt::fftw::fftshift(samples);
     xt::view(dm_data, d, xt::all()) = xt::fftw::irfft(samples);
   }
 
-  // CLEAN UP..
+  // Copy the output of the FFT into an xarray with the expected output shape
   const std::vector<size_t> computed_shape = {n_output_samples, dm_count_};
   xt::xarray<float> computed_data(computed_shape);
   #ifdef DEDISP_DEBUG
@@ -151,7 +149,6 @@ void FDDPlan::show() const {
 void FDDPlan::generate_dm_list(float dm_start, float dm_end, float pulse_width,
                                float tolerance) {
   // Fill the DM list
-  // TODO: verify calculations.
   const double time_resolution = time_resolution_ * 1e6;
   const double f =
       (peak_frequency_ + ((n_channels_ / 2) - 0.5) * frequency_resolution_) *

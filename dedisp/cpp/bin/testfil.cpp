@@ -96,28 +96,27 @@ int main() {
   // const size_t n_samples_computed = n_samples - fdd_plan.max_delay();
   const xt::xarray<float> dm_table = fdd_plan.get_dm_table();
 
-  // TODO: limit output to 100 like the original dedisp code.
-  // int n_candidates = 0;
-  // for (size_t d = 0; d < fdd_plan.dm_count(); ++d) {
-  //   for (size_t s = 0; s < n_samples_computed; ++s) {
-  //     const float value = output(d, s);
-  //     std::cout << "  Checking DM trial " << d << " x " << s << " => " << value - output_mean << " > " << 6.0f * output_std << std::endl;
-  //     if (value - output_mean > 6.0f * output_std) {
-  //       // printf(
-  //       //     "  DM trial %u (%.3f pc/cm^3), Samp %u (%.6f s): %f (%.2f sigma)\n",
-  //       //     d, dm_table(d), s, s * observation.sampling_period, value,
-  //       //     (value - output_mean) / output_std);
-  //       ++n_candidates;
-  //       if (n_candidates > 100) {
-  //         break;
-  //       }
-  //     }
-  //   }
-  //   if (n_candidates > 100) {
-  //     break;
-  //   }
-  // }
-  // std::cout << "\nFound " << n_candidates << " DM candidates." << std::endl;
+  int n_candidates = 0;
+  for (size_t d = 0; d < fdd_plan.dm_count(); ++d) {
+    for (size_t s = 0; s < n_samples_computed; ++s) {
+      const float value = output(d, s);
+      std::cout << "  Checking DM trial " << d << " x " << s << " => " << value - output_mean << " > " << 6.0f * output_std << std::endl;
+      if (value - output_mean > 6.0f * output_std) {
+        printf(
+            "  DM trial %u (%.3f pc/cm^3), Samp %u (%.6f s): %f (%.2f sigma)\n",
+            d, dm_table(d), s, s * observation.sampling_period, value,
+            (value - output_mean) / output_std);
+        ++n_candidates;
+        if (n_candidates > 100) {
+          break;
+        }
+      }
+    }
+    if (n_candidates > 100) {
+      break;
+    }
+  }
+  std::cout << "\nFound " << n_candidates << " DM candidates." << std::endl;
 
   const std::string fn_in{"fddin_fil.npy"};
   xt::dump_npy(fn_in, fil_input);

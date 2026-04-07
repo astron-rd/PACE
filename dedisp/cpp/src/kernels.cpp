@@ -7,7 +7,6 @@
 
 namespace dedisp {
 
-// TODO: update interface!?
 void fourier_domain_dedisperse(size_t dm_count, size_t n_frequencies,
                                size_t n_channels, float time_resolution,
                                float *spin_frequencies,
