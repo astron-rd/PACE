@@ -43,11 +43,11 @@ int main() {
   }
   timer->pause();
   std::cout << quantised_signal << std::endl;
-  std::cout << "> runtime: " << timer->duration() << " seconds. "
-            << std::endl;
+  std::cout << "> runtime: " << timer->duration() << " seconds. " << std::endl;
 
   const std::string filename{"signal.npy"};
   xt::dump_npy(filename, quantised_signal);
 
-  std::cout << "The simulated signal has been written to " << filename << "." << std::endl;
+  std::cout << "The simulated signal has been written to " << filename << "."
+            << std::endl;
 }

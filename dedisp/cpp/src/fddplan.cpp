@@ -24,7 +24,8 @@ FDDPlan::FDDPlan(size_t n_channels, float time_resolution, float peak_frequency,
 }
 
 xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
-  const size_t n_samples = input.shape(0); // input has dimensions samples x channel
+  const size_t n_samples =
+      input.shape(0); // input has dimensions samples x channel
   const size_t n_spin_frequencies = n_samples / 2 + 1;
   const size_t n_output_samples = n_samples - max_delay_;
 
@@ -34,21 +35,20 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
   const size_t n_samples_padded = round_up(n_samples_fft + 1, 1024);
   const size_t n_fft_frequency_bins = n_samples_padded / 2 + 1;
 
-
-  #ifdef DEDISP_DEBUG
-    std::cout << "n_samples            = " << n_samples << '\n';
-    std::cout << "n_samples_fft        = " << n_samples_fft << '\n';
-    std::cout << "n_samples_padded     = " << n_samples_padded << '\n';
-    std::cout << "n_fft_frequency_bins = " << n_fft_frequency_bins << '\n';
-  #endif
+#ifdef DEDISP_DEBUG
+  std::cout << "n_samples            = " << n_samples << '\n';
+  std::cout << "n_samples_fft        = " << n_samples_fft << '\n';
+  std::cout << "n_samples_padded     = " << n_samples_padded << '\n';
+  std::cout << "n_fft_frequency_bins = " << n_fft_frequency_bins << '\n';
+#endif
 
   // 1. Generate spin table
   std::cout << "(1) Generate the spin frequency table." << std::endl;
 
   generate_spin_frequency_table(n_spin_frequencies, n_samples);
-  #ifdef DEDISP_DEBUG
-    std::cout << spin_frequency_table_ << std::endl;
-  #endif
+#ifdef DEDISP_DEBUG
+  std::cout << spin_frequency_table_ << std::endl;
+#endif
 
   // 2. Transpose data (convert input bytes to floats)
   std::cout << "(2) Transpose data: int -> float." << std::endl;
@@ -59,51 +59,53 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
 
   constexpr float byte_offset = 127.5;
   transpose_data<uint8_t, float>(n_channels_, n_samples, n_channels_,
-                         n_samples_padded, byte_offset, n_channels_,
-                         input.data(), transposed_input.data());
+                                 n_samples_padded, byte_offset, n_channels_,
+                                 input.data(), transposed_input.data());
 
-
-  #ifdef DEDISP_DEBUG_NPY
-    const std::string fn_transpose{"fdd-transpose.npy"};
-    xt::dump_npy(fn_transpose, transposed_input);
-  #endif
+#ifdef DEDISP_DEBUG_NPY
+  const std::string fn_transpose{"fdd-transpose.npy"};
+  xt::dump_npy(fn_transpose, transposed_input);
+#endif
 
   // 3. Real-to-complex FFT: time series data to frequency domain
   // Perform an FFT batched over frequency using OpenMP
   std::cout << "(3) Forward FFT: real-to-complex." << std::endl;
 
   // Scratch space to store the Fourier-domain (FD) data
-  const std::vector<size_t> fd_scratch_shape = {n_channels_, n_fft_frequency_bins};
-  xt::xarray<std::complex<float>> fd_scratch = xt::zeros<std::complex<float>>(fd_scratch_shape);
+  const std::vector<size_t> fd_scratch_shape = {n_channels_,
+                                                n_fft_frequency_bins};
+  xt::xarray<std::complex<float>> fd_scratch =
+      xt::zeros<std::complex<float>>(fd_scratch_shape);
 
-  #pragma omp parallel for
-  for(size_t c = 0; c < n_channels_; ++c) {
+#pragma omp parallel for
+  for (size_t c = 0; c < n_channels_; ++c) {
     xt::xarray<float> samples = xt::eval(xt::row(transposed_input, c));
     xt::view(fd_scratch, c, xt::all()) = xt::fftw::rfft(samples);
   }
 
-  #ifdef DEDISP_DEBUG_NPY
-    const std::string fn_r2c{"fdd-fft-r2c.npy"};
-    xt::dump_npy(fn_r2c, fd_scratch);
-  #endif
+#ifdef DEDISP_DEBUG_NPY
+  const std::string fn_r2c{"fdd-fft-r2c.npy"};
+  xt::dump_npy(fn_r2c, fd_scratch);
+#endif
 
   // 4. Run dedispersion algorithm (CPU reference or optimised version)
   std::cout << "(4) Run dedispersion algorithm." << std::endl;
 
-  const std::vector<size_t> dm_scratch_shape = {dm_count_, n_fft_frequency_bins};
-  xt::xarray<std::complex<float>> dm_scratch = xt::zeros<std::complex<float>>(dm_scratch_shape);
+  const std::vector<size_t> dm_scratch_shape = {dm_count_,
+                                                n_fft_frequency_bins};
+  xt::xarray<std::complex<float>> dm_scratch =
+      xt::zeros<std::complex<float>>(dm_scratch_shape);
 
   const size_t in_out_stride = n_fft_frequency_bins;
   dedisp::fourier_domain_dedisperse(
-    dm_count_, n_spin_frequencies, n_channels_, time_resolution_,
-    spin_frequency_table_.data(), dm_table_.data(), delay_table_.data(),
-    in_out_stride, in_out_stride, fd_scratch.data(), dm_scratch.data()
-  );
+      dm_count_, n_spin_frequencies, n_channels_, time_resolution_,
+      spin_frequency_table_.data(), dm_table_.data(), delay_table_.data(),
+      in_out_stride, in_out_stride, fd_scratch.data(), dm_scratch.data());
 
-  #ifdef DEDISP_DEBUG_NPY
-    const std::string fn_dedisp{"fdd-dedisp.npy"};
-    xt::dump_npy(fn_dedisp, dm_scratch);
-  #endif
+#ifdef DEDISP_DEBUG_NPY
+  const std::string fn_dedisp{"fdd-dedisp.npy"};
+  xt::dump_npy(fn_dedisp, dm_scratch);
+#endif
 
   // 5. Complex-to-real FFT: frequency domain back to time series data
   // Perform an FFT batched along the DM axis using OpenMP
@@ -112,8 +114,8 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
   const std::vector<size_t> output_shape = {dm_count_, n_samples_padded};
   xt::xarray<float> dm_data = xt::zeros<float>(output_shape);
 
-  #pragma omp parallel for
-  for(size_t d = 0; d < dm_count_; ++d) {
+#pragma omp parallel for
+  for (size_t d = 0; d < dm_count_; ++d) {
     xt::xarray<std::complex<float>> samples = xt::eval(xt::row(dm_scratch, d));
     xt::view(dm_data, d, xt::all()) = xt::fftw::irfft(samples);
   }
@@ -121,11 +123,12 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
   // Copy the output of the FFT into an xarray with the expected output shape
   const std::vector<size_t> computed_shape = {n_output_samples, dm_count_};
   xt::xarray<float> computed_data(computed_shape);
-  #ifdef DEDISP_DEBUG
-    std::cout << "output samps = " << computed_data.shape(0) << "; DM count = " << computed_data.shape(1) << '\n';
-  #endif
+#ifdef DEDISP_DEBUG
+  std::cout << "output samps = " << computed_data.shape(0)
+            << "; DM count = " << computed_data.shape(1) << '\n';
+#endif
   for (size_t s = 0; s < n_output_samples; ++s) {
-    for(size_t d = 0; d < dm_count_; ++d) {
+    for (size_t d = 0; d < dm_count_; ++d) {
       xt::view(computed_data, s, d) = xt::view(dm_data, d, s);
     }
   }
@@ -137,7 +140,8 @@ void FDDPlan::show() const {
   std::cout << "FDD Plan Summary" << std::endl;
   std::cout << "  nr channels:          " << n_channels_ << std::endl;
   std::cout << "  nr dm trials:         " << dm_count_ << std::endl;
-  std::cout << "  max delay:            " << max_delay_ * time_resolution_ << " s (" << max_delay_ << " samples)" << std::endl;
+  std::cout << "  max delay:            " << max_delay_ * time_resolution_
+            << " s (" << max_delay_ << " samples)" << std::endl;
   std::cout << "  time resolution:      " << time_resolution_ << " s"
             << std::endl;
   std::cout << "  frequency resolution: " << -frequency_resolution_ << " MHz"
@@ -185,7 +189,8 @@ void FDDPlan::generate_dm_list(float dm_start, float dm_end, float pulse_width,
   max_delay_ = static_cast<size_t>(max_dm * max_delay + 0.5);
 }
 
-void FDDPlan::generate_linear_dm_list(float dm_start, float dm_end, float dm_step) {
+void FDDPlan::generate_linear_dm_list(float dm_start, float dm_end,
+                                      float dm_step) {
   assert(dm_step > 0);
 
   // Linearly fill the DM list

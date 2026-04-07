@@ -3,8 +3,9 @@
 # these versions in their master branch. That way, the XTensor versions will be
 # equal in all repositories.
 
-# Supress warnings because some of the following variable names, e.g. "xtensor-python_GIT_TAG", are non-standard; they are non-standard because they use hyphens.
-# cmake-lint: disable=C0103
+# Supress warnings because some of the following variable names, e.g.
+# "xtensor-python_GIT_TAG", are non-standard; they are non-standard because they
+# use hyphens. cmake-lint: disable=C0103
 if(NOT xtl_GIT_TAG)
   set(xtl_GIT_TAG 0.8.0)
 endif()
@@ -34,17 +35,17 @@ if(NOT xtl IN_LIST XTENSOR_LIBRARIES)
   list(APPEND XTENSOR_LIBRARIES xtl)
 endif()
 
-# Ignore warnings thrown by CMake policy CMP0169.
-# See the comment below about FetchContent_Populate.
+# Ignore warnings thrown by CMake policy CMP0169. See the comment below about
+# FetchContent_Populate.
 if(POLICY CMP0169)
- cmake_policy(SET CMP0169 OLD)
+  cmake_policy(SET CMP0169 OLD)
 endif()
 
 include(FetchContent)
 
 foreach(LIB ${XTENSOR_LIBRARIES})
-  # Check which of the FFTW precisions are requested by the user and
-  # set the git tag accordingly.
+  # Check which of the FFTW precisions are requested by the user and set the git
+  # tag accordingly.
   if(LIB STREQUAL "xtensor-fftw-float")
     set(LIB "xtensor-fftw")
     set(HAVE_XTENSOR_FFTW_FLOAT TRUE)
@@ -73,15 +74,16 @@ foreach(LIB ${XTENSOR_LIBRARIES})
 
     # FetchContent_MakeAvailable makes ${LIB} part of the project. Headers from
     # ${LIB} are then installed along with the project. However, most projects
-    # only use ${LIB} internally, at compile time, and should not install ${LIB},
-    # including its headers: - For libraries, XTensor shouldn't be part the public
-    # API. - For applications, installing headers isn't needed at all.
+    # only use ${LIB} internally, at compile time, and should not install
+    # ${LIB}, including its headers: - For libraries, XTensor shouldn't be part
+    # the public API. - For applications, installing headers isn't needed at
+    # all.
     #
     # Instead of FetchContent_MakeAvailable, we therefore use
-    # FetchContent_Populate and define an INTERFACE target manually. This approach
-    # also supports xtensor-fftw, which does not define a CMake target and also
-    # loads FFTW using custom options A drawback of this approach is that we have
-    # to set some options manually, like
+    # FetchContent_Populate and define an INTERFACE target manually. This
+    # approach also supports xtensor-fftw, which does not define a CMake target
+    # and also loads FFTW using custom options A drawback of this approach is
+    # that we have to set some options manually, like
     # XTENSOR_FORCE_TEMPORARY_MEMORY_IN_ASSIGNMENTS.
 
     FetchContent_GetProperties(${LIB})
@@ -91,7 +93,7 @@ foreach(LIB ${XTENSOR_LIBRARIES})
 
     add_library(${LIB} INTERFACE)
     target_include_directories(${LIB} SYSTEM
-                              INTERFACE "${${LIB}_SOURCE_DIR}/include")
+                               INTERFACE "${${LIB}_SOURCE_DIR}/include")
   endif()
 endforeach()
 
@@ -106,7 +108,8 @@ endif()
 if(HAVE_XTENSOR_FFTW_DOUBLE OR HAVE_XTENSOR_FFTW_FLOAT)
   find_package(PkgConfig)
   if(NOT PkgConfig_FOUND)
-    message(WARNING "PkgConfig not found, not linking xtensor-fftw to fftw3(f).")
+    message(
+      WARNING "PkgConfig not found, not linking xtensor-fftw to fftw3(f).")
   else()
     if(HAVE_XTENSOR_FFTW_DOUBLE)
       pkg_search_module(FFTW fftw3 REQUIRED IMPORTED_TARGET)

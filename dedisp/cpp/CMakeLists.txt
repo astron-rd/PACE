@@ -12,15 +12,14 @@ include_directories("${CMAKE_SOURCE_DIR}")
 
 # Add various debugging options
 option(DEDISP_DEBUG "Increase logging verbosity for debugging" OFF)
-if (DEDISP_DEBUG)
+if(DEDISP_DEBUG)
   add_definitions(-DDEDISP_DEBUG)
 endif()
 
 option(DEDISP_DEBUG_NPY "Dump intermediate XTensor arrays as NPY files" OFF)
-if (DEDISP_DEBUG_NPY)
+if(DEDISP_DEBUG_NPY)
   add_definitions(-DDEDISP_DEBUG_NPY)
 endif()
-
 
 # Load external dependencies
 include(FetchContent)

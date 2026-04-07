@@ -1,5 +1,5 @@
-#include <numbers>
 #include <iostream>
+#include <numbers>
 
 #include <omp.h>
 

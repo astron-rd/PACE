@@ -2,11 +2,11 @@
 #include <iostream>
 #include <random>
 
-#include <xtensor/io/xio.hpp>
-#include <xtensor/io/xnpy.hpp>
-#include <xtensor/core/xmath.hpp>
 #include <xtensor-fftw/basic.hpp>
 #include <xtensor-fftw/helper.hpp>
+#include <xtensor/core/xmath.hpp>
+#include <xtensor/io/xio.hpp>
+#include <xtensor/io/xnpy.hpp>
 
 #include "fddplan.hpp"
 #include "kernels.hpp"
@@ -18,7 +18,8 @@ void test_transpose_data() {
   constexpr size_t n_samples = 5;
   constexpr size_t n_channels = 2;
   std::vector<size_t> input_shape = {n_samples, n_channels};
-  xt::xarray<float> raw_data = xt::arange<float>(0, n_samples * n_channels).reshape(input_shape);
+  xt::xarray<float> raw_data =
+      xt::arange<float>(0, n_samples * n_channels).reshape(input_shape);
   std::cout << raw_data << std::endl;
 
   // Quanitise the float values
@@ -40,8 +41,8 @@ void test_transpose_data() {
   std::cout << "Transpose data..." << std::endl;
   constexpr float byte_offset = 127.5f;
   dedisp::transpose_data<uint8_t, float>(n_channels, n_samples, n_channels,
-                         n_samples_padded, byte_offset, 1,
-                         data.data(), padded_data.data());
+                                         n_samples_padded, byte_offset, 1,
+                                         data.data(), padded_data.data());
 
   std::cout << padded_data << std::endl;
 }
@@ -51,13 +52,15 @@ void test_r2c_fft() {
   constexpr size_t n_samples = 8;
   constexpr size_t n_channels = 2;
   std::vector<size_t> shape = {n_channels, n_samples};
-  xt::xarray<float> data = xt::arange<float>(0, n_samples * n_channels).reshape(shape);
+  xt::xarray<float> data =
+      xt::arange<float>(0, n_samples * n_channels).reshape(shape);
   std::cout << data << std::endl;
 
   // Output storage
   const size_t n_fft_bins = n_samples / 2 + 1;
   std::vector<size_t> scratch_shape = {n_channels, n_fft_bins};
-  xt::xarray<std::complex<float>> scratch = xt::zeros<std::complex<float>>(scratch_shape);
+  xt::xarray<std::complex<float>> scratch =
+      xt::zeros<std::complex<float>>(scratch_shape);
   std::cout << scratch << std::endl;
 
   // Grab a single row of time samples from a single channel
@@ -78,7 +81,8 @@ void test_c2r_fft() {
   constexpr size_t n_samples = 8;
   const size_t n_fft_bins = n_samples / 2 + 1;
   std::vector<size_t> shape = {n_dms, n_fft_bins};
-  xt::xarray<std::complex<float>> data = xt::arange<float>(0, n_samples * n_fft_bins).reshape(shape);
+  xt::xarray<std::complex<float>> data =
+      xt::arange<float>(0, n_samples * n_fft_bins).reshape(shape);
   std::cout << data << std::endl;
 
   // Allocate output storage
@@ -132,20 +136,20 @@ void test_fdd_kernel() {
 
   // Mock freq and dm scratch arrays
   const std::vector<size_t> input_shape = {n_channels, n_fft_bins};
-  xt::xarray<std::complex<float>> input = xt::ones<std::complex<float>>(input_shape);
-
+  xt::xarray<std::complex<float>> input =
+      xt::ones<std::complex<float>>(input_shape);
 
   std::cout << "\nKernel input =\n" << input << '\n' << std::endl;
 
   const std::vector<size_t> output_shape = {n_dms, n_fft_bins};
-  xt::xarray<std::complex<float>> output(output_shape); // = xt::zeros<std::complex<float>>(output_shape);
+  xt::xarray<std::complex<float>> output(
+      output_shape); // = xt::zeros<std::complex<float>>(output_shape);
 
   const size_t stride = n_fft_bins;
   std::cout << "Executing FDD kernel..." << std::endl;
   dedisp::fourier_domain_dedisperse(
-      n_dms, n_spin, n_channels, time_res, spin_table.data(), dm_table.data(), delay_table.data(),
-      stride, stride, input.data(), output.data()
-  );
+      n_dms, n_spin, n_channels, time_res, spin_table.data(), dm_table.data(),
+      delay_table.data(), stride, stride, input.data(), output.data());
 
   std::cout << "\nKernel output =\n" << output << std::endl;
 }

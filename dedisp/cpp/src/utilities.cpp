@@ -33,10 +33,11 @@ simulate_dispersed_signal(const dedisp::SignalInfo &signal,
     data(sample, channel) += signal.intensity;
   }
 
-  #ifdef DEDISP_DEBUG
-    std::cout << "DEBUG: simulated a dispersed signal with data shape (samples, channels): ";
-    std::cout << data.shape(0) << " / " << data.shape(1) << std::endl;
-  #endif
+#ifdef DEDISP_DEBUG
+  std::cout << "DEBUG: simulated a dispersed signal with data shape (samples, "
+               "channels): ";
+  std::cout << data.shape(0) << " / " << data.shape(1) << std::endl;
+#endif
 
   return data;
 }
