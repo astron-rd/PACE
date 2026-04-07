@@ -32,8 +32,6 @@ void Gridder::grid_onto_subgrids(
                             wavenumbers, visibilities, uvw, taper,
                             nr_correlations_in_, subgrid_size_, subgrid);
 
-    subgrid = xt::fftw::ifft2(subgrid);
-
     xt::view(subgrids, s, xt::all(), xt::all(), xt::all()) = subgrid;
   }
 }
