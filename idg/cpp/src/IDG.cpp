@@ -36,17 +36,17 @@ void Gridder::grid_onto_subgrids(
   }
 }
 
-void Gridder::ifft_subgrids(const xt::xarray<Metadata> &metadata,
-                            xt::xarray<std::complex<float>> &subgrids) const {
-  const size_t nr_subgrids = metadata.size();
+void Gridder::ifft_subgrids(xt::xarray<std::complex<float>> &subgrids) const {
+  for (size_t s = 0; s < subgrids.shape(0); ++s) {
+    for (size_t c = 0; c < subgrids.shape(1); ++s) {
+      auto subgrid = xt::eval(xt::view(subgrids, s, c, xt::all(), xt::all()));
 
-  for (size_t s = 0; s < nr_subgrids; ++s) {
-    auto subgrid =
-        xt::eval(xt::view(subgrids, s, xt::all(), xt::all(), xt::all()));
+      subgrid = xt::fftw::ifft2(subgrid);
 
-    subgrid = xt::fftw::ifft2(subgrid);
+      subgrid = subgrid / (subgrid_size_ * subgrid_size_);
 
-    xt::view(subgrids, s, xt::all(), xt::all(), xt::all()) = subgrid;
+      xt::view(subgrids, s, xt::all(), xt::all(), xt::all()) = subgrid;
+    }
   }
 }
 
