@@ -34,7 +34,7 @@ int main() {
   xt::xarray<float> signal =
       dedisp::simulate_dispersed_signal(signal_properties, observation);
 
-  // Quantise the input signal. Note that this actually clips the signal...
+  // Quantise the input signal.
   xt::xarray<uint8_t> quantised_signal(signal.shape());
   for (size_t s = 0; s < signal.shape(0); ++s) {
     for (size_t c = 0; c < signal.shape(1); ++c) {
