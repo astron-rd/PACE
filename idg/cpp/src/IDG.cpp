@@ -6,6 +6,7 @@
 #include <xtensor-fftw/basic.hpp>
 #include <xtensor-fftw/helper.hpp>
 #include <xtensor/containers/xarray.hpp>
+#include <xtensor/core/xtensor_forward.hpp>
 #include <xtensor/views/xview.hpp>
 
 #include "IDG.h"
@@ -23,7 +24,7 @@ void Gridder::grid_onto_subgrids(
   assert(subgrid_size_ == subgrids.shape()[2]);
   const size_t nr_subgrids = metadata.size();
 
-  #pragma omp parallel for schedule(dynamic)
+#pragma omp parallel for schedule(dynamic)
   for (size_t s = 0; s < nr_subgrids; ++s) {
     auto subgrid =
         xt::eval(xt::view(subgrids, s, xt::all(), xt::all(), xt::all()));
@@ -66,8 +67,7 @@ void Gridder::add_subgrids_to_grid(
   }
 }
 
-void Gridder::transform(int direction,
-                        xt::xarray<std::complex<float>> &grid) const {
+void Gridder::transform(xt::xarray<std::complex<float>> &grid) const {
   assert(nr_correlations_out_ == grid.shape()[0]);
   const size_t height = grid.shape()[1];
   const size_t width = grid.shape()[2];
@@ -75,26 +75,30 @@ void Gridder::transform(int direction,
 
   for (size_t i = 0; i < nr_correlations_out_; ++i) {
     auto slice = xt::view(grid, i, xt::all(), xt::all());
-    xt::xarray<std::complex<float>> tmp = slice;
+    auto tmp = xt::xarray<std::complex<float>>::from_shape(slice.shape());
 
-    tmp = xt::fftw::fftshift(tmp);
-
-    if (direction == FourierDomainToImageDomain) {
-      tmp = xt::fftw::ifft2(tmp);
-    } else {
-      tmp = xt::fftw::fft2(tmp);
+    for (size_t x = 0; x < width; ++x) {
+      for (size_t y = 0; y < height; ++y) {
+        size_t dst_x = (x + width / 2) % width;
+        size_t dst_y = (y + height / 2) % height;
+        tmp(dst_y, dst_x) = slice(y, x);
+      }
     }
 
-    tmp = xt::fftw::fftshift(tmp);
+    tmp = xt::fftw::ifft2(tmp);
+
+    for (size_t x = 0; x < width; ++x) {
+      for (size_t y = 0; y < height; ++y) {
+        size_t src_x = (x + width / 2) % width;
+        size_t src_y = (y + height / 2) % height;
+        slice(y, x) = tmp(src_y, src_x);
+      }
+    }
 
     std::complex<float> scale{2.0f, 0.0f};
 
-    if (direction == FourierDomainToImageDomain) {
-      tmp *= scale;
-    } else {
-      tmp /= scale;
-    }
+    slice *= scale;
 
-    slice = tmp;
+    xt::view(grid, i, xt::all(), xt::all()) = slice;
   }
 }
