@@ -357,7 +357,7 @@ int main(int argc, const char *argv[]) {
 
   // Transform to image domain
   main_start = std::chrono::high_resolution_clock::now();
-  gridder.transform(FourierDomainToImageDomain, grid);
+  gridder.transform(grid);
   main_end = std::chrono::high_resolution_clock::now();
   double transform_time =
       std::chrono::duration<double>(main_end - main_start).count();

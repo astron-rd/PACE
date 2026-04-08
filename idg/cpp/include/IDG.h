@@ -26,7 +26,7 @@ public:
                             const xt::xarray<std::complex<float>> &subgrids,
                             xt::xarray<std::complex<float>> &grid) const;
 
-  void transform(int direction, xt::xarray<std::complex<float>> &grid) const;
+  void transform(xt::xarray<std::complex<float>> &grid) const;
 
 private:
   size_t nr_correlations_in_;
