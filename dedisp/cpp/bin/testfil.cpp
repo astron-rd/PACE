@@ -32,7 +32,6 @@ int main() {
       -1.0f * static_cast<float>(header.foff * header.nchans),
       static_cast<size_t>(header.nchans)};
 
-
   // Dedispersion plan constraints: start DM, end DM, pulse width (ms), smearing
   // tolerance.
   const dedisp::DedispersionConstraints constraints{900.0f, 1000.0f, 4.0f,
