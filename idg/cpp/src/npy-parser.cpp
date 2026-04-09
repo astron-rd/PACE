@@ -1,132 +1,92 @@
 #include "npy-parser.h"
-#include "idgtypes.h"
+#include <algorithm>
 #include <cstdint>
-#include <cstdio>
 #include <fstream>
 #include <ios>
+#include <memory>
 #include <stdexcept>
-#include <sys/types.h>
-#include <xtensor/containers/xadapt.hpp>
-#include <xtensor/containers/xarray.hpp>
-#include <xtensor/containers/xbuffer_adaptor.hpp>
-#include <xtensor/core/xlayout.hpp>
-#include <xtensor/core/xstrides.hpp>
-#include <xtensor/core/xtensor_forward.hpp>
-
-xt::xarray<UVW> npy_parser::load_npy_uvw(const std::string &filename) {
-  std::ifstream stream(filename, std::ifstream::binary);
-  if (!stream) {
-    XTENSOR_THROW(std::runtime_error, "io error: failed to open a file.");
-  }
-
-  unsigned char v_major, v_minor;
-  read_magic(stream, &v_major, &v_minor);
-
-  std::string header;
-
-  if (v_major == 1 && v_minor == 0) {
-    header = read_header_1_0(stream);
-  } else if (v_major == 2 && v_minor == 0) {
-    header = read_header_2_0(stream);
-  } else {
-    XTENSOR_THROW(std::runtime_error, "unsupported file format version.");
-  }
-
-  bool fortran_order;
-  std::string typestr;
-  std::vector<std::size_t> shape;
-
-  parse_header(header, typestr, &fortran_order, shape);
-
-  if (typestr != "[('u','<f4'),('v','<f4'),('w','<f4')]") {
-    XTENSOR_THROW(std::runtime_error,
-                  "type does not match expected UVW layout.");
-  }
-
-  constexpr size_t item_size = 3 * 4;
-  size_t item_count = xt::compute_size(shape);
-  size_t buffer_size = item_count * item_size;
-  std::vector<size_t> strides(shape.size());
-  xt::compute_strides(shape,
-                      fortran_order ? xt::layout_type::column_major
-                                    : xt::layout_type::row_major,
-                      strides);
-
-  char *buf = std::allocator<char>{}.allocate(buffer_size);
-  if (buf == nullptr) {
-    XTENSOR_THROW(std::runtime_error, "Allocation failed.");
-  }
-
-  stream.read(buf, std::streamsize(buffer_size));
-
-  auto uvws = reinterpret_cast<UVW *>(buf);
-
-  xt::xarray<UVW> output = xt::adapt(uvws, item_count, xt::no_ownership(),
-                                     std::move(shape), std::move(strides));
-
-  return output;
-}
-
-xt::xarray<Metadata>
-npy_parser::load_npy_metadata(const std::string &filename) {
-  std::ifstream stream(filename, std::ifstream::binary);
-  if (!stream) {
-    XTENSOR_THROW(std::runtime_error, "io error: failed to open a file.");
-  }
-
-  unsigned char v_major, v_minor;
-  read_magic(stream, &v_major, &v_minor);
-
-  std::string header;
-
-  if (v_major == 1 && v_minor == 0) {
-    header = read_header_1_0(stream);
-  } else if (v_major == 2 && v_minor == 0) {
-    header = read_header_2_0(stream);
-  } else {
-    XTENSOR_THROW(std::runtime_error, "unsupported file format version.");
-  }
-
-  bool fortran_order;
-  std::string typestr;
-  std::vector<std::size_t> shape;
-
-  parse_header(header, typestr, &fortran_order, shape);
-
-  if (typestr !=
-      "[('baseline','<i4'),('time_index','<i4'),('nr_timesteps','<i4'),"
-      "('channel_begin','<i4'),('channel_end','<i4'),('coordinate',[('x',"
-      "'<i4'),('y','<i4'),('z','<i4')])]") {
-    XTENSOR_THROW(std::runtime_error,
-                  "type does not match expected Metadata layout.");
-  }
-
-  constexpr size_t item_size = 8 * 4;
-  size_t item_count = xt::compute_size(shape);
-  size_t buffer_size = item_count * item_size;
-  std::vector<size_t> strides(shape.size());
-  xt::compute_strides(shape,
-                      fortran_order ? xt::layout_type::column_major
-                                    : xt::layout_type::row_major,
-                      strides);
-
-  char *buf = std::allocator<char>{}.allocate(buffer_size);
-  if (buf == nullptr) {
-    XTENSOR_THROW(std::runtime_error, "Allocation failed.");
-  }
-
-  stream.read(buf, std::streamsize(buffer_size));
-
-  auto uvws = reinterpret_cast<Metadata *>(buf);
-
-  xt::xarray<Metadata> output = xt::adapt(uvws, item_count, xt::no_ownership(),
-                                          std::move(shape), std::move(strides));
-
-  return output;
-}
 
 const char magic_string[] = "\x93NUMPY";
 const std::size_t magic_string_length = sizeof(magic_string) - 1;
+
+namespace npy_parser {
+void read_magic(std::istream &istream, unsigned char *v_major,
+                unsigned char *v_minor);
+std::string read_header_1_0(std::istream &istream);
+std::string read_header_2_0(std::istream &istream);
+void parse_header(std::string header, std::string &descr, bool *fortran_order,
+                  std::vector<std::size_t> &shape);
+std::string unwrap_s(std::string s, char delim_front, char delim_back);
+std::string get_value_from_map(std::string mapstr);
+void pop_char(std::string &s, char c);
+} // namespace npy_parser
+
+npy_parser::npy_header
+npy_parser::load_npy_header(const std::string &filename) {
+  std::ifstream stream(filename, std::ifstream::binary);
+  if (!stream) {
+    XTENSOR_THROW(std::runtime_error, "io error: failed to open a file.");
+  }
+
+  return load_npy_header(stream);
+}
+
+npy_parser::npy_header npy_parser::load_npy_header(std::istream &istream) {
+  unsigned char v_major, v_minor;
+  read_magic(istream, &v_major, &v_minor);
+
+  std::string header;
+  if (v_major == 1 && v_minor == 0) {
+    header = read_header_1_0(istream);
+  } else if (v_major == 2 && v_minor == 0) {
+    header = read_header_2_0(istream);
+  } else {
+    XTENSOR_THROW(std::runtime_error, "unsupported file format version.");
+  }
+
+  npy_header output;
+  parse_header(header, output.descr, &output.fortran_order, output.shape);
+  return output;
+}
+
+void npy_parser::write_npy_header(std::ostream &ostream, std::string_view descr,
+                                  const std::vector<std::size_t> &shape,
+                                  bool fortran_order) {
+  static constexpr char magic[] = {'\x93', 'N', 'U', 'M', 'P', 'Y'};
+  static constexpr char version[] = {1, 0};
+
+  ostream.write(magic, sizeof(magic));
+  ostream.write(version, sizeof(version));
+
+  std::string shape_str = "(";
+  for (std::size_t i = 0; i < shape.size(); ++i) {
+    if (i > 0) {
+      shape_str += ", ";
+    }
+    shape_str += std::to_string(shape[i]);
+  }
+  if (shape.size() == 1) {
+    shape_str += ",";
+  }
+  shape_str += ")";
+
+  std::string header = "{'descr': ";
+  header += descr;
+  header += ", 'fortran_order': ";
+  header += fortran_order ? "True" : "False";
+  header += ", 'shape': ";
+  header += shape_str;
+  header += ", }";
+
+  const std::size_t header_len = header.size() + 1;
+  const std::size_t padding = (64 - ((10 + header_len) % 64)) % 64;
+  header.append(padding, ' ');
+  header += '\n';
+
+  const uint16_t header_len_le = static_cast<uint16_t>(header.size());
+  ostream.write(reinterpret_cast<const char *>(&header_len_le), 2);
+  ostream.write(header.data(), std::streamsize(header.size()));
+}
 
 inline void npy_parser::read_magic(std::istream &istream,
                                    unsigned char *v_major,
