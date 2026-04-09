@@ -27,8 +27,8 @@ int main() {
   std::cout << header << '\n';
 
   const dedisp::ObservationInfo observation{
-      header.nsamples * header.tsamp, header.tsamp, header.fch1,
-      -1.0f * header.foff * header.nchans, header.nchans};
+      static_cast<float>(header.nsamples * header.tsamp), static_cast<float>(header.tsamp), static_cast<float>(header.fch1),
+      -1.0f * static_cast<float>(header.foff * header.nchans), static_cast<size_t>(header.nchans)};
 
   // Dedispersion plan constraints: start DM, end DM, pulse width (ms), smearing
   // tolerance.
