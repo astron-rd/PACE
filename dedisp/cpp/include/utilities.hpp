@@ -69,7 +69,7 @@ private:
   bool is_running;
 
   std::chrono::duration<double> time_sum;
-  std::chrono::system_clock::time_point time_start;
+  std::chrono::high_resolution_clock::time_point time_start;
 };
 
 } // namespace benchmark
