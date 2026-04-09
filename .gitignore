@@ -1,4 +1,15 @@
 .vscode
+
+# Python
+*.npy
+*__pycache__*
+.ipynb_checkpoints
+
+# Exclude build directories
+build/
+
+# Clang
+.cache/
 .idea
 
 # Python project files
