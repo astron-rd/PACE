@@ -1,13 +1,22 @@
 import random
 
-import idgtypes
 import numba as nb
 import numpy as np
-from idg.python.kernels.kernels import (
-    add_pt_src_to_baseline,
-    compute_metadata,
-    evaluate_spheroidal,
-)
+
+try:
+    from . import idgtypes
+    from .kernels.numba import (
+        add_pt_src_to_baseline,
+        compute_metadata,
+        evaluate_spheroidal,
+    )
+except ImportError:
+    import idgtypes
+    from kernels.numba import (
+        add_pt_src_to_baseline,
+        compute_metadata,
+        evaluate_spheroidal,
+    )
 
 
 def get_uvw(
