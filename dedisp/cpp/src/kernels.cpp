@@ -37,8 +37,8 @@ void fourier_domain_dedisperse(size_t dm_count, size_t n_frequencies,
            ++channel_index) {
         // Compute phasor
         const float phase = 2.0f * std::numbers::pi_v<float> *
-                      spin_frequencies[frequency_index] *
-                      dm_delays[channel_index];
+                            spin_frequencies[frequency_index] *
+                            dm_delays[channel_index];
         std::complex<float> phasor{std::cosf(phase), std::sinf(phase)};
 
         // Load sample
