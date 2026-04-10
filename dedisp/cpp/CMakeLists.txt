@@ -21,6 +21,11 @@ if(DEDISP_DEBUG_NPY)
   add_definitions(-DDEDISP_DEBUG_NPY)
 endif()
 
+option(DEDISP_USE_OPENMP "Use OpenMP to parallise loops" ON)
+if(DEDISP_USE_OPENMP)
+  add_definitions(-DDEDISP_USE_OPENMP)
+endif()
+
 # Load external dependencies
 include(FetchContent)
 

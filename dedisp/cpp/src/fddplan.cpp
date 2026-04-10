@@ -77,7 +77,9 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
   xt::xarray<std::complex<float>> fd_scratch =
       xt::zeros<std::complex<float>>(fd_scratch_shape);
 
+#ifdef DEDISP_USE_OPENMP
 #pragma omp parallel for
+#endif
   for (size_t c = 0; c < n_channels_; ++c) {
     xt::xarray<float> samples = xt::eval(xt::row(transposed_input, c));
     xt::view(fd_scratch, c, xt::all()) = xt::fftw::rfft(samples);
@@ -114,7 +116,9 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
   const std::vector<size_t> output_shape = {dm_count_, n_samples_padded};
   xt::xarray<float> dm_data = xt::zeros<float>(output_shape);
 
+#ifdef DEDISP_USE_OPENMP
 #pragma omp parallel for
+#endif
   for (size_t d = 0; d < dm_count_; ++d) {
     xt::xarray<std::complex<float>> samples = xt::eval(xt::row(dm_scratch, d));
     xt::view(dm_data, d, xt::all()) = xt::fftw::irfft(samples);
@@ -229,7 +233,9 @@ void FDDPlan::generate_spin_frequency_table(size_t n_spin_frequencies,
                                             size_t n_samples) {
   spin_frequency_table_.resize({n_spin_frequencies});
 
+#ifdef DEDISP_USE_OPENMP
 #pragma omp parallel for
+#endif
   for (size_t i = 0; i < n_spin_frequencies; ++i) {
     spin_frequency_table_(i) = i * (1.0f / (n_samples * time_resolution_));
   }

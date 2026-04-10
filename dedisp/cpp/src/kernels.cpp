@@ -14,7 +14,9 @@ void fourier_domain_dedisperse(size_t dm_count, size_t n_frequencies,
                                size_t stride_in, size_t stride_out,
                                std::complex<float> *input,
                                std::complex<float> *output) {
+#ifdef DEDISP_USE_OPENMP
 #pragma omp parallel for
+#endif
   for (size_t dm_index = 0; dm_index < dm_count; ++dm_index) {
     // Calculate DM delays
     float dm_delays[n_channels];
@@ -34,10 +36,10 @@ void fourier_domain_dedisperse(size_t dm_count, size_t n_frequencies,
       for (size_t channel_index = 0; channel_index < n_channels;
            ++channel_index) {
         // Compute phasor
-        float phase = 2.0f * std::numbers::pi_v<float> *
+        const float phase = 2.0f * std::numbers::pi_v<float> *
                       spin_frequencies[frequency_index] *
                       dm_delays[channel_index];
-        std::complex<float> phasor{std::cos(phase), std::sin(phase)};
+        std::complex<float> phasor{std::cosf(phase), std::sinf(phase)};
 
         // Load sample
         std::complex<float> *sample_ptr = &input[channel_index * stride_in];
