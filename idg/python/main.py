@@ -2,10 +2,17 @@ import argparse
 import json
 import time
 
-import idgtypes
 import numpy as np
-from idg import Gridder  # type: ignore
-from init import get_frequencies, get_metadata, get_taper, get_uvw, get_visibilities
+
+from idg_python import idgtypes
+from idg_python.idg import Gridder  # type: ignore
+from idg_python.init import (
+    get_frequencies,
+    get_metadata,
+    get_taper,
+    get_uvw,
+    get_visibilities,
+)
 
 # Dictionary to store all timings
 timings = dict()
