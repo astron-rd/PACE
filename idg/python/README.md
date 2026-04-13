@@ -3,9 +3,7 @@
 ## Usage
 
 ```sh
-uv venv
-uv pip install ./
-idg {arguments}
+uv run idg {arguments}
 ```
 
 ### Unit tests
