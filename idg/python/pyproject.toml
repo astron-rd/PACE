@@ -25,6 +25,9 @@ dependencies = [
 [project.urls]
 homepage = "https://github.com/astron-rd/pace"
 
+[project.scripts]
+idg = "idg_python.main:main"
+
 [build-system]
 requires = [
     "setuptools>=70.0"

@@ -2,6 +2,12 @@
 
 ## Usage
 
+```sh
+uv venv
+uv pip install ./
+idg {arguments}
+```
+
 ### Unit tests
 
 ```sh

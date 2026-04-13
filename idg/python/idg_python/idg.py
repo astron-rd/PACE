@@ -1,6 +1,7 @@
-import idgtypes
 import numpy as np
-from idg.python.kernels.kernels import (
+
+from idg_python import idgtypes
+from idg_python.kernels.numba import (
     add_subgrid_to_grid,
     compute_phasor,
     visibilities_to_subgrids,
