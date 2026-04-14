@@ -2,6 +2,10 @@
 
 ## Usage
 
+```sh
+uv run idg {arguments}
+```
+
 ### Unit tests
 
 ```sh

@@ -1,9 +1,10 @@
 import random
 
-import idgtypes
 import numba as nb
 import numpy as np
-from idg.python.kernels.kernels import (
+
+from idg_python import idgtypes
+from idg_python.kernels.numba import (
     add_pt_src_to_baseline,
     compute_metadata,
     evaluate_spheroidal,
