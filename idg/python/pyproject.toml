@@ -29,9 +29,7 @@ homepage = "https://github.com/astron-rd/pace"
 idg = "idg_python.main:main"
 
 [build-system]
-requires = [
-    "setuptools>=70.0"
-]
+requires = ["setuptools>=70.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages]
@@ -61,13 +59,12 @@ branch = true
 [tool.pytest.ini_options]
 env = [{"PYTHONWARNINGS"="default::DeprecationWarning"}]
 addopts = "--cov-report term --cov-report xml --cov-report html --cov=idg_python"
-testpaths = [
-    "tests",
-]
+testpaths = ["tests"]
 
 [dependency-groups]
 dev = [
+    "build>=0.8.0",
     "pytest>=7.0.0",
     "pytest-cov>=3.0.0",
-    "build>=0.8.0"
+    "pytest-benchmark>=5.2.3",
 ]
