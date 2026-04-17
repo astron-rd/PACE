@@ -8,7 +8,10 @@ pub type FrequencyArray = Array1<Float>;
 
 pub trait FrequencyArrayExtension {
     fn generate(start_frequency: Float, channel_count: u32, frequency_increment: Float) -> Self;
-    fn from_file(path: &Path) -> Result<Self, ndarray_npy::ReadNpyError>
+    fn from_npy_file(path: &Path) -> Result<Self, ndarray_npy::ReadNpyError>
+    where
+        Self: Sized;
+    fn from_hdf5_file(file: &hdf5_metno::File) -> Result<Self, hdf5_metno::Error>
     where
         Self: Sized;
 }
@@ -31,10 +34,17 @@ impl FrequencyArrayExtension for FrequencyArray {
     /// - `path`: Path to the npy file
     ///
     ///  Returns a frequency array, shape (`channel_count`)
-    fn from_file(path: &Path) -> Result<Self, ndarray_npy::ReadNpyError>
-    where
-        Self: Sized,
-    {
+    fn from_npy_file(path: &Path) -> Result<Self, ndarray_npy::ReadNpyError> {
         ndarray_npy::read_npy(path)
+    }
+
+    /// Read frequency data from HDF5 file
+    ///
+    /// ## Parameters
+    /// - `file`: The HDF5 File
+    ///
+    /// Returns a frequency array, shape (`channel_count`)
+    fn from_hdf5_file(file: &hdf5_metno::File) -> Result<Self, hdf5_metno::Error> {
+        file.dataset("frequencies")?.read()
     }
 }

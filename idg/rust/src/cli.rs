@@ -93,7 +93,7 @@ pub enum Commands {
         output_input: bool,
     },
     /// Load the input data from .npy files
-    Load {
+    LoadNpy {
         /// Location of the data directory, defaults to current working directory.
         #[arg(long, short = 'd')]
         data_dir: Option<PathBuf>,
@@ -117,6 +117,24 @@ pub enum Commands {
         /// Location of the taper file, relative to `data_dir`
         #[arg(long)]
         taper_file: Option<PathBuf>,
+
+        /// Size of the subgrid in pixels
+        #[arg(long, default_value = "32")]
+        subgrid_size: u32,
+
+        /// Size of the grid in pixels
+        #[arg(long, default_value = "1024")]
+        grid_size: u32,
+
+        /// Number of correlations out
+        #[arg(long, default_value = "1")]
+        correlation_count_out: u32,
+    },
+    /// Load the input data from a HDF5 file.
+    LoadHdf5 {
+        /// Location of the HDF file
+        #[arg(long, short = 'd', default_value = "input.hdf5")]
+        filename: PathBuf,
 
         /// Size of the subgrid in pixels
         #[arg(long, default_value = "32")]

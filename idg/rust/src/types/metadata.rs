@@ -133,8 +133,11 @@ pub struct Coordinate {
 pub type MetadataArray = Array1<Metadata>;
 
 pub trait MetadataArrayExtension {
+    fn from_hdf5_file(file: &hdf5_metno::File) -> Result<Self, hdf5_metno::Error>
+    where
+        Self: Sized;
     fn generate(grid_size: u32, subgrid_size: u32, channel_count: u32, uvw: &UvwArray) -> Self;
-    fn from_file(path: &Path) -> Result<Self, ndarray_npy::ReadNpyError>
+    fn from_npy_file(path: &Path) -> Result<Self, ndarray_npy::ReadNpyError>
     where
         Self: Sized;
 }
@@ -174,11 +177,18 @@ impl MetadataArrayExtension for MetadataArray {
     /// - `path`: Path to the npy file
     ///
     /// Returns a metadata array, shape (`subgrid_count`)
-    fn from_file(path: &Path) -> Result<Self, ndarray_npy::ReadNpyError>
-    where
-        Self: Sized,
-    {
+    fn from_npy_file(path: &Path) -> Result<Self, ndarray_npy::ReadNpyError> {
         ndarray_npy::read_npy(path)
+    }
+
+    /// Read metadata data from HDF5 file
+    ///
+    /// ## Parameters
+    /// - `file`: The HDF5 File
+    ///
+    /// Returns a metadata array, shape (`subgrid_count`)
+    fn from_hdf5_file(file: &hdf5_metno::File) -> Result<Self, hdf5_metno::Error> {
+        file.dataset("metadata")?.read()
     }
 }
 

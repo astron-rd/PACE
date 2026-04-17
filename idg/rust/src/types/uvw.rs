@@ -147,7 +147,10 @@ pub trait UvwArrayExtension {
         baseline_count: u32,
         grid_size: u32,
     ) -> Self;
-    fn from_file(path: &Path) -> Result<Self, ndarray_npy::ReadNpyError>
+    fn from_npy_file(path: &Path) -> Result<Self, ndarray_npy::ReadNpyError>
+    where
+        Self: Sized;
+    fn from_hdf5_file(file: &hdf5_metno::File) -> Result<Self, hdf5_metno::Error>
     where
         Self: Sized;
 }
@@ -230,7 +233,17 @@ impl UvwArrayExtension for UvwArray {
     /// - `path`: Path to the npy file
     ///
     ///  Returns a UVW array of size (`baseline_count` * `timestep_count`)
-    fn from_file(path: &Path) -> Result<Self, ndarray_npy::ReadNpyError> {
+    fn from_npy_file(path: &Path) -> Result<Self, ndarray_npy::ReadNpyError> {
         ndarray_npy::read_npy(path)
+    }
+
+    /// Read UVW data from HDF5 file
+    ///
+    /// ## Parameters
+    /// - `file`: The HDF5 File
+    ///
+    ///  Returns a UVW array of size (`baseline_count` * `timestep_count`)
+    fn from_hdf5_file(file: &hdf5_metno::File) -> Result<Self, hdf5_metno::Error> {
+        file.dataset("uvws")?.read()
     }
 }

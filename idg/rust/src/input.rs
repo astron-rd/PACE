@@ -121,7 +121,7 @@ impl Input {
                     image_size,
                 })
             }
-            Commands::Load {
+            Commands::LoadNpy {
                 data_dir,
                 uvw_file,
                 frequencies_file,
@@ -132,16 +132,18 @@ impl Input {
                 grid_size,
                 correlation_count_out,
             } => {
-                print_header!("READING INPUT DATA");
+                print_header!("READING NPY INPUT DATA");
 
                 let data_dir = data_dir.clone().unwrap_or(std::env::current_dir()?);
 
-                let uvw: UvwArray =
-                    time_function!("load uvws", UvwArray::from_file(&data_dir.join(uvw_file))?);
+                let uvw: UvwArray = time_function!(
+                    "load uvws",
+                    UvwArray::from_npy_file(&data_dir.join(uvw_file))?
+                );
 
                 let frequencies: FrequencyArray = time_function!(
                     "load frequencies",
-                    FrequencyArray::from_file(&data_dir.join(frequencies_file))?
+                    FrequencyArray::from_npy_file(&data_dir.join(frequencies_file))?
                 );
 
                 let wavenumbers: WavenumberArray = time_function!(
@@ -151,7 +153,7 @@ impl Input {
 
                 let visibilities: VisibilityArray = time_function!(
                     "load visibilities",
-                    VisibilityArray::from_file(&data_dir.join(visibilities_file))?
+                    VisibilityArray::from_npy_file(&data_dir.join(visibilities_file))?
                 );
 
                 let channel_count = frequencies.shape()[0];
@@ -168,7 +170,7 @@ impl Input {
                     ),
                     Some(path) => time_function!(
                         "load metadata",
-                        MetadataArray::from_file(&data_dir.join(path))?
+                        MetadataArray::from_npy_file(&data_dir.join(path))?
                     ),
                 };
 
@@ -178,6 +180,51 @@ impl Input {
                         time_function!("load taper", Taper::from_file(&data_dir.join(path))?)
                     }
                 };
+
+                Ok(Self {
+                    subgrid_count: metadata.len(),
+                    image_size: SPEED_OF_LIGHT
+                        / frequencies.last().expect("frequencies should not be empty"),
+                    correlation_count_in: visibilities.shape()[3].try_into().unwrap(),
+                    correlation_count_out: *correlation_count_out,
+                    w_step: cli.w_step,
+                    uvw,
+                    frequencies,
+                    wavenumbers,
+                    visibilities,
+                    metadata,
+                    taper,
+                    grid_size: *grid_size,
+                    subgrid_size: *subgrid_size,
+                })
+            }
+            Commands::LoadHdf5 {
+                filename,
+                subgrid_size,
+                grid_size,
+                correlation_count_out,
+            } => {
+                print_header!("READING HDF5 INPUT DATA");
+
+                let file = hdf5_metno::File::open(std::env::current_dir()?.join(filename))?;
+
+                let uvw: UvwArray = time_function!("load uvws", UvwArray::from_hdf5_file(&file)?);
+
+                let frequencies: FrequencyArray =
+                    time_function!("load frequencies", FrequencyArray::from_hdf5_file(&file)?);
+
+                let wavenumbers: WavenumberArray = time_function!(
+                    "derive wavenumbers",
+                    WavenumberArray::from_frequencies(&frequencies)
+                );
+
+                let visibilities: VisibilityArray =
+                    time_function!("load visibilities", VisibilityArray::from_hdf5_file(&file)?);
+
+                let metadata: MetadataArray =
+                    time_function!("load metadata", MetadataArray::from_hdf5_file(&file)?);
+
+                let taper: Taper = time_function!("generate taper", Taper::generate(*subgrid_size));
 
                 Ok(Self {
                     subgrid_count: metadata.len(),
