@@ -13,11 +13,14 @@ pub struct Cli {
     #[arg(long, default_value = "1.0")]
     pub w_step: Float,
 
-    /// Output numpy data
-    #[arg(short = 'o', long, value_name = "OUTPUT_PATH")]
-    pub numpy_output: Option<PathBuf>,
+    #[arg(short = 'f', long, default_value = "hdf5")]
+    pub output_format: OutputOptions,
 
-    /// Output intermediary subgrids
+    /// Output file location
+    #[arg(short = 'o', long, value_name = "OUTPUT_PATH")]
+    pub output_file: Option<PathBuf>,
+
+    /// Output subgrids
     #[arg(short = 's', long, default_value = "false")]
     pub output_subgrids: bool,
 
@@ -28,6 +31,14 @@ pub struct Cli {
     /// Output timing data
     #[arg(long, default_value=None, value_name = "OUTPUT_PATH")]
     pub timing_output: Option<PathBuf>,
+}
+
+#[derive(Clone, clap::clap_derive::ValueEnum)]
+pub enum OutputOptions {
+    /// Output as a directory of NPY files
+    Npy,
+    /// Output as a HDF5 file
+    Hdf5,
 }
 
 #[derive(Subcommand)]
