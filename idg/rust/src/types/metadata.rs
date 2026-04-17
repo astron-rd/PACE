@@ -4,11 +4,13 @@ use crate::{constants::Float, types::UvwArray};
 
 use super::{check_for_extra_bytes, check_type_desc};
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
+use hdf5_metno::H5Type;
 use ndarray::prelude::*;
 use ndarray_npy::{ReadDataError, ReadableElement, WritableElement};
 use py_literal::Value;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, H5Type)]
+#[repr(C)]
 pub struct Metadata {
     pub baseline: u32,
     pub time_index: u32,
@@ -120,7 +122,8 @@ impl WritableElement for Metadata {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, H5Type)]
+#[repr(C)]
 pub struct Coordinate {
     pub x: u32,
     pub y: u32,

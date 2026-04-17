@@ -9,6 +9,7 @@ anyhow = "1.0.101"
 byteorder = "1.5.0"
 clap = { version = "4.5.54", features = ["derive"] }
 fftw = "0.8.0"
+hdf5-metno = { version = "0.12.3", features = ["complex"] }
 itertools = "0.14.0"
 ndarray = { version = "0.17.2", features = ["serde", "rayon"] }
 ndarray-npy = "0.10.0"
@@ -27,3 +28,6 @@ f64 = []
 
 [lints.clippy]
 excessive_precision = "allow"
+
+[[bin]]
+name = "npy-2-hdf5"

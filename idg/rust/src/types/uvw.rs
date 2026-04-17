@@ -4,6 +4,7 @@ use crate::constants::{Float, PI};
 
 use super::{check_for_extra_bytes, check_type_desc};
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
+use hdf5_metno::H5Type;
 use ndarray::prelude::*;
 use ndarray_npy::{ReadDataError, ReadableElement, WritableElement};
 use ndarray_rand::{
@@ -15,7 +16,8 @@ use num_traits::Zero;
 use py_literal::Value;
 
 /// 3-dimensional vector with UVW parameters
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, H5Type)]
+#[repr(C)]
 pub struct Uvw {
     pub u: Float,
     pub v: Float,
