@@ -33,7 +33,7 @@ impl TaperExtension for Taper {
     }
 }
 
-fn evaluate_spheroidal(x: Float) -> Float {
+pub fn evaluate_spheroidal(x: Float) -> Float {
     #[rustfmt::skip]
     const P: [[Float; 5]; 2] = [
         [8.203343e-2, -3.644705e-1, 6.278660e-1, -5.335581e-1, 2.312756e-1],
