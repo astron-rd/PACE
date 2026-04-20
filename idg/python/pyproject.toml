@@ -58,7 +58,7 @@ branch = true
 
 [tool.pytest.ini_options]
 env = [{"PYTHONWARNINGS"="default::DeprecationWarning"}]
-addopts = "--cov-report term --cov-report xml --cov-report html --cov=idg_python"
+addopts = "--cov-report term --cov-report xml --cov-report html --cov=idg_python --benchmark-skip --benchmark-warmup on"
 testpaths = ["tests"]
 
 [dependency-groups]
