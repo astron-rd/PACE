@@ -1,0 +1,43 @@
+on:
+  pull_request:
+    types: [opened, reopened, edited, synchronize]
+
+jobs:
+  benchmark_pr_branch:
+    name: Continuous Benchmarking PRs with Bencher
+    # DO NOT REMOVE: For handling Fork PRs see Pull Requests from Forks
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      pull-requests: write
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - project: idg/python
+            adapter: python_pytest
+            args: --file results.json
+            cmd: uv run pytest --benchmark-only --benchmark-json=results.json
+          - project: idg/rust
+            adapter: rust_criterion
+            cmd: cargo bench
+    steps:
+      - uses: actions/checkout@v6
+      - uses: bencherdev/bencher@main
+      - uses: astral-sh/setup-uv@v7
+        if: matrix.adapter == 'python_pytest'
+      - name: Track PR Benchmarks with Bencher
+        working-directory: ${{ matrix.project }}
+        run: |
+          bencher run \
+          --project astron-pace \
+          --token '${{ secrets.BENCHER_API_TOKEN }}' \
+          --branch "$GITHUB_HEAD_REF" \
+          --start-point "$GITHUB_BASE_REF" \
+          --start-point-hash '${{ github.event.pull_request.base.sha }}' \
+          --start-point-clone-thresholds \
+          --start-point-reset \
+          --testbed ubuntu-latest \
+          --error-on-alert \
+          --adapter ${{ matrix.adapter }} \
+          --github-actions '${{ secrets.GITHUB_TOKEN }}' \
+          ${{ matrix.args }} "${{ matrix.cmd }}"
