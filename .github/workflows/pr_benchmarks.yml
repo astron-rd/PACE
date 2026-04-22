@@ -1,7 +1,6 @@
 on:
   pull_request:
     types: [opened, reopened, edited, synchronize]
-
 jobs:
   benchmark_pr_branch:
     name: Continuous Benchmarking PRs with Bencher
