@@ -15,7 +15,7 @@ from idg_python.init import (
 )
 
 # Dictionary to store all timings
-timings = dict()
+timings = {}
 
 # Constants
 NR_CORRELATIONS_IN = 2  # XX, YY

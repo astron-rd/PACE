@@ -188,7 +188,7 @@ def get_visibilities(
     )
 
     # Create offsets for fake point sources
-    offsets = list()
+    offsets = []
     random.seed(random_seed)
     for _ in range(nr_point_sources):
         x = (random.random() * (max_pixel_offset)) - (max_pixel_offset / 2)
