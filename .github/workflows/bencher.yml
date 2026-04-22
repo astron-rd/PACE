@@ -14,11 +14,11 @@ jobs:
     strategy:
       matrix:
         include:
-          - project: idg/python
+          - dir: idg/python
             adapter: python_pytest
             args: --file results.json
             cmd: uv run pytest --benchmark-only --benchmark-json=results.json
-          - project: idg/rust
+          - dir: idg/rust
             adapter: rust_criterion
             cmd: cargo bench
     steps:
@@ -28,7 +28,7 @@ jobs:
         if: matrix.adapter == 'python_pytest'
       - name: Track base branch benchmarks with Bencher
         if: github.event_name == 'push'
-        working-directory: ${{ matrix.project }}
+        working-directory: ${{ matrix.dir }}
         run: |
           bencher run \
           --project astron-pace \
@@ -46,7 +46,7 @@ jobs:
           ${{ matrix.args }} "${{ matrix.cmd }}"
       - name: Track PR benchmarks with Bencher
         if: github.event_name == 'pull_request'
-        working-directory: ${{ matrix.project }}
+        working-directory: ${{ matrix.dir }}
         run: |
           bencher run \
           --project astron-pace \
