@@ -137,7 +137,7 @@ def compute_pixels(
 
         for chan in range(channel_begin, channel_end):
             phase = nb.float32(phase_offset - (phase_index * wavenumbers[chan]))
-            phasor = np.exp(1j * phase)  # type: ignore
+            phasor = np.exp(1j * phase)
 
             for pol in range(nr_correlations_in):
                 pixels[pol % nr_correlations_out] += (
