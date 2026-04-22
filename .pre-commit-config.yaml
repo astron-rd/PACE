@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v17.0.6
+    rev: v22.1.4
     hooks:
       - id: clang-format
   - repo: https://github.com/cheshirekow/cmake-format-precommit
@@ -9,7 +9,7 @@ repos:
       - id: cmake-format
       - id: cmake-lint
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v6.0.0
     hooks:
       - id: check-added-large-files
       - id: check-ast
@@ -22,16 +22,16 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
   - repo: https://github.com/executablebooks/mdformat
-    rev: 0.7.22
+    rev: 1.0.0
     hooks:
       - id: mdformat
         args: ['--wrap=80']
   - repo: https://github.com/google/yamlfmt
-    rev: v0.16.0
+    rev: v0.21.0
     hooks:
       - id: yamlfmt
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.4
+    rev: v0.15.11
     hooks:
       - id: ruff-check
         args: [--fix]
