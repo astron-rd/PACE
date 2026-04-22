@@ -26,36 +26,13 @@ jobs:
       - uses: bencherdev/bencher@main
       - uses: astral-sh/setup-uv@v7
         if: matrix.experiment.adapter == 'python_pytest'
-      - name: Track base branch benchmarks with Bencher
-        if: github.event_name == 'push'
+      - name: Run benchmarks with Bencher
         working-directory: ${{ matrix.application }}/${{ matrix.experiment.branch }}
         run: |
           bencher run \
           --project astron-pace \
           --token '${{ secrets.BENCHER_API_TOKEN }}' \
           --branch ${{ matrix.experiment.branch }} \
-          --testbed ubuntu-latest \
-          --threshold-measure latency \
-          --threshold-test t_test \
-          --threshold-max-sample-size 64 \
-          --threshold-upper-boundary 0.99 \
-          --thresholds-reset \
-          --error-on-alert \
-          --adapter ${{ matrix.experiment.adapter }} \
-          --github-actions '${{ secrets.GITHUB_TOKEN }}' \
-          ${{ matrix.experiment.command }}
-      - name: Track PR benchmarks with Bencher
-        if: github.event_name == 'pull_request'
-        working-directory: ${{ matrix.application }}/${{ matrix.experiment.branch }}
-        run: |
-          bencher run \
-          --project astron-pace \
-          --token '${{ secrets.BENCHER_API_TOKEN }}' \
-          --branch ${{ matrix.experiment.branch }} \
-          --start-point "$GITHUB_BASE_REF" \
-          --start-point-hash '${{ github.event.pull_request.base.sha }}' \
-          --start-point-clone-thresholds \
-          --start-point-reset \
           --testbed ubuntu-latest \
           --threshold-measure latency \
           --threshold-test t_test \
