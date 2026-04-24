@@ -221,10 +221,6 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
 
 #ifdef DEDISP_BENCHMARK
   output_timer->pause();
-  // total_timer->pause();
-
-  // Print timings
-  // std::cout << "FDDPlan::execute() runtime:" << std::endl;
   std::cout << std::endl;
   std::cout << "Initialization time : " << init_timer->duration() << " sec."
             << std::endl;
