@@ -144,7 +144,7 @@ pub enum Commands {
     /// Load the input data from a HDF5 file.
     LoadHdf5 {
         /// Location of the HDF file
-        #[arg(long, short = 'd', default_value = "input.hdf5")]
+        #[arg(long, short = 'd', default_value = "input.h5")]
         filename: PathBuf,
 
         /// Size of the subgrid in pixels
