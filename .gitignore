@@ -23,3 +23,6 @@ __pycache__
 
 # Bencher
 results.json
+
+# HDF5 data files
+*.hdf5
