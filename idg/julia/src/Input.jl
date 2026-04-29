@@ -9,17 +9,17 @@ using .Util
 using HDF5
 
 struct Inputs
-    uvws
-    frequencies
-    wavenumbers
-    visibilities
-    metadata
-    taper
-    subgrid_count
-    image_size
-    correlation_count_in
-    correlation_count_out
-    w_step
+    uvws::Array{Types.UVW,2}
+    frequencies::Array{Float32, 1}
+    wavenumbers::Array{Float32, 1}
+    visibilities::Array{ComplexF32, 4}
+    metadata::Array{Types.Metadata, 1}
+    taper::Array{Float32, 2}
+    subgrid_count::Integer
+    image_size::Float32
+    correlation_count_in::Integer
+    correlation_count_out::Integer
+    w_step::Float32
 end
 
 function load_inputs()

@@ -1,25 +1,8 @@
 module Types
 
-struct UVW
-    u::Float32
-    v::Float32
-    w::Float32
-end
+UVW = @NamedTuple{u::Float32, v::Float32, w::Float32}
 
-struct Coordinate
-    x::UInt32
-    y::UInt32
-    z::UInt32
-end
-
-struct Metadata
-    baseline::UInt32
-    time_index::UInt32
-    timestep_count::UInt32
-    channel_begin::UInt32
-    channel_end::UInt32
-    coordinate::Coordinate
-end
+Metadata = @NamedTuple{baseline::UInt32, time_index::UInt32, timestep_count::UInt32, channel_begin::UInt32, channel_end::UInt32, coordinate::@NamedTuple{x::UInt32, y::UInt32, z::UInt32}}
 
 function generate_taper(subgrid_size::Integer)
     x = LinRange(-1.0, 1.0, subgrid_size)
@@ -48,7 +31,7 @@ function evaluate_spheroidal(x)
     end
 
     x_squared = x^2
-    delta_x_squared = x_squared - endi ^ 2
+    delta_x_squared = x_squared - endi^2
     top = evaluate_polynomial(delta_x_squared, P[part])
     btm = evaluate_polynomial(delta_x_squared, Q[part])
 
@@ -61,7 +44,7 @@ end
 
 function evaluate_polynomial(x, coeff)
     val = coeff[1]
-    x_accumulator = x;
+    x_accumulator = x
     for i in 2:length(coeff)
         p = coeff[i]
         val += p * x_accumulator
