@@ -1,2 +1,14 @@
+name = "IDG"
+uuid = "1c361926-95cb-479d-8a96-7a790ca7ac70"
+version = "0.1.0"
+authors = ["Vivian <me@vivstuff.gay>"]
+
 [deps]
 HDF5 = "f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f"
+Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
+Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+
+[compat]
+HDF5 = "0.17.3"
+Plots = "1.41.6"
+Printf = "1.11.0"
