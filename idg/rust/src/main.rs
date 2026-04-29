@@ -93,7 +93,7 @@ fn main() -> Result<()> {
                 builder.with_data(gridder.grid()).create("grid")?;
             });
             if cli.output_subgrids {
-                time_function!("writing subgrids.npy", {
+                time_function!("writing subgrids", {
                     let builder = output_file.new_dataset_builder();
                     builder.with_data(gridder.subgrids()).create("subgrids")?;
                 });
@@ -103,23 +103,23 @@ fn main() -> Result<()> {
                 let inputs_file =
                     hdf5_metno::File::create(std::env::current_dir()?.join("inputs.hdf5"))?;
                 if output_input {
-                    time_function!("writing uvw.npy", {
+                    time_function!("writing uvw", {
                         let builder = inputs_file.new_dataset_builder();
                         builder.with_data(&input.uvw).create("uvws")?;
                     });
-                    time_function!("writing frequencies.npy", {
+                    time_function!("writing frequencies", {
                         let builder = inputs_file.new_dataset_builder();
                         builder
                             .with_data(&input.frequencies)
                             .create("frequencies")?;
                     });
-                    time_function!("writing visibilities.npy", {
+                    time_function!("writing visibilities", {
                         let builder = inputs_file.new_dataset_builder();
                         builder
                             .with_data(&input.visibilities)
                             .create("visibilities")?;
                     });
-                    time_function!("writing metadata.npy", {
+                    time_function!("writing metadata", {
                         let builder = inputs_file.new_dataset_builder();
                         builder.with_data(&input.metadata).create("metadata")?;
                     });
