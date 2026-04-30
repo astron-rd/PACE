@@ -18,7 +18,7 @@ function grid_onto_subgrids!(inputs, subgrids)
             inputs.uvws,
             inputs.visibilities,
             inputs.taper,
-            subgrids[i, :, :, :]
+            @view subgrids[i, :, :, :]
         )
     end
 end
