@@ -42,16 +42,37 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
   std::cout << "n_fft_frequency_bins = " << n_fft_frequency_bins << '\n';
 #endif
 
+#ifdef DEDISP_BENCHMARK
+  auto init_timer = std::make_unique<dedisp::benchmark::Timer>();
+  auto preprocessing_timer = std::make_unique<dedisp::benchmark::Timer>();
+  auto dedispersion_timer = std::make_unique<dedisp::benchmark::Timer>();
+  auto postprocessing_timer = std::make_unique<dedisp::benchmark::Timer>();
+  auto output_timer = std::make_unique<dedisp::benchmark::Timer>();
+#endif
+
   // 1. Generate spin table
   std::cout << "(1) Generate the spin frequency table." << std::endl;
 
+#ifdef DEDISP_BENCHMARK
+  init_timer->start();
+#endif
+
   generate_spin_frequency_table(n_spin_frequencies, n_samples);
+
+#ifdef DEDISP_BENCHMARK
+  init_timer->pause();
+#endif
+
 #ifdef DEDISP_DEBUG
   std::cout << spin_frequency_table_ << std::endl;
 #endif
 
   // 2. Transpose data (convert input bytes to floats)
   std::cout << "(2) Transpose data: int -> float." << std::endl;
+
+#ifdef DEDISP_BENCHMARK
+  preprocessing_timer->start();
+#endif
 
   // Input is in the frequency domain, while the output is in the DM domain.
   const std::vector<size_t> transposed_shape = {n_channels_, n_samples_padded};
@@ -62,6 +83,10 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
                                  n_samples_padded, byte_offset, n_channels_,
                                  input.data(), transposed_input.data());
 
+#ifdef DEDISP_BENCHMARK
+  preprocessing_timer->pause();
+#endif
+
 #ifdef DEDISP_DEBUG_NPY
   const std::string fn_transpose{"fdd-transpose.npy"};
   xt::dump_npy(fn_transpose, transposed_input);
@@ -71,17 +96,34 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
   // Perform an FFT batched over frequency using OpenMP
   std::cout << "(3) Forward FFT: real-to-complex." << std::endl;
 
+#ifdef DEDISP_BENCHMARK
+  init_timer->start();
+#endif
+
   // Scratch space to store the Fourier-domain (FD) data
   const std::vector<size_t> fd_scratch_shape = {n_channels_,
                                                 n_fft_frequency_bins};
   xt::xarray<std::complex<float>> fd_scratch =
       xt::zeros<std::complex<float>>(fd_scratch_shape);
 
+#ifdef DEDISP_BENCHMARK
+  init_timer->pause();
+#endif
+#ifdef DEDISP_BENCHMARK
+  preprocessing_timer->start();
+#endif
+
+#ifdef DEDISP_USE_OPENMP
 #pragma omp parallel for
+#endif
   for (size_t c = 0; c < n_channels_; ++c) {
     xt::xarray<float> samples = xt::eval(xt::row(transposed_input, c));
     xt::view(fd_scratch, c, xt::all()) = xt::fftw::rfft(samples);
   }
+
+#ifdef DEDISP_BENCHMARK
+  preprocessing_timer->pause();
+#endif
 
 #ifdef DEDISP_DEBUG_NPY
   const std::string fn_r2c{"fdd-fft-r2c.npy"};
@@ -91,16 +133,32 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
   // 4. Run dedispersion algorithm (CPU reference or optimised version)
   std::cout << "(4) Run dedispersion algorithm." << std::endl;
 
+#ifdef DEDISP_BENCHMARK
+  init_timer->start();
+#endif
+
   const std::vector<size_t> dm_scratch_shape = {dm_count_,
                                                 n_fft_frequency_bins};
   xt::xarray<std::complex<float>> dm_scratch =
       xt::zeros<std::complex<float>>(dm_scratch_shape);
+
+#ifdef DEDISP_BENCHMARK
+  init_timer->pause();
+#endif
+
+#ifdef DEDISP_BENCHMARK
+  dedispersion_timer->start();
+#endif
 
   const size_t in_out_stride = n_fft_frequency_bins;
   dedisp::fourier_domain_dedisperse(
       dm_count_, n_spin_frequencies, n_channels_, time_resolution_,
       spin_frequency_table_.data(), dm_table_.data(), delay_table_.data(),
       in_out_stride, in_out_stride, fd_scratch.data(), dm_scratch.data());
+
+#ifdef DEDISP_BENCHMARK
+  dedispersion_timer->pause();
+#endif
 
 #ifdef DEDISP_DEBUG_NPY
   const std::string fn_dedisp{"fdd-dedisp.npy"};
@@ -111,27 +169,71 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
   // Perform an FFT batched along the DM axis using OpenMP
   std::cout << "(5) Inverse FFT: complex-to-real." << std::endl;
 
+#ifdef DEDISP_BENCHMARK
+  init_timer->start();
+#endif
+
   const std::vector<size_t> output_shape = {dm_count_, n_samples_padded};
   xt::xarray<float> dm_data = xt::zeros<float>(output_shape);
 
+#ifdef DEDISP_BENCHMARK
+  init_timer->pause();
+#endif
+#ifdef DEDISP_BENCHMARK
+  postprocessing_timer->start();
+#endif
+
+#ifdef DEDISP_USE_OPENMP
 #pragma omp parallel for
+#endif
   for (size_t d = 0; d < dm_count_; ++d) {
     xt::xarray<std::complex<float>> samples = xt::eval(xt::row(dm_scratch, d));
     xt::view(dm_data, d, xt::all()) = xt::fftw::irfft(samples);
   }
 
+#ifdef DEDISP_BENCHMARK
+  postprocessing_timer->pause();
+#endif
+#ifdef DEDISP_BENCHMARK
+  init_timer->start();
+#endif
+
   // Copy the output of the FFT into an xarray with the expected output shape
   const std::vector<size_t> computed_shape = {n_output_samples, dm_count_};
   xt::xarray<float> computed_data(computed_shape);
+
+#ifdef DEDISP_BENCHMARK
+  init_timer->pause();
+#endif
+
 #ifdef DEDISP_DEBUG
   std::cout << "output samps = " << computed_data.shape(0)
             << "; DM count = " << computed_data.shape(1) << '\n';
+#endif
+#ifdef DEDISP_BENCHMARK
+  output_timer->start();
 #endif
   for (size_t s = 0; s < n_output_samples; ++s) {
     for (size_t d = 0; d < dm_count_; ++d) {
       xt::view(computed_data, s, d) = xt::view(dm_data, d, s);
     }
   }
+
+#ifdef DEDISP_BENCHMARK
+  output_timer->pause();
+  std::cout << std::endl;
+  std::cout << "Initialization time : " << init_timer->duration() << " sec."
+            << std::endl;
+  std::cout << "Preprocessing time  : " << preprocessing_timer->duration()
+            << " sec." << std::endl;
+  std::cout << "Dedispersion time   : " << dedispersion_timer->duration()
+            << " sec." << std::endl;
+  std::cout << "Postprocessing time : " << postprocessing_timer->duration()
+            << " sec." << std::endl;
+  std::cout << "Output copy time    : " << output_timer->duration() << " sec."
+            << std::endl;
+  std::cout << std::endl;
+#endif
 
   return computed_data;
 }
@@ -229,7 +331,9 @@ void FDDPlan::generate_spin_frequency_table(size_t n_spin_frequencies,
                                             size_t n_samples) {
   spin_frequency_table_.resize({n_spin_frequencies});
 
+#ifdef DEDISP_USE_OPENMP
 #pragma omp parallel for
+#endif
   for (size_t i = 0; i < n_spin_frequencies; ++i) {
     spin_frequency_table_(i) = i * (1.0f / (n_samples * time_resolution_));
   }
