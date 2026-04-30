@@ -68,8 +68,8 @@ function visibility_to_subgrid!(
             )
 
             sph = taper[y, x]
-            x_dst = Util.array_mod((x - 1 + (Constants.SUBGRID_SIZE ÷ 2)), Constants.SUBGRID_SIZE)
-            y_dst = Util.array_mod((y - 1 + (Constants.SUBGRID_SIZE ÷ 2)), Constants.SUBGRID_SIZE)
+            x_dst = Util.array_mod((x + (Constants.SUBGRID_SIZE ÷ 2)), Constants.SUBGRID_SIZE)
+            y_dst = Util.array_mod((y + (Constants.SUBGRID_SIZE ÷ 2)), Constants.SUBGRID_SIZE)
 
             for pol in 1:correlation_count_out
                 subgrid[pol, y_dst, x_dst] = pixels[pol] * sph
