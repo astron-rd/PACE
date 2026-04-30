@@ -45,8 +45,7 @@ end
 function evaluate_polynomial(x, coeff)
     val = coeff[1]
     x_accumulator = x
-    for i in 2:length(coeff)
-        p = coeff[i]
+    for p in coeff[2:end]
         val += p * x_accumulator
         x_accumulator *= x
     end

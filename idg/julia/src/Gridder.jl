@@ -6,7 +6,7 @@ include("Constants.jl")
 include("Util.jl")
 
 function grid_onto_subgrids!(inputs, subgrids)
-    Threads.@threads for i in 1:length(inputs.metadata)
+    for i in 1:length(inputs.metadata)
         visibility_to_subgrid!(
             inputs.metadata[i],
             inputs.w_step,
@@ -18,7 +18,7 @@ function grid_onto_subgrids!(inputs, subgrids)
             inputs.uvws,
             inputs.visibilities,
             inputs.taper,
-            subgrids[i,:,:,:]
+            subgrids[i, :, :, :]
         )
     end
 end
@@ -38,8 +38,8 @@ function visibility_to_subgrid!(
 )
     w_offset_in_lambda = w_step * (metadatum.coordinate.z + 0.5)
 
-    u_offset = (metadatum.coordinate.x + Constants.SUBGRID_SIZE / 2 - Constants.GRID_SIZE / 2) * (2 * π * w_offset_in_lambda)
-    v_offset = (metadatum.coordinate.y + Constants.SUBGRID_SIZE / 2 - Constants.GRID_SIZE / 2) * (2 * π * w_offset_in_lambda)
+    u_offset = (metadatum.coordinate.x + Constants.SUBGRID_SIZE / 2 - Constants.GRID_SIZE / 2) * (2 * π / image_size)
+    v_offset = (metadatum.coordinate.y + Constants.SUBGRID_SIZE / 2 - Constants.GRID_SIZE / 2) * (2 * π / image_size)
     w_offset = 2 * π * w_offset_in_lambda
 
     for y in (1:Constants.SUBGRID_SIZE)
@@ -68,8 +68,8 @@ function visibility_to_subgrid!(
             )
 
             sph = taper[y, x]
-            x_dst = Util.array_mod((x + (Constants.SUBGRID_SIZE ÷ 2)), Constants.SUBGRID_SIZE)
-            y_dst = Util.array_mod((y + (Constants.SUBGRID_SIZE ÷ 2)), Constants.SUBGRID_SIZE)
+            x_dst = Util.array_mod((x - 1 + (Constants.SUBGRID_SIZE ÷ 2)), Constants.SUBGRID_SIZE)
+            y_dst = Util.array_mod((y - 1 + (Constants.SUBGRID_SIZE ÷ 2)), Constants.SUBGRID_SIZE)
 
             for pol in 1:correlation_count_out
                 subgrid[pol, y_dst, x_dst] = pixels[pol] * sph
@@ -122,7 +122,7 @@ function compute_pixels(
             phasor = exp(1im * phase)
 
             for pol in 1:correlation_count_in
-                pixels[1] += visibilities[baseline+1, idx+1, channel, pol] * phasor
+                pixels[Util.array_mod(pol, Constants.CORRELATION_COUNT_OUT)] += visibilities[baseline+1, idx+1, channel, pol] * phasor
             end
         end
     end
