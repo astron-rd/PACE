@@ -6,7 +6,7 @@ include("Constants.jl")
 include("Util.jl")
 
 function grid_onto_subgrids!(inputs, subgrids)
-    for i in 1:length(inputs.metadata)
+    Threads.@threads for i in 1:length(inputs.metadata)
         visibility_to_subgrid!(
             inputs.metadata[i],
             inputs.w_step,
