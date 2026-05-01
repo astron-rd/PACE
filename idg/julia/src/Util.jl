@@ -18,4 +18,8 @@ function array_mod(x, mod)
     ((x - 1) % mod) + 1
 end
 
+function reverse_dims(a)
+    permutedims(a, reverse(1:ndims(a)))
+end
+
 end

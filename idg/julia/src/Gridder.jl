@@ -132,16 +132,51 @@ function compute_pixels(
     pixels
 end
 
-function ifft_subgrids!(subgrids::Array{ComplexF32, 4})
-    subgrid = @view subgrids[1, 1, :, :]
-    
-    plan = FFTW.plan_ifft!(subgrid)
-
+function ifft_subgrids!(subgrids::Array{ComplexF32,4})
     for subgrid = @views eachslice(subgrids, dims=(1, 2))
-        # This applies the plan to the subgrid in-place
-        # Please don't ask why this uses the * operator...
-        plan * subgrid
+        FFTW.ifft!(subgrid)
     end
+end
+
+function add_subgrids_to_grid!(inputs, subgrids, grid)
+    phasor = compute_phasor(Constants.SUBGRID_SIZE)
+
+    for i in eachindex(inputs.metadata)
+        subgrid = @view subgrids[i, :, :, :]
+        metadata = inputs.metadata[i]
+        add_subgrid_to_grid!(subgrid, metadata, grid, phasor)
+    end
+end
+
+function compute_phasor(subgrid_size)
+    phasor = zeros(ComplexF32, subgrid_size, subgrid_size)
+    for y in 1:subgrid_size
+        for x in 1:subgrid_size
+            phase = π * (x + y - subgrid_size) / subgrid_size
+            phasor[x, y] = exp(phase * im)
+        end
+    end
+    phasor
+end
+
+function add_subgrid_to_grid!(subgrid, metadata, grid, phasor)
+    for y in 1:Constants.SUBGRID_SIZE
+        for x in 1:Constants.SUBGRID_SIZE
+            x_src = Util.array_mod((x + (Constants.SUBGRID_SIZE ÷ 2)), Constants.SUBGRID_SIZE)
+            y_src = Util.array_mod((y + (Constants.SUBGRID_SIZE ÷ 2)), Constants.SUBGRID_SIZE)
+
+            for p in 1:Constants.CORRELATION_COUNT_OUT
+                grid[p, metadata.coordinate.y+y, metadata.coordinate.x+x] += subgrid[p, y_src, x_src] * phasor[y, x]
+            end
+        end
+    end
+    println("test?")
+end
+
+function transform_grid!(grid)
+    shifted_grid = FFTW.fftshift(grid)
+    fourierd_grid = FFTW.ifft(shifted_grid)
+    FFTW.ifftshift!(grid, fourierd_grid)
 end
 
 end

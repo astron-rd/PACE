@@ -9,13 +9,17 @@ function do_thing()
     inputs = Input.load_inputs()
 
     subgrids = zeros(ComplexF32, inputs.subgrid_count, Constants.CORRELATION_COUNT_OUT, Constants.SUBGRID_SIZE, Constants.SUBGRID_SIZE)
-    grid = zeros(ComplexF32, Constants.CORRELATION_COUNT_OUT, Constants.SUBGRID_SIZE, Constants.SUBGRID_SIZE)
+    grid = zeros(ComplexF32, Constants.CORRELATION_COUNT_OUT, Constants.GRID_SIZE, Constants.GRID_SIZE)
 
     Util.time_function("grid visibilities", () -> Gridder.grid_onto_subgrids!(inputs, subgrids))
 
     Util.time_function("ifft subgrids", () -> Gridder.ifft_subgrids!(subgrids))
 
-    subgrids
+    Util.time_function("add subgrids to grid", () -> Gridder.add_subgrids_to_grid!(inputs, subgrids, grid))
+
+    Util.time_function("transform grid", () -> Gridder.transform_grid!(grid))
+
+    grid
 end
 
 end # module IDG
