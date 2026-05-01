@@ -5,6 +5,8 @@ include("Input.jl")
 include("Constants.jl")
 include("Util.jl")
 
+using FFTW
+
 function grid_onto_subgrids!(inputs, subgrids)
     Threads.@threads for i in 1:length(inputs.metadata)
         visibility_to_subgrid!(
@@ -128,6 +130,18 @@ function compute_pixels(
     end
 
     pixels
+end
+
+function ifft_subgrids!(subgrids::Array{ComplexF32, 4})
+    subgrid = @view subgrids[1, 1, :, :]
+    
+    plan = FFTW.plan_ifft!(subgrid)
+
+    for subgrid = @views eachslice(subgrids, dims=(1, 2))
+        # This applies the plan to the subgrid in-place
+        # Please don't ask why this uses the * operator...
+        plan * subgrid
+    end
 end
 
 end
