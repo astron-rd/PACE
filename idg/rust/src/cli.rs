@@ -13,9 +13,6 @@ pub struct Cli {
     #[arg(long, default_value = "1.0")]
     pub w_step: Float,
 
-    #[arg(short = 'f', long, default_value = "hdf5")]
-    pub output_format: OutputOptions,
-
     /// Output file location
     #[arg(short = 'o', long, value_name = "OUTPUT_PATH")]
     pub output_file: Option<PathBuf>,
@@ -31,14 +28,6 @@ pub struct Cli {
     /// Output timing data
     #[arg(long, default_value=None, value_name = "OUTPUT_PATH")]
     pub timing_output: Option<PathBuf>,
-}
-
-#[derive(Clone, clap::clap_derive::ValueEnum)]
-pub enum OutputOptions {
-    /// Output as a directory of NPY files
-    Npy,
-    /// Output as a HDF5 file
-    Hdf5,
 }
 
 #[derive(Subcommand)]
@@ -103,48 +92,10 @@ pub enum Commands {
         #[arg(long, default_value = "false")]
         output_input: bool,
     },
-    /// Load the input data from .npy files
-    LoadNpy {
-        /// Location of the data directory, defaults to current working directory.
-        #[arg(long, short = 'd')]
-        data_dir: Option<PathBuf>,
-
-        /// Location of the UVW file, relative to `data_dir`
-        #[arg(long, default_value = "uvw.npy")]
-        uvw_file: PathBuf,
-
-        /// Location of the frequencies file, relative to `data_dir`
-        #[arg(long, default_value = "frequencies.npy")]
-        frequencies_file: PathBuf,
-
-        /// Location of the visibilities file, relative to `data_dir`
-        #[arg(long, default_value = "visibilities.npy")]
-        visibilities_file: PathBuf,
-
-        /// Location of the metadata file, relative to `data_dir`
-        #[arg(long)]
-        metadata_file: Option<PathBuf>,
-
-        /// Location of the taper file, relative to `data_dir`
-        #[arg(long)]
-        taper_file: Option<PathBuf>,
-
-        /// Size of the subgrid in pixels
-        #[arg(long, default_value = "32")]
-        subgrid_size: u32,
-
-        /// Size of the grid in pixels
-        #[arg(long, default_value = "1024")]
-        grid_size: u32,
-
-        /// Number of correlations out
-        #[arg(long, default_value = "1")]
-        correlation_count_out: u32,
-    },
     /// Load the input data from a HDF5 file.
-    LoadHdf5 {
+    Load {
         /// Location of the HDF file
-        #[arg(long, short = 'd', default_value = "input.h5")]
+        #[arg(long, short = 'f', default_value = "input.h5")]
         filename: PathBuf,
 
         /// Size of the subgrid in pixels
