@@ -1,19 +1,15 @@
-use std::{io, ops::Add, path::Path};
+use std::ops::Add;
 
 use crate::constants::{Float, PI};
 
-use super::{check_for_extra_bytes, check_type_desc};
-use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use hdf5_metno::H5Type;
 use ndarray::prelude::*;
-use ndarray_npy::{ReadDataError, ReadableElement, WritableElement};
 use ndarray_rand::{
     RandomExt,
     rand::{SeedableRng, rngs::StdRng},
     rand_distr::{Beta, Uniform},
 };
 use num_traits::Zero;
-use py_literal::Value;
 
 /// 3-dimensional vector with UVW parameters
 #[derive(Clone, Copy, Debug, PartialEq, H5Type)]
@@ -56,87 +52,6 @@ impl Zero for Uvw {
     }
 }
 
-impl ReadableElement for Uvw {
-    fn read_to_end_exact_vec<R: std::io::Read>(
-        mut reader: R,
-        type_desc: &py_literal::Value,
-        len: usize,
-    ) -> Result<Vec<Self>, ReadDataError> {
-        #[cfg(not(feature = "f64"))]
-        check_type_desc(type_desc, "[('u', '<f4'), ('v', '<f4'), ('w', '<f4')]")?;
-        #[cfg(feature = "f64")]
-        check_type_desc(type_desc, "[('u', '<f8'), ('v', '<f8'), ('w', '<f8')]")?;
-
-        let mut out = Vec::with_capacity(len);
-
-        for _ in 0..len {
-            #[cfg(not(feature = "f64"))]
-            {
-                let u = reader.read_f32::<LittleEndian>()?;
-                let v = reader.read_f32::<LittleEndian>()?;
-                let w = reader.read_f32::<LittleEndian>()?;
-
-                out.push(Uvw::new(u, v, w));
-            }
-            #[cfg(feature = "f64")]
-            {
-                let u = reader.read_f64::<LittleEndian>()?;
-                let v = reader.read_f64::<LittleEndian>()?;
-                let w = reader.read_f64::<LittleEndian>()?;
-
-                out.push(Uvw::new(u, v, w));
-            }
-        }
-
-        check_for_extra_bytes(&mut reader)?;
-
-        Ok(out)
-    }
-}
-
-impl WritableElement for Uvw {
-    fn type_descriptor() -> Value {
-        #[cfg(not(feature = "f64"))]
-        return Value::List(vec![
-            Value::Tuple(vec![Value::String("u".into()), Value::String("<f4".into())]),
-            Value::Tuple(vec![Value::String("v".into()), Value::String("<f4".into())]),
-            Value::Tuple(vec![Value::String("w".into()), Value::String("<f4".into())]),
-        ]);
-        #[cfg(feature = "f64")]
-        return Value::List(vec![
-            Value::Tuple(vec![Value::String("u".into()), Value::String("<f8".into())]),
-            Value::Tuple(vec![Value::String("v".into()), Value::String("<f8".into())]),
-            Value::Tuple(vec![Value::String("w".into()), Value::String("<f8".into())]),
-        ]);
-    }
-
-    fn write<W: io::Write>(&self, mut writer: W) -> Result<(), ndarray_npy::WriteDataError> {
-        #[cfg(not(feature = "f64"))]
-        {
-            writer.write_f32::<LittleEndian>(self.u)?;
-            writer.write_f32::<LittleEndian>(self.v)?;
-            writer.write_f32::<LittleEndian>(self.w)?;
-        }
-        #[cfg(feature = "f64")]
-        {
-            writer.write_f64::<LittleEndian>(self.u)?;
-            writer.write_f64::<LittleEndian>(self.v)?;
-            writer.write_f64::<LittleEndian>(self.w)?;
-        }
-        Ok(())
-    }
-
-    fn write_slice<W: io::Write>(
-        slice: &[Self],
-        mut writer: W,
-    ) -> Result<(), ndarray_npy::WriteDataError> {
-        for item in slice {
-            WritableElement::write(item, &mut writer)?;
-        }
-        Ok(())
-    }
-}
-
 pub type UvwArray = Array2<Uvw>;
 
 pub trait UvwArrayExtension {
@@ -147,9 +62,6 @@ pub trait UvwArrayExtension {
         baseline_count: u32,
         grid_size: u32,
     ) -> Self;
-    fn from_npy_file(path: &Path) -> Result<Self, ndarray_npy::ReadNpyError>
-    where
-        Self: Sized;
     fn from_hdf5_file(file: &hdf5_metno::File) -> Result<Self, hdf5_metno::Error>
     where
         Self: Sized;
@@ -225,16 +137,6 @@ impl UvwArrayExtension for UvwArray {
         }
 
         uvw
-    }
-
-    /// Read UVW data from npy file
-    ///
-    /// ## Parameters
-    /// - `path`: Path to the npy file
-    ///
-    ///  Returns a UVW array of size (`baseline_count` * `timestep_count`)
-    fn from_npy_file(path: &Path) -> Result<Self, ndarray_npy::ReadNpyError> {
-        ndarray_npy::read_npy(path)
     }
 
     /// Read UVW data from HDF5 file

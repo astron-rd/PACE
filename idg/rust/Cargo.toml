@@ -33,9 +33,6 @@ f64 = []
 [lints.clippy]
 excessive_precision = "allow"
 
-[[bin]]
-name = "npy-2-hdf5"
-
 [[bench]]
 name = "kernels"
 harness = false

@@ -1,13 +1,7 @@
-use std::{io, path::Path};
-
 use crate::{constants::Float, types::UvwArray};
 
-use super::{check_for_extra_bytes, check_type_desc};
-use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use hdf5_metno::H5Type;
 use ndarray::prelude::*;
-use ndarray_npy::{ReadDataError, ReadableElement, WritableElement};
-use py_literal::Value;
 
 #[derive(Debug, PartialEq, Eq, H5Type)]
 #[repr(C)]
@@ -18,108 +12,6 @@ pub struct Metadata {
     pub channel_begin: u32,
     pub channel_end: u32,
     pub coordinate: Coordinate,
-}
-
-impl ReadableElement for Metadata {
-    fn read_to_end_exact_vec<R: io::Read>(
-        mut reader: R,
-        type_desc: &Value,
-        len: usize,
-    ) -> Result<Vec<Self>, ReadDataError> {
-        check_type_desc(
-            type_desc,
-            "[('baseline', '<i4'), ('time_index', '<i4'), ('nr_timesteps', '<i4'), ('channel_begin', '<i4'), ('channel_end', '<i4'), ('coordinate', [('x', '<i4'), ('y', '<i4'), ('z', '<i4')])]",
-        )?;
-
-        let mut out = Vec::with_capacity(len);
-
-        for _ in 0..len {
-            let baseline = reader.read_u32::<LittleEndian>()?;
-            let time_index = reader.read_u32::<LittleEndian>()?;
-            let timestep_count = reader.read_u32::<LittleEndian>()?;
-            let channel_begin = reader.read_u32::<LittleEndian>()?;
-            let channel_end = reader.read_u32::<LittleEndian>()?;
-            let coordinate_x = reader.read_u32::<LittleEndian>()?;
-            let coordinate_y = reader.read_u32::<LittleEndian>()?;
-            let coordinate_z = reader.read_u32::<LittleEndian>()?;
-
-            out.push(Metadata {
-                baseline,
-                time_index,
-                timestep_count,
-                channel_begin,
-                channel_end,
-                coordinate: Coordinate {
-                    x: coordinate_x,
-                    y: coordinate_y,
-                    z: coordinate_z,
-                },
-            });
-        }
-
-        check_for_extra_bytes(&mut reader)?;
-
-        Ok(out)
-    }
-}
-
-impl WritableElement for Metadata {
-    fn type_descriptor() -> Value {
-        Value::List(vec![
-            Value::Tuple(vec![
-                Value::String("baseline".into()),
-                Value::String("<i4".into()),
-            ]),
-            Value::Tuple(vec![
-                Value::String("time_index".into()),
-                Value::String("<i4".into()),
-            ]),
-            Value::Tuple(vec![
-                Value::String("nr_timesteps".into()),
-                Value::String("<i4".into()),
-            ]),
-            Value::Tuple(vec![
-                Value::String("channel_begin".into()),
-                Value::String("<i4".into()),
-            ]),
-            Value::Tuple(vec![
-                Value::String("channel_end".into()),
-                Value::String("<i4".into()),
-            ]),
-            Value::Tuple(vec![
-                Value::String("coordinate".into()),
-                Value::List(vec![
-                    Value::Tuple(vec![Value::String("x".into()), Value::String("<i4".into())]),
-                    Value::Tuple(vec![Value::String("y".into()), Value::String("<i4".into())]),
-                    Value::Tuple(vec![Value::String("z".into()), Value::String("<i4".into())]),
-                ]),
-            ]),
-        ])
-    }
-
-    fn write<W: io::Write>(&self, mut writer: W) -> Result<(), ndarray_npy::WriteDataError> {
-        writer.write_u32::<LittleEndian>(self.baseline)?;
-        writer.write_u32::<LittleEndian>(self.time_index)?;
-        writer.write_u32::<LittleEndian>(self.timestep_count)?;
-        writer.write_u32::<LittleEndian>(self.channel_begin)?;
-        writer.write_u32::<LittleEndian>(self.channel_end)?;
-        writer.write_u32::<LittleEndian>(self.coordinate.x)?;
-        writer.write_u32::<LittleEndian>(self.coordinate.y)?;
-        writer.write_u32::<LittleEndian>(self.coordinate.z)?;
-
-        Ok(())
-    }
-
-    fn write_slice<W: io::Write>(
-        slice: &[Self],
-        mut writer: W,
-    ) -> Result<(), ndarray_npy::WriteDataError> {
-        for item in slice {
-            WritableElement::write(item, &mut writer)?;
-        }
-
-        Ok(())
-    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, H5Type)]
@@ -137,9 +29,6 @@ pub trait MetadataArrayExtension {
     where
         Self: Sized;
     fn generate(grid_size: u32, subgrid_size: u32, channel_count: u32, uvw: &UvwArray) -> Self;
-    fn from_npy_file(path: &Path) -> Result<Self, ndarray_npy::ReadNpyError>
-    where
-        Self: Sized;
 }
 
 impl MetadataArrayExtension for MetadataArray {
@@ -169,16 +58,6 @@ impl MetadataArrayExtension for MetadataArray {
         }
 
         metadata.into()
-    }
-
-    /// Read metadata data from npy file
-    ///
-    /// ## Parameters
-    /// - `path`: Path to the npy file
-    ///
-    /// Returns a metadata array, shape (`subgrid_count`)
-    fn from_npy_file(path: &Path) -> Result<Self, ndarray_npy::ReadNpyError> {
-        ndarray_npy::read_npy(path)
     }
 
     /// Read metadata data from HDF5 file
