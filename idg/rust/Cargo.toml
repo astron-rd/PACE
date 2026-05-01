@@ -13,7 +13,6 @@ fftw = "0.8.0"
 hdf5-metno = { version = "0.12.3", features = ["complex"] }
 itertools = "0.14.0"
 ndarray = { version = "0.17.2", features = ["serde", "rayon"] }
-ndarray-npy = "0.10.0"
 ndarray-rand = "0.16.0"
 num-complex = "0.4.6"
 num-traits = "0.2.19"
