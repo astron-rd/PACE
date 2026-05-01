@@ -3,6 +3,7 @@ name = "idg"
 version = "0.1.0"
 rust-version = "1.85"
 edition = "2024"
+default-run = "idg"
 
 [dependencies]
 anyhow = "1.0.101"
