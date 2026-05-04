@@ -33,7 +33,7 @@ pub trait VisibilityArrayExtension {
         frequencies: &FrequencyArray,
         uvw: &UvwArray,
     ) -> Self;
-    fn from_hdf5_file(file: &hdf5_metno::File) -> Result<Self, hdf5_metno::Error>
+    fn from_file(file: &hdf5_metno::File) -> Result<Self, hdf5_metno::Error>
     where
         Self: Sized;
 }
@@ -97,7 +97,7 @@ impl VisibilityArrayExtension for VisibilityArray {
     /// - `file`: The HDF5 File
     ///
     /// Returns a visibility array
-    fn from_hdf5_file(file: &hdf5_metno::File) -> Result<Self, hdf5_metno::Error> {
+    fn from_file(file: &hdf5_metno::File) -> Result<Self, hdf5_metno::Error> {
         file.dataset("visibilities")?.read()
     }
 }

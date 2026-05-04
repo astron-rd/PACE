@@ -11,7 +11,7 @@ use ndarray_rand::{
 };
 use num_traits::Zero;
 
-/// 3-dimensional vector with UVW parameters
+/// 3-dimensional array with UVW parameters
 #[derive(Clone, Copy, Debug, PartialEq, H5Type)]
 #[repr(C)]
 pub struct Uvw {
@@ -62,7 +62,7 @@ pub trait UvwArrayExtension {
         baseline_count: u32,
         grid_size: u32,
     ) -> Self;
-    fn from_hdf5_file(file: &hdf5_metno::File) -> Result<Self, hdf5_metno::Error>
+    fn from_file(file: &hdf5_metno::File) -> Result<Self, hdf5_metno::Error>
     where
         Self: Sized;
 }
@@ -145,7 +145,7 @@ impl UvwArrayExtension for UvwArray {
     /// - `file`: The HDF5 File
     ///
     ///  Returns a UVW array of size (`baseline_count` * `timestep_count`)
-    fn from_hdf5_file(file: &hdf5_metno::File) -> Result<Self, hdf5_metno::Error> {
+    fn from_file(file: &hdf5_metno::File) -> Result<Self, hdf5_metno::Error> {
         file.dataset("uvws")?.read()
     }
 }

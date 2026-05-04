@@ -13,7 +13,7 @@ pub struct Cli {
     #[arg(long, default_value = "1.0")]
     pub w_step: Float,
 
-    /// Output file location
+    /// Output file path
     #[arg(short = 'o', long, value_name = "OUTPUT_PATH")]
     pub output_file: Option<PathBuf>,
 
@@ -94,7 +94,7 @@ pub enum Commands {
     },
     /// Load the input data from a HDF5 file.
     Load {
-        /// Location of the HDF file
+        /// Location of the HDF5 file
         #[arg(long, short = 'f', default_value = "input.h5")]
         filename: PathBuf,
 

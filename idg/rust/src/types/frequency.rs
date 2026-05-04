@@ -6,7 +6,7 @@ pub type FrequencyArray = Array1<Float>;
 
 pub trait FrequencyArrayExtension {
     fn generate(start_frequency: Float, channel_count: u32, frequency_increment: Float) -> Self;
-    fn from_hdf5_file(file: &hdf5_metno::File) -> Result<Self, hdf5_metno::Error>
+    fn from_file(file: &hdf5_metno::File) -> Result<Self, hdf5_metno::Error>
     where
         Self: Sized;
 }
@@ -29,7 +29,7 @@ impl FrequencyArrayExtension for FrequencyArray {
     /// - `file`: The HDF5 File
     ///
     /// Returns a frequency array, shape (`channel_count`)
-    fn from_hdf5_file(file: &hdf5_metno::File) -> Result<Self, hdf5_metno::Error> {
+    fn from_file(file: &hdf5_metno::File) -> Result<Self, hdf5_metno::Error> {
         file.dataset("frequencies")?.read()
     }
 }

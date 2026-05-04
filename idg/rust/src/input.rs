@@ -127,14 +127,14 @@ impl Input {
                 grid_size,
                 correlation_count_out,
             } => {
-                print_header!("READING HDF5 INPUT DATA");
+                print_header!("READING INPUT DATA");
 
                 let file = hdf5_metno::File::open(std::env::current_dir()?.join(filename))?;
 
-                let uvw: UvwArray = time_function!("load uvws", UvwArray::from_hdf5_file(&file)?);
+                let uvw: UvwArray = time_function!("load uvws", UvwArray::from_file(&file)?);
 
                 let frequencies: FrequencyArray =
-                    time_function!("load frequencies", FrequencyArray::from_hdf5_file(&file)?);
+                    time_function!("load frequencies", FrequencyArray::from_file(&file)?);
 
                 let wavenumbers: WavenumberArray = time_function!(
                     "derive wavenumbers",
@@ -142,10 +142,10 @@ impl Input {
                 );
 
                 let visibilities: VisibilityArray =
-                    time_function!("load visibilities", VisibilityArray::from_hdf5_file(&file)?);
+                    time_function!("load visibilities", VisibilityArray::from_file(&file)?);
 
                 let metadata: MetadataArray =
-                    time_function!("load metadata", MetadataArray::from_hdf5_file(&file)?);
+                    time_function!("load metadata", MetadataArray::from_file(&file)?);
 
                 let taper: Taper = time_function!("generate taper", Taper::generate(*subgrid_size));
 
