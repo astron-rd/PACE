@@ -1,5 +1,3 @@
-use std::path::Path;
-
 use itertools::Itertools;
 use ndarray::{
     Zip,
@@ -35,7 +33,7 @@ pub trait VisibilityArrayExtension {
         frequencies: &FrequencyArray,
         uvw: &UvwArray,
     ) -> Self;
-    fn from_file(path: &Path) -> Result<Self, ndarray_npy::ReadNpyError>
+    fn from_file(file: &hdf5_metno::File) -> Result<Self, hdf5_metno::Error>
     where
         Self: Sized;
 }
@@ -93,10 +91,13 @@ impl VisibilityArrayExtension for VisibilityArray {
         visibilities
     }
 
-    fn from_file(path: &Path) -> Result<Self, ndarray_npy::ReadNpyError>
-    where
-        Self: Sized,
-    {
-        ndarray_npy::read_npy(path)
+    /// Read visibility data from HDF5 file
+    ///
+    /// ## Parameters
+    /// - `file`: The HDF5 File
+    ///
+    /// Returns a visibility array
+    fn from_file(file: &hdf5_metno::File) -> Result<Self, hdf5_metno::Error> {
+        file.dataset("visibilities")?.read()
     }
 }
