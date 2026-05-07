@@ -24,7 +24,7 @@ end
 
 function load_inputs()
     Util.print_header("READING INPUT DATA")
-    infile = HDF5.h5open("input/input.hdf5", "r")
+    infile = HDF5.h5open("input.h5", "r")
 
     uvw_ds = infile["uvws"]
     uvws = Util.time_function("load uvws", () -> read(uvw_ds))
