@@ -1,3 +1,3 @@
-include("src/IDG.jl")
+using IDG
 
-IDG.do_thing()
+IDG.run()

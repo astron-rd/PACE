@@ -5,7 +5,7 @@ include("Constants.jl")
 include("Gridder.jl")
 include("Util.jl")
 
-function do_thing()
+function run()
     inputs = Input.load_inputs()
 
     subgrids = zeros(ComplexF32, inputs.subgrid_count, Constants.CORRELATION_COUNT_OUT, Constants.SUBGRID_SIZE, Constants.SUBGRID_SIZE)

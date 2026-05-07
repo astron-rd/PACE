@@ -170,7 +170,6 @@ function add_subgrid_to_grid!(subgrid, metadata, grid, phasor)
             end
         end
     end
-    println("test?")
 end
 
 function transform_grid!(grid)
