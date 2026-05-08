@@ -3,8 +3,9 @@
 #include <xtensor/containers/xarray.hpp>
 
 #include "idgtypes.h"
+#include "settings.h"
 
-xt::xarray<UVW> get_uvw(const float observation_hours,
+xt::xarray<UVW> get_uvws(const float observation_hours,
                         const size_t nr_baselines, const size_t grid_size,
                         const float ellipticity = 0.1f, const int seed = 2);
 
@@ -27,3 +28,7 @@ get_visibilities(const size_t nr_correlations, const size_t nr_channels,
                  int max_pixel_offset = -1, const int random_seed = 2);
 
 xt::xarray<float> get_taper(const size_t subgrid_size);
+
+Inputs
+generate_inputs(Settings settings,
+                std::vector<std::pair<const std::string, double>> &timings);

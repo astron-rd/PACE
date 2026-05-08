@@ -8,10 +8,12 @@
 
 #include "idgtypes.h"
 #include "kernels.h"
+#include "settings.h"
+#include "util.h"
 
-xt::xarray<UVW> get_uvw(const float observation_hours,
-                        const size_t nr_baselines, const size_t grid_size,
-                        const float ellipticity = 0.1f, const int seed = 2) {
+xt::xarray<UVW> get_uvws(const float observation_hours,
+                         const size_t nr_baselines, const size_t grid_size,
+                         const float ellipticity = 0.1f, const int seed = 2) {
   // Convert observation time to seconds (1 sample per second)
   const size_t observation_seconds =
       static_cast<size_t>(observation_hours * 3600.0f);
@@ -185,4 +187,55 @@ xt::xarray<float> get_taper(const size_t subgrid_size) {
       xt::expand_dims(x_spheroidal, 0) * xt::expand_dims(x_spheroidal, 1);
 
   return taper;
+}
+
+Inputs
+generate_inputs(Settings settings,
+                std::vector<std::pair<const std::string, double>> &timings) {
+  print_header("GENERATING INPUT DATA");
+
+  // Generate UVW coordinates
+  xt::xarray<UVW> uvws;
+  time_function(timings, "generate uvws", [settings, &uvws]() {
+    uvws = get_uvws(settings.observation_hours, settings.nr_baselines,
+                    settings.grid_size);
+  });
+
+  // Generate frequencies
+  xt::xarray<float> frequencies;
+  time_function(timings, "generate frequencies", [settings, &frequencies]() {
+    get_frequencies(static_cast<float>(settings.start_frequency),
+                    static_cast<float>(settings.frequency_increment),
+                    settings.nr_channels);
+  });
+
+  // Derive wavenumbers
+  xt::xarray<float> wavenumbers;
+  time_function(
+      timings, "derive wavenumbers", [settings, &wavenumbers, frequencies]() {
+        wavenumbers = (frequencies * 2.0 * M_PI) / settings.speed_of_light;
+      });
+
+  // Generate metadata
+  xt::xarray<Metadata> metadata;
+  time_function(timings, "generate metadata", [settings, &metadata, uvws]() {
+    metadata = get_metadata(settings.nr_channels, settings.subgrid_size,
+                            settings.grid_size, uvws);
+  });
+  const size_t nr_subgrids = metadata.size();
+
+  // Generate visibilities
+
+  xt::xarray<VisibilityType> visibilities;
+  time_function(timings, "generate visibilities",
+                [settings, &visibilities, frequencies, uvws]() {
+                  visibilities = get_visibilities(
+                      settings.nr_correlations_in, settings.nr_channels,
+                      settings.nr_timesteps, settings.nr_baselines,
+                      static_cast<float>(settings.image_size),
+                      settings.grid_size, frequencies, uvws);
+                });
+
+  return Inputs{uvws,     frequencies,  wavenumbers,
+                metadata, visibilities, nr_subgrids};
 }
