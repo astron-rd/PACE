@@ -54,8 +54,9 @@ fn main() -> Result<()> {
     }
 
     if let Commands::Generate { output_input, .. } = cli.command {
-        let inputs_file = hdf5_metno::File::create(std::env::current_dir()?.join("inputs.hdf5"))?;
         if output_input {
+            let inputs_file =
+                hdf5_metno::File::create(std::env::current_dir()?.join("inputs.h5"))?;
             time_function!("writing uvw", {
                 let builder = inputs_file.new_dataset_builder();
                 builder.with_data(&input.uvw).create("uvws")?;
