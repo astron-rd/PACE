@@ -1,4 +1,5 @@
 #include <chrono>
+#include <complex>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -6,6 +7,12 @@
 #include <cxxopts.hpp>
 #include <xtensor/containers/xarray.hpp>
 #include <xtensor/io/xnpy.hpp>
+
+#include "h5cpp/dataspace/simple.hpp"
+#include "h5cpp/file/file.hpp"
+#include "h5cpp/file/functions.hpp"
+#include "h5cpp/node/group.hpp"
+#include <h5cpp/contrib/stl/complex.hpp>
 
 #include "IDG.h"
 #include "idgtypes.h"
@@ -68,8 +75,6 @@ cxxopts::Options setupOptions(const char *argv[]) {
       "output_subgrids", "Output subgrids",
       cxxopts::value<bool>()->default_value(std::to_string(kOutputData)))(
       "output_grid", "Output grid",
-      cxxopts::value<bool>()->default_value(std::to_string(kOutputData)))(
-      "output_image", "Output image",
       cxxopts::value<bool>()->default_value(std::to_string(kOutputData)));
 
   options.add_options("Timing")(
@@ -161,9 +166,21 @@ int main(int argc, const char *argv[]) {
 
     print_timing("Total", total_time, 100.0);
   }
-  if (settings.output_image) {
-    xt::dump_npy("image.npy", grid);
-  }
+
+  hdf5::file::File output_file = hdf5::file::create("output.h5");
+  hdf5::node::Group root_node = output_file.root();
+
+  hdf5::datatype::Compound datatype =
+      hdf5::datatype::Compound::create(sizeof(std::complex<float>));
+  datatype.insert("r", 0, hdf5::datatype::TypeTrait<float>::create(float()));
+  datatype.insert("i", alignof(float),
+                  hdf5::datatype::TypeTrait<float>::create(float()));
+
+  std::vector<size_t> dims(grid.shape().begin(), grid.shape().end());
+  auto dataspace = hdf5::dataspace::Simple(dims);
+  auto grid_dataset = root_node.create_dataset("grid", datatype, dataspace);
+
+  grid_dataset.write(*grid.data(), datatype, dataspace);
 
   return EXIT_SUCCESS;
 }

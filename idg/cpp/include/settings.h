@@ -25,7 +25,6 @@ public:
     output_taper = result["output_taper"].as<bool>();
     output_subgrids = result["output_subgrids"].as<bool>();
     output_grid = result["output_grid"].as<bool>();
-    output_image = result["output_image"].as<bool>();
 
     // Parse timing options
     report_timing = result["report_timing"].as<bool>();
