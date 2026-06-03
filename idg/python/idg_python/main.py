@@ -3,6 +3,7 @@ import json
 import time
 
 import numpy as np
+import h5py
 
 from idg_python import idgtypes
 from idg_python.idg import Gridder  # type: ignore
@@ -207,14 +208,9 @@ def main():
     print(f"{'Total':<30} {total_time:>8.3f} s")
 
     if STORE_DATA:
-        np.save("uvw.npy", uvw)
-        np.save("frequencies.npy", frequencies)
-        np.save("taper.npy", taper)
-        np.save("metadata.npy", metadata)
-        np.save("visibilities.npy", visibilities)
-        np.save("subgrids.npy", subgrids)
-        np.save("grid.npy", grid)
-        np.save("image.npy", grid)
+        output_file = h5py.File("output.h5", "w")
+        output_file.create_dataset("grid", data=grid)
+        output_file.create_dataset("subgrids", data=subgrids)
 
     if OUTPUT_FILENAME:
         output = {
