@@ -176,7 +176,7 @@ int main(int argc, const char *argv[]) {
   datatype.insert("i", alignof(float),
                   hdf5::datatype::TypeTrait<float>::create(float()));
 
-  std::vector<size_t> dims(grid.shape().begin(), grid.shape().end());
+  const std::vector<hsize_t> dims(grid.shape().begin(), grid.shape().end());
   auto dataspace = hdf5::dataspace::Simple(dims);
   auto grid_dataset = root_node.create_dataset("grid", datatype, dataspace);
 
