@@ -20,7 +20,7 @@ public:
     report_timing = result["report_timing"].as<bool>();
   }
 
-  const size_t nr_correlations_in = 2;  // XX, YY
+  const size_t nr_correlations_in = 2; // XX, YY
   const float w_step = 1.0f;
   const double speed_of_light = 299792458.0;
 
