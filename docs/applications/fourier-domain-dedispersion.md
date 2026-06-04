@@ -1,6 +1,6 @@
 # Fourier-Domain Dedispersion (FDD)
 
-This page combines a conceptual primer and implementation details for
+This page combines a conceptual primer with implementation details for
 Fourier-domain dedispersion in the PACE context.
 
 ## Background
@@ -8,8 +8,9 @@ Fourier-domain dedispersion in the PACE context.
 Beamformed radio data are commonly searched for dispersed transient and periodic
 signals such as pulsars and fast radio bursts (FRBs). As a radio pulse
 propagates through the ionised interstellar medium, lower radio frequencies
-travel more slowly than higher frequencies. This causes a frequency-dependent
-arrival-time delay that smears the signal across the observing band.
+travel more slowly than higher frequencies. This creates a
+frequency-dependent arrival-time delay that smears the signal across the
+observing band.
 
 Dedispersion corrects for this effect by realigning the signal across frequency
 channels for a set of trial dispersion measures (DMs). In practical search
@@ -28,10 +29,10 @@ Some useful papers and online resources:
 
 ### Dispersion
 
-Due to the varying ISM along the line-of-sight to a radio transient (e.g. a
-pulsar), the signal is dispersed as a function of frequency. There is a time
-delay between the signal observed at $\nu$ and a reference frequency $\nu_0$,
-described by:
+Due to variations in the interstellar medium (ISM) along the line of sight to a
+radio transient (e.g. a pulsar), the signal is dispersed as a function of
+frequency. There is a time delay between the signal observed at $\nu$ and a
+reference frequency $\nu_0$, described by:
 
 $$
 \Delta t(\nu, \mathrm{DM}) = \mathrm{DM}\,\kappa_{\mathrm{DM}}\left(\nu^{-2} - \nu_0^{-2}\right)
@@ -72,11 +73,11 @@ $$
 I(t, \mathrm{DM}) = \sum_{\nu} I\left(t - \Delta t(\nu, \mathrm{DM}), \nu\right)
 $$
 
-Since DM is usually unknown, this is repeated for many trial DMs (often
+Since DM is usually unknown, this process is repeated for many trial DMs (often
 100-1000).
 
 Note on performance: the time-domain approach requires significant memory
-bandwidth while doing relatively little computation per memory operation.
+bandwidth while doing relatively little computation per memory access.
 
 ### Fourier-domain dedispersion
 
@@ -141,13 +142,13 @@ applied after summation. However, for FFT-based periodicity searches this step
 can be omitted and data can remain in the Fourier domain.
 
 The main motivation for FDD is performance. Time-domain dedispersion is often
-memory-bandwidth limited, while FDD shifts more work into arithmetic on
+memory-bandwidth-limited, while FDD shifts more work into arithmetic on
 Fourier-domain data and can be faster for large DM counts.
 
 ## PACE simplifications
 
 The PACE reference application focuses on the Fourier-domain dedispersion
-algorithm itself rather than on the full real-world dedisp pipeline.
+algorithm itself rather than on a full real-world dedisp pipeline.
 
 - Only Fourier-domain dedispersion is considered.
 - Time-domain dedispersion from dedisp is out of scope.
@@ -155,8 +156,8 @@ algorithm itself rather than on the full real-world dedisp pipeline.
 
 ## Fourier-Domain Dedispersion data flow
 
-This describes how data flows through the reference implementation of
-frequency-domain dedispersion (FDD), including the various data transformations,
+This section describes how data flows through the reference implementation of
+frequency-domain dedispersion (FDD), including the main data transformations,
 transposes, and FFT operations.
 
 Scope: this page describes the CPU FDD non-segmented execution path
@@ -230,8 +231,8 @@ nsamps_computed = nsamps - max_delay  # number of valid output samples
 Compute FFT buffer sizes with zero-padding:
 
 ```
-nfreq = (nsamps / 2 + 1)           # frequency components for an FFT of length nsamps
 nsamp_fft = round_up(nsamps + 1, 16384)  # actual FFT length (zero-padded to multiple of 16k)
+nfreq = (nsamp_fft / 2 + 1)              # frequency components for an FFT of length nsamp_fft
 nsamp_padded = round_up(nsamp_fft + 1, 1024)  # buffer size (holds nfreq complex = 2*nfreq floats)
 ```
 
@@ -345,7 +346,7 @@ copy_data(ndm, nsamps_computed, nsamp_padded, nsamps_computed, data_dm, output)
 This view shows one row of each 2D buffer (one channel or one DM), how wide it
 is in samples/elements, and which part is consumed by each step.
 
-Note: bars are schematic (not exact scale); they show the relative used vs
+Note: bars are schematic (not exact scale); they show relative used vs
 padded/discarded regions.
 
 Legend:
