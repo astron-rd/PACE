@@ -1,8 +1,37 @@
 [package]
-name = "pace-idg"
+name = "idg"
 version = "0.1.0"
+rust-version = "1.85"
 edition = "2024"
+default-run = "idg"
 
 [dependencies]
-ndarray = "0.16.1"
-ndarray-rand = "0.15.0"
+anyhow = "1.0.101"
+byteorder = "1.5.0"
+clap = { version = "4.5.54", features = ["derive"] }
+fftw = "0.8.0"
+hdf5-metno = { version = "0.12.3", features = ["complex"] }
+itertools = "0.14.0"
+ndarray = { version = "0.17.2", features = ["serde", "rayon"] }
+ndarray-rand = "0.16.0"
+num-complex = "0.4.6"
+num-traits = "0.2.19"
+py_literal = "0.4.0"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+
+[dev-dependencies]
+criterion = "0.7.0"
+
+[patch.crates-io]
+ndarray = { git = "https://github.com/rust-ndarray/ndarray.git" }
+
+[features]
+f64 = []
+
+[lints.clippy]
+excessive_precision = "allow"
+
+[[bench]]
+name = "kernels"
+harness = false

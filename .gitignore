@@ -1,4 +1,29 @@
 .vscode
+
+# Python
 *.npy
 *__pycache__*
-*build*
+.ipynb_checkpoints
+
+# Exclude build directories
+build/
+
+# Clang
+.cache/
+.idea
+
+# Python project files
+uv.lock
+coverage.xml
+.coverage
+*.egg-info
+.venv
+dist
+__pycache__
+
+# Bencher
+results.json
+
+# HDF5 data files
+*.hdf5
+*.h5

@@ -1,0 +1,43 @@
+import h5py
+
+import initializers
+from config import settings
+
+
+def main():
+    uvw = initializers.init_uvw(
+        observation_hours=settings.observation_hours,
+        nr_baselines=settings.nr_baselines,
+        grid_size=settings.grid_size,
+    )
+    frequencies = initializers.init_frequencies(
+        start_frequency=settings.start_frequency,
+        frequency_increment=settings.frequency_increment,
+        nr_channels=settings.nr_channels,
+    )
+    metadata = initializers.init_metadata(
+        nr_channels=settings.nr_channels,
+        subgrid_size=settings.subgrid_size,
+        grid_size=settings.grid_size,
+        uvw=uvw,
+    )
+    visibilities = initializers.init_visibilities(
+        nr_correlations=settings.nr_correlations_in,
+        nr_channels=settings.nr_channels,
+        nr_timesteps=settings.nr_timesteps,
+        nr_baselines=settings.nr_baselines,
+        image_size=settings.image_size,
+        grid_size=settings.grid_size,
+        frequencies=frequencies,
+        uvw=uvw,
+    )
+
+    output_file = h5py.File("inputs.h5", "w")
+    output_file.create_dataset("uvws", data=uvw)
+    output_file.create_dataset("frequencies", data=frequencies)
+    output_file.create_dataset("metadata", data=metadata)
+    output_file.create_dataset("visibilities", data=visibilities)
+
+
+if __name__ == "__main__":
+    main()

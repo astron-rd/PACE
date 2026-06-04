@@ -1,36 +1,84 @@
-use std::f64::consts::PI;
+use anyhow::Result;
+use clap::Parser;
 
-mod idgtypes;
-mod init;
+use crate::{
+    cli::Commands,
+    gridder::Gridder,
+    input::Input,
+    util::{print_header, time_function},
+};
 
-const NR_CORRELATIONS_IN: usize = 2; // XX, YY
-const NR_CORRELATIONS_OUT: usize = 1; // I
-const SUBGRID_SIZE: usize = 32; // size of each subgrid
-const GRID_SIZE: usize = 1024; // size of the full grid
-const OBSERVATION_HOURS: usize = 4; // total observation time in hours
-const NR_TIMESTEPS: usize = OBSERVATION_HOURS * 3600;
-const NR_CHANNELS: usize = 16; // number of frequency channels
-const W_STEP: f64 = 1.0; // w step in wavelengths
+mod cli;
+mod constants;
+mod gridder;
+mod input;
+mod types;
+mod util;
 
-const START_FREQUENCY: f64 = 150e6; // 150 MHz
-const FREQUENCY_INCREMENT: f64 = 1e6; // 1 MHz
-const END_FREQUENCY: f64 = START_FREQUENCY + NR_CHANNELS as f64 * FREQUENCY_INCREMENT;
+fn main() -> Result<()> {
+    let cli = cli::Cli::parse();
 
-const SPEED_OF_LIGHT: f64 = 299792458.0;
-const IMAGE_SIZE: f64 = SPEED_OF_LIGHT / END_FREQUENCY;
+    let input = Input::from_cli(&cli)?;
 
-const NR_STATIONS: usize = 20;
-const NR_BASELINES: usize = NR_STATIONS * (NR_STATIONS - 1) / 2;
+    input.print_parameters();
 
-fn main() {
-    let _uvw = init::get_uvw(OBSERVATION_HOURS, NR_BASELINES, GRID_SIZE, None, None);
-    // TODO: Save uvw to file
+    print_header!("MAIN");
+    let mut gridder = Gridder::new_empty(&input);
 
-    println!("Initialize frequencies");
-    let frequencies = init::get_frequencies(START_FREQUENCY, FREQUENCY_INCREMENT, NR_CHANNELS);
-    let _wavenumbers = (frequencies * 2. * PI) / SPEED_OF_LIGHT;
-    // TODO: Save frequencies to file
+    time_function!("grid onto subgrids", gridder.grid_onto_subgrids(&input));
 
-    print!("Initialize metadata");
-    // TODO: Get metadata and save to file
+    time_function!("ifft the subgrids", gridder.ifft_subgrids(&input));
+
+    time_function!("add subgrids to grid", gridder.add_subgrids_to_grid(&input));
+
+    time_function!(
+        "transform grid",
+        gridder.transform(&input, fftw::types::Sign::Backward)
+    );
+
+    print_header!("OUTPUT");
+
+    let output_file = hdf5_metno::File::create(
+        std::env::current_dir()?.join(cli.output_file.unwrap_or("output.h5".into())),
+    )?;
+
+    time_function!("writing grid", {
+        let builder = output_file.new_dataset_builder();
+        builder.with_data(gridder.grid()).create("grid")?;
+    });
+    if cli.output_subgrids {
+        time_function!("writing subgrids", {
+            let builder = output_file.new_dataset_builder();
+            builder.with_data(gridder.subgrids()).create("subgrids")?;
+        });
+    }
+
+    if let Commands::Generate { output_input, .. } = cli.command {
+        let inputs_file = hdf5_metno::File::create(std::env::current_dir()?.join("inputs.hdf5"))?;
+        if output_input {
+            time_function!("writing uvw", {
+                let builder = inputs_file.new_dataset_builder();
+                builder.with_data(&input.uvw).create("uvws")?;
+            });
+            time_function!("writing frequencies", {
+                let builder = inputs_file.new_dataset_builder();
+                builder
+                    .with_data(&input.frequencies)
+                    .create("frequencies")?;
+            });
+            time_function!("writing visibilities", {
+                let builder = inputs_file.new_dataset_builder();
+                builder
+                    .with_data(&input.visibilities)
+                    .create("visibilities")?;
+            });
+            time_function!("writing metadata", {
+                let builder = inputs_file.new_dataset_builder();
+                builder.with_data(&input.metadata).create("metadata")?;
+            });
+        }
+    }
+
+    println!("done!");
+    Ok(())
 }

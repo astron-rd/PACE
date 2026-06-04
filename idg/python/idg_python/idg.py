@@ -1,12 +1,14 @@
 import numpy as np
-import numba as nb
 
-import idgtypes
-from kernels import add_subgrid_to_grid, compute_phasor, visibilities_to_subgrids
+from idg_python import idgtypes
+from idg_python.kernels.numba import (
+    add_subgrid_to_grid,
+    compute_phasor,
+    visibilities_to_subgrids,
+)
 
 
 class Gridder:
-
     def __init__(self, nr_correlations_in: int, subgrid_size: int):
         self.nr_correlations_in = nr_correlations_in
         self.nr_correlations_out = 4 if nr_correlations_in == 4 else 1

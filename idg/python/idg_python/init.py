@@ -1,10 +1,14 @@
 import random
-import numpy as np
+
 import numba as nb
+import numpy as np
 
-import idgtypes
-
-from kernels import add_pt_src_to_baseline, evaluate_spheroidal, compute_metadata
+from idg_python import idgtypes
+from idg_python.kernels.numba import (
+    add_pt_src_to_baseline,
+    compute_metadata,
+    evaluate_spheroidal,
+)
 
 
 def get_uvw(
@@ -93,6 +97,7 @@ def get_frequencies(
         start_frequency,
         start_frequency + nr_channels * frequency_increment,
         frequency_increment,
+        dtype=np.float32,
     )
 
 
@@ -183,7 +188,7 @@ def get_visibilities(
     )
 
     # Create offsets for fake point sources
-    offsets = list()
+    offsets = []
     random.seed(random_seed)
     for _ in range(nr_point_sources):
         x = (random.random() * (max_pixel_offset)) - (max_pixel_offset / 2)

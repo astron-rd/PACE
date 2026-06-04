@@ -1,6 +1,19 @@
 repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-ast
+      - id: check-builtin-literals
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: check-yaml
+      - id: debug-statements
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v17.0.6
+    rev: v22.1.4
     hooks:
       - id: clang-format
   - repo: https://github.com/cheshirekow/cmake-format-precommit
@@ -8,21 +21,43 @@ repos:
     hooks:
       - id: cmake-format
       - id: cmake-lint
-  - repo: https://github.com/psf/black
-    rev: 25.1.0
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.11
     hooks:
-      - id: black
-  - repo: https://github.com/executablebooks/mdformat
-    rev: 0.7.22
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+  - repo: local
     hooks:
-      - id: mdformat
-        args: ['--wrap=80']
-  - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.35.1
-    hooks:
-      - id: yamllint
-        args: [--config-file, .yamllint.yaml]
-  - repo: https://github.com/google/yamlfmt
-    rev: v0.16.0
-    hooks:
-      - id: yamlfmt
+      - id: pytest-idg
+        name: pytest-idg
+        stages: [manual] # only run when specified manually
+        entry: bash -c 'cd idg/python; uv run pytest'
+        language: system
+        types: [python]
+        pass_filenames: false
+        always_run: false
+      - id: pytest-all-sky
+        name: pytest-all-sky
+        stages: [manual] # only run when specified manually
+        entry: bash -c 'cd all-sky/python; uv run pytest'
+        language: system
+        types: [python]
+        pass_filenames: false
+        always_run: false
+      - id: build-idg
+        name: build-idg
+        stages: [manual] # only run when specified manually
+        entry: bash -c 'cd idg/python; uv run -m build'
+        language: system
+        types: [python]
+        pass_filenames: false
+        always_run: false
+      - id: build-all-sky
+        name: build-all-sky
+        stages: [manual] # only run when specified manually
+        entry: bash -c 'cd all-sky/python; uv run -m build'
+        language: system
+        types: [python]
+        pass_filenames: false
+        always_run: false
