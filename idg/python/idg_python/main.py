@@ -115,7 +115,7 @@ def main():
     if LOAD_INPUT is not None:
         print_header("READING INPUT DATA")
         with h5py.File(LOAD_INPUT, "r") as infile:
-            uvw_ds = infile["uvw"]
+            uvw_ds = infile["uvws"]
             if not isinstance(uvw_ds, h5py.Dataset):
                 print("Invalid input file: uvw is not defined")
                 return
