@@ -114,28 +114,28 @@ def main():
 
     if LOAD_INPUT is not None:
         print_header("READING INPUT DATA")
-        with h5py.File(LOAD_INPUT, "r") as input:
-            uvw_ds = input["uvw"]
+        with h5py.File(LOAD_INPUT, "r") as infile:
+            uvw_ds = infile["uvw"]
             if not isinstance(uvw_ds, h5py.Dataset):
                 print("Invalid input file: uvw is not defined")
                 return
             uvw = timeit("Load UVW coordinates", lambda: uvw_ds[...])
 
-            frequencies_ds = input["frequencies"]
+            frequencies_ds = infile["frequencies"]
             if not isinstance(frequencies_ds, h5py.Dataset):
                 print("Invalid input file: frequencies is not defined")
                 return
             frequencies = timeit("Load frequencies", lambda: frequencies_ds[...])
             wavenumbers = (frequencies * 2 * np.pi) / SPEED_OF_LIGHT
 
-            metadata_ds = input["metadata"]
+            metadata_ds = infile["metadata"]
             if not isinstance(metadata_ds, h5py.Dataset):
                 print("Invalid input file: frequencies is not defined")
                 return
             metadata = timeit("Load metadata", lambda: metadata_ds[...])
             nr_subgrids = metadata.shape[0]
 
-            visibilities_ds = input["visibilities"]
+            visibilities_ds = infile["visibilities"]
             if not isinstance(visibilities_ds, h5py.Dataset):
                 print("Invalid input file: frequencies is not defined")
                 return
