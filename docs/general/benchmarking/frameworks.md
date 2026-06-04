@@ -26,14 +26,14 @@ Scoring scheme:
 - ◯ = 0.5 point
 - ❌ = 0 points
 
-| Framework | Open source | Self-hosted | Multi-language | Performance tracking
-| Visualization | |---|---|---|---|---|---| | [Bencher](https://bencher.dev/) |
-✅ | ✅ | ✅ | ✅ | ✅ | | [Neptune.ai](https://neptune.ai/) | ❌ | ✅ | ◯ | ❌ | ✅ | |
-[MLflow](https://mlflow.org/) | ✅ | ✅ | ❌ | ❌ | ✅ | |
-[Prometheus/Grafana](https://prometheus.io/) | ✅ | ✅ | ◯ | ❌ | ✅ | |
-[DVC](https://github.com/treeverse/dvc/wiki/Debugging,-Profiling-and-Benchmarking-DVC)
-| ✅ | ✅ | ❌ | ❌ | ◯ | | [Hyperfine](https://github.com/sharkdp/hyperfine) | ✅ |
-❌ | ✅ | ❌ | ❌ |
+| Framework | Open source | Self-hosted | Multi-language | Performance tracking | Visualization |
+|---|---|---|---|---|---|
+| [Bencher](https://bencher.dev/) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| [Neptune.ai](https://neptune.ai/) | ❌ | ✅ | ◯ | ❌ | ✅ |
+| [MLflow](https://mlflow.org/) | ✅ | ✅ | ❌ | ❌ | ✅ |
+| [Prometheus/Grafana](https://prometheus.io/) | ✅ | ✅ | ◯ | ❌ | ✅ |
+| [DVC](https://github.com/treeverse/dvc/wiki/Debugging,-Profiling-and-Benchmarking-DVC) | ✅ | ✅ | ❌ | ❌ | ◯ |
+| [Hyperfine](https://github.com/sharkdp/hyperfine) | ✅ | ❌ | ✅ | ❌ | ❌ |
 
 Bencher has the best score overall and offers the follow key advantages:
 
