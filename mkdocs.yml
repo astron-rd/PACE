@@ -1,11 +1,27 @@
 site_name: PACE
 theme:
-   name: readthedocs
+   name: material
 nav:
    - Home: index.md
-   - Benchmarking Frameworks: benchmarking-frameworks.md
-   - Data Format: data-format.md
-   - Fourier-Domain Dedispersion Details: fourier-domain-dedispersion-details.md
-   - Jax: jax.md
-   - Python: python.md
-   - Rust: rust.md
+   - General:
+      - Benchmarking Frameworks: general/benchmarking-frameworks.md
+      - Data Format: general/data-format.md
+   - Programming Languages:
+      - Jax: programming-languages/jax.md
+      - Python: programming-languages/python.md
+      - Rust: programming-languages/rust.md
+   - Applications:
+      - Image-Domain Gridding: applications/image-domain-gridding.md
+      - All-sky Imaging (LOFTY): applications/all-sky-imaging-lofty.md
+      - Fourier-Domain Dedispersion: applications/fourier-domain-dedispersion.md
+      - Fourier Domain Dedispersion (PACE Context): applications/fourier-domain-dedispersion-pace-context.md
+      - Fourier-Domain Dedispersion Details: applications/fourier-domain-dedispersion-details.md
+markdown_extensions:
+   - pymdownx.arithmatex:
+         generic: true
+extra_css:
+   - https://unpkg.com/katex@0.17.0/dist/katex.min.css
+extra_javascript:
+   - https://unpkg.com/katex@0.17.0/dist/katex.min.js
+   - https://unpkg.com/katex@0.17.0/dist/contrib/auto-render.min.js
+   - javascript/katex.js
