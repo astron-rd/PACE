@@ -33,6 +33,8 @@ def main():
     )
 
     output_file = h5py.File("inputs.h5", "w")
+    output_file.attrs["grid_size"] = settings.grid_size
+    output_file.attrs["subgrid_size"] = settings.subgrid_size
     output_file.create_dataset("uvws", data=uvw)
     output_file.create_dataset("frequencies", data=frequencies)
     output_file.create_dataset("metadata", data=metadata)
