@@ -54,14 +54,14 @@ Inputs load_inputs(Settings settings,
   // Load UVW coordinates
   node::Dataset uvws_ds = root_node.get_dataset("uvws");
   xt::xarray<UVW> uvws;
-  time_function(timings, "generate uvws", [&uvws, &uvws_ds]() {
+  time_function(timings, "load uvws", [&uvws, &uvws_ds]() {
     uvws = load_dataset_to_xtensor<UVW>(uvws_ds);
   });
 
   // Load frequencies
   node::Dataset frequencies_ds = root_node.get_dataset("frequencies");
   xt::xarray<float> frequencies;
-  time_function(timings, "generate frequencies",
+  time_function(timings, "load frequencies",
                 [&frequencies, &frequencies_ds]() {
                   frequencies = load_dataset_to_xtensor<float>(frequencies_ds);
                 });
@@ -76,7 +76,7 @@ Inputs load_inputs(Settings settings,
   // Load metadata
   node::Dataset metadata_ds = root_node.get_dataset("metadata");
   xt::xarray<Metadata> metadata;
-  time_function(timings, "generate metadata", [&metadata, &metadata_ds]() {
+  time_function(timings, "load metadata", [&metadata, &metadata_ds]() {
     metadata = load_dataset_to_xtensor<Metadata>(metadata_ds);
   });
   const size_t nr_subgrids = metadata.size();
@@ -85,7 +85,7 @@ Inputs load_inputs(Settings settings,
   node::Dataset visibilities_ds = root_node.get_dataset("visibilities");
   xt::xarray<VisibilityType> visibilities;
   time_function(
-      timings, "generate visibilities", [&visibilities, &visibilities_ds]() {
+      timings, "load visibilities", [&visibilities, &visibilities_ds]() {
         visibilities = load_dataset_to_xtensor<VisibilityType>(visibilities_ds);
       });
 
