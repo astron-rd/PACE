@@ -14,6 +14,8 @@ include("${CMAKE_SOURCE_DIR}/cmake/FetchXTensor.cmake")
 
 include("${CMAKE_SOURCE_DIR}/cmake/FetchCxxopts.cmake")
 
+include("${CMAKE_SOURCE_DIR}/cmake/FetchH5cpp.cmake")
+
 find_package(OpenMP)
 
 add_subdirectory(src)
