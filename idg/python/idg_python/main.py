@@ -49,13 +49,18 @@ def main():
         "--nr_stations", type=int, default=20, help="Number of stations"
     )
     parser.add_argument(
+        "--load",
+        const="input.h5",
+        nargs="?",
+        help="Load input data from HDF5 file (optional: specify filename)"
+    )
+    parser.add_argument(
         "--store", action="store_true", default=False, help="Store data in Numpy format"
     )
     parser.add_argument(
         "--json",
-        nargs="?",
         const="timings.json",
-        default=False,
+        nargs="?",
         help="Output timings in JSON format (optional: specify filename)",
     )
     args = parser.parse_args()
@@ -64,6 +69,7 @@ def main():
     GRID_SIZE = args.grid_size
     OBSERVATION_HOURS = args.observation_hours
     NR_CHANNELS = args.nr_channels
+    LOAD_INPUT = args.load
     STORE_DATA = args.store
     OUTPUT_FILENAME = args.json
 
@@ -106,52 +112,86 @@ def main():
         timings[description] = duration
         return result
 
-    print_header("INITIALIZATION")
-    uvw = timeit(
-        "Initialize UVW coordinates",
-        lambda: get_uvw(
-            observation_hours=OBSERVATION_HOURS,
-            nr_baselines=NR_BASELINES,
-            grid_size=GRID_SIZE,
-        ),
-    )
+    if LOAD_INPUT is not None:
+        print_header("READING INPUT DATA")
+        with h5py.File(LOAD_INPUT, "r") as input:
+            uvw_ds = input["uvw"]
+            if not isinstance(uvw_ds, h5py.Dataset):
+                print("Invalid input file: uvw is not defined")
+                return
+            uvw = timeit("Load UVW coordinates", lambda: uvw_ds[...])
 
-    frequencies = timeit(
-        "Initialize frequencies",
-        lambda: get_frequencies(START_FREQUENCY, FREQUENCY_INCREMENT, NR_CHANNELS),
-    )
-    wavenumbers = (frequencies * 2 * np.pi) / SPEED_OF_LIGHT
+            frequencies_ds = input["frequencies"]
+            if not isinstance(frequencies_ds, h5py.Dataset):
+                print("Invalid input file: frequencies is not defined")
+                return
+            frequencies = timeit("Load frequencies",
+                                 lambda: frequencies_ds[...])
+            wavenumbers = (frequencies * 2 * np.pi) / SPEED_OF_LIGHT
 
-    metadata = timeit(
-        "Initialize metadata",
-        lambda: get_metadata(
-            nr_channels=NR_CHANNELS,
-            subgrid_size=SUBGRID_SIZE,
-            grid_size=GRID_SIZE,
-            uvw=uvw,
-        ),
-    )
-    nr_subgrids = metadata.shape[0]
+            metadata_ds = input["metadata"]
+            if not isinstance(metadata_ds, h5py.Dataset):
+                print("Invalid input file: frequencies is not defined")
+                return
+            metadata = timeit("Load metadata", lambda: metadata_ds[...])
+            nr_subgrids = metadata.shape[0]
 
-    visibilities = timeit(
-        "Initialize visibilities",
-        lambda: get_visibilities(
-            nr_correlations=NR_CORRELATIONS_IN,
-            nr_channels=NR_CHANNELS,
-            nr_timesteps=NR_TIMESTEPS,
-            nr_baselines=NR_BASELINES,
-            image_size=IMAGE_SIZE,
-            grid_size=GRID_SIZE,
-            frequencies=frequencies,
-            uvw=uvw,
-        ),
-    )
+            visibilities_ds = input["visibilities"]
+            if not isinstance(visibilities_ds, h5py.Dataset):
+                print("Invalid input file: frequencies is not defined")
+                return
+            visibilities = timeit("Load visibilities",
+                                  lambda: visibilities_ds[...])
+
+    else:
+        print_header("GENERATING INPUT DATA")
+        uvw = timeit(
+            "Initialize UVW coordinates",
+            lambda: get_uvw(
+                observation_hours=OBSERVATION_HOURS,
+                nr_baselines=NR_BASELINES,
+                grid_size=GRID_SIZE,
+            ),
+        )
+
+        frequencies = timeit(
+            "Initialize frequencies",
+            lambda: get_frequencies(
+                START_FREQUENCY, FREQUENCY_INCREMENT, NR_CHANNELS),
+        )
+        wavenumbers = (frequencies * 2 * np.pi) / SPEED_OF_LIGHT
+
+        metadata = timeit(
+            "Initialize metadata",
+            lambda: get_metadata(
+                nr_channels=NR_CHANNELS,
+                subgrid_size=SUBGRID_SIZE,
+                grid_size=GRID_SIZE,
+                uvw=uvw,
+            ),
+        )
+        nr_subgrids = metadata.shape[0]
+
+        visibilities = timeit(
+            "Initialize visibilities",
+            lambda: get_visibilities(
+                nr_correlations=NR_CORRELATIONS_IN,
+                nr_channels=NR_CHANNELS,
+                nr_timesteps=NR_TIMESTEPS,
+                nr_baselines=NR_BASELINES,
+                image_size=IMAGE_SIZE,
+                grid_size=GRID_SIZE,
+                frequencies=frequencies,
+                uvw=uvw,
+            ),
+        )
 
     grid = np.zeros(
         (NR_CORRELATIONS_OUT, GRID_SIZE, GRID_SIZE), dtype=idgtypes.gridtype
     )
 
-    taper = timeit("Initialize taper", lambda: get_taper(subgrid_size=SUBGRID_SIZE))
+    taper = timeit("Initialize taper", lambda: get_taper(
+        subgrid_size=SUBGRID_SIZE))
 
     subgrids = np.zeros(
         shape=(nr_subgrids, NR_CORRELATIONS_OUT, SUBGRID_SIZE, SUBGRID_SIZE),
