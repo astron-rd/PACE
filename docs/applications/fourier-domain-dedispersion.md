@@ -1,75 +1,7 @@
-# Fourier Domain Dedispersion (FDD)
+# Fourier-Domain Dedispersion (FDD)
 
-This document aims to be a short primer on Fourier-domain dedispersion and
-related concepts that might be useful for understanding the reference code.
-
-## Concepts
-
-Some useful papers and online resources:
-
-- [Fourier-domain dedispersion](https://www.aanda.org/articles/aa/full_html/2022/01/aa42099-21/aa42099-21.html)
-- [Dispersion measure: Confusion, Constants & Clarity](https://arxiv.org/abs/2007.02886)
-- [Dispersion measure](https://casper.berkeley.edu/astrobaki/index.php/Dispersion_measure)
-- [Pulsar Dispersion Measure](https://astronomy.swin.edu.au/cosmos/*/Pulsar+Dispersion+Measure)
-
-### Dispersion
-
-Due to the varying ISM along the line-of-sight to a radio transient, e.g. a
-pulsar, the signal is dispersed as a function of frequency. This means there is
-a time delay between the signal when it is observed at $\\nu$ compared to a
-reference frequency $\\nu_0$. The amount of time delay is described by:
-
-$$ \\Delta t(\\nu, \\mathrm{DM}) =
-\\mathrm{DM},\\kappa\_{\\mathrm{DM}}\\left(\\nu^{-2} - \\nu_0^{-2}\\right) $$
-
-where $\\kappa\_{\\mathrm{DM}}$ is a proportionality constant and $\\mathrm{DM}$
-is the dispersion measure, defined as the path integral over the electron
-density along the line-of-sight:
-
-$$ \\mathrm{DM} = \\int n_e(\\ell),\\mathrm{d}\\ell $$
-
-### Time-domain dedispersion
-
-Imagine an astronomer has a Stokes I spectrum (an incoherent spectrum), $I(t,
-\\nu)$. To dedisperse this signal, we apply a time delay $\\Delta t(\\nu,
-\\mathrm{DM})$ according to the equation above.
-
-To obtain the highest signal-to-noise ratio (S/N or SNR), we sum over all
-channels such that the resultant spectrum is given by:
-
-$$ I(t, \\mathrm{DM}) = \\sum\_{\\nu} I\\left(t - \\Delta t(\\nu, \\mathrm{DM}),
-\\nu\\right) $$
-
-Since the DM is most often unknown, we typically repeat this for 100-1000 trial
-DMs.
-
-Note on performance: the TDD approach requires significant bandwidth while
-requiring relatively little computation per memory operation.
-
-### Fourier-domain dedispersion
-
-Instead of applying time delays directly, we can also apply phase shifts in
-frequency-space. In that manner, the time delay $\\Delta t(\\nu, \\mathrm{DM})$
-can be applied as a phasor.
-
-We Fourier-transform each channel (or observation frequency) $\\nu$ to obtain
-the intensity as a function of spin frequency $f_s$, which is associated with
-the periodic signal of, e.g. the pulsar:
-
-$$ I(f_s, \\nu) = \\mathcal{F}\_{t \\rightarrow f_s}{I(t, \\nu)} = \\int I(t,
-\\nu),e^{-2\\pi i f_s t},\\mathrm{d}t $$
-
-In this space, we can apply the time delay as a phase rotation:
-
-$$ \\mathcal{W}(f_s, \\nu, \\mathrm{DM}) = e^{-2\\pi i f_s,\\Delta t(\\nu,
-\\mathrm{DM})} $$
-
-Such that the dedispersed signal is recovered by:
-
-$$ I(t, \\mathrm{DM}) = \\sum\_{\\nu} I\\left(t - \\Delta t(\\nu, \\mathrm{DM}),
-\\nu\\right) $$
-
-# Fourier-Domain Dedispersion (dedisp)
+This page combines a conceptual primer and implementation details for
+Fourier-domain dedispersion in the PACE context.
 
 ## Background
 
@@ -84,6 +16,35 @@ channels for a set of trial dispersion measures (DMs). In practical search
 pipelines, beamformed data are therefore processed for many DM values to recover
 sharp pulses and improve detectability.
 
+## Concepts
+
+Some useful papers and online resources:
+
+- [Fourier-domain dedispersion](https://www.aanda.org/articles/aa/full_html/2022/01/aa42099-21/aa42099-21.html)
+- [Dispersion measure: Confusion, Constants & Clarity](https://arxiv.org/abs/2007.02886)
+- [Dispersion measure](https://casper.berkeley.edu/astrobaki/index.php/Dispersion_measure)
+- [Pulsar Dispersion Measure](https://astronomy.swin.edu.au/cosmos/*/Pulsar+Dispersion+Measure)
+- [ASTRON dedisp repository](https://git.astron.nl/RD/dedisp)
+
+### Dispersion
+
+Due to the varying ISM along the line-of-sight to a radio transient (e.g. a
+pulsar), the signal is dispersed as a function of frequency. There is a time
+delay between the signal observed at $\nu$ and a reference frequency $\nu_0$,
+described by:
+
+$$
+\Delta t(\nu, \mathrm{DM}) = \mathrm{DM}\,\kappa_{\mathrm{DM}}\left(\nu^{-2} - \nu_0^{-2}\right)
+$$
+
+where $\kappa_{\mathrm{DM}}$ is a proportionality constant and $\mathrm{DM}$
+is the dispersion measure, defined as the path integral over electron density
+along the line-of-sight:
+
+$$
+\mathrm{DM} = \int n_e(\ell)\,\mathrm{d}\ell
+$$
+
 ### Beamformed input data
 
 The input to dedispersion is typically beamformed filterbank data: a
@@ -95,99 +56,102 @@ complex voltages.
 For a trial DM, the relative delay between two frequencies scales approximately
 as:
 
-$$ \\Delta t \\propto \\mathrm{DM} \\left( \\nu_1^{-2} - \\nu_2^{-2} \\right) $$
+$$
+\Delta t \propto \mathrm{DM}\left(\nu_1^{-2} - \nu_2^{-2}\right)
+$$
 
 so lower-frequency channels must be shifted by larger amounts than
 higher-frequency channels.
 
-### Time-domain and Fourier-domain dedispersion
+### Time-domain dedispersion
 
-Traditional incoherent dedispersion is performed in the time domain. For each
-trial DM, every frequency channel is shifted by the appropriate number of
-samples and the aligned channels are summed. This is straightforward, but when
-many DMs must be evaluated it becomes compute-intensive and often
-memory-bandwidth limited.
+Given a Stokes I spectrum $I(t, \nu)$, time-domain dedispersion applies
+channel-dependent delays and sums channels:
 
-Fourier-Domain Dedispersion (FDD) performs the same alignment in the Fourier
-domain. Instead of shifting channel time series in time, it Fourier-transforms
-them and applies the corresponding delay as a phase rotation. This increases
-arithmetic intensity and makes the algorithm better suited to modern
-accelerators such as GPUs.
+$$
+I(t, \mathrm{DM}) = \sum_{\nu} I\left(t - \Delta t(\nu, \mathrm{DM}), \nu\right)
+$$
 
-## Fourier-Domain Dedispersion (FDD)
+Since DM is usually unknown, this is repeated for many trial DMs (often
+100-1000).
 
-FDD is a brute-force incoherent dedispersion algorithm for beamformed data. It
-corrects dispersion delays by applying phase rotations to Fourier-transformed
-time-series data, rather than by shifting samples in the time domain.
+Note on performance: the time-domain approach requires significant memory
+bandwidth while doing relatively little computation per memory operation.
 
-A shift in time corresponds to a phase rotation in the Fourier domain. If a
-channel time series $x_c[t]$ is transformed to $X_c[k]$, then applying a delay
-$\\tau_c$ for channel $c$ amounts to multiplying each Fourier bin by a complex
-phasor:
+### Fourier-domain dedispersion
 
-$$ X'\_c[k] = X_c[k] e^{-2\\pi i k \\tau_c / N} $$
+Instead of applying time delays directly, Fourier-Domain Dedispersion (FDD)
+applies equivalent phase shifts in frequency space. This increases arithmetic
+intensity and is often better suited to modern accelerators such as GPUs.
 
-where $N$ is the transform length and $\\tau_c$ is the delay for the current
-trial DM relative to a reference frequency. After this correction, the frequency
-channels are aligned and can be summed to form the dedispersed result.
+We Fourier-transform each channel (observation frequency) $\nu$ to obtain
+intensity as a function of spin frequency $f_s$:
+
+$$
+I(f_s, \nu) = \mathcal{F}_{t \rightarrow f_s}\{I(t, \nu)\} = \int I(t, \nu)\,e^{-2\pi i f_s t}\,\mathrm{d}t
+$$
+
+In this space, the time delay is applied as a phase rotation:
+
+$$
+\mathcal{W}(f_s, \nu, \mathrm{DM}) = e^{-2\pi i f_s\,\Delta t(\nu, \mathrm{DM})}
+$$
+
+A discrete-time equivalent for channel spectrum $X_c[k]$ is:
+
+$$
+X'_c[k] = X_c[k] e^{-2\pi i k \tau_c / N}
+$$
+
+where $N$ is the transform length and $\tau_c$ is the delay for channel $c$ at
+the current trial DM.
 
 ### Algorithm
 
 For each block of beamformed data, FDD proceeds in three steps:
 
 1. FFT the time series of every frequency channel.
-1. For each trial DM, compute the delay per channel and apply the corresponding
-   phase rotation in the Fourier domain.
-1. Sum the corrected channels to form a dedispersed output for that DM.
+1. For each trial DM, compute per-channel delays and apply corresponding phase
+   rotations in the Fourier domain.
+1. Sum corrected channels to form a dedispersed output for that DM.
 
-In pseudocode, the core computation looks like this:
+In pseudocode:
 
 ```
 for each data block:
-	for each frequency channel c:
-		spectrum[c] = FFT(time_series[c])
+  for each frequency channel c:
+    spectrum[c] = FFT(time_series[c])
 
-	for each trial DM d:
-		dedispersed_spectrum = 0
-		for each frequency channel c:
-			delay = compute_delay(d, c)
-			for each Fourier bin k:
-				phasor = exp(-2pii k delay / N)
-				dedispersed_spectrum[k] += spectrum[c][k] * phasor
+  for each trial DM d:
+    dedispersed_spectrum = 0
+    for each frequency channel c:
+      delay = compute_delay(d, c)
+      for each Fourier bin k:
+        phasor = exp(-2pii k delay / N)
+        dedispersed_spectrum[k] += spectrum[c][k] * phasor
 
-		if time_domain_output_required:
-			output[d] = IFFT(dedispersed_spectrum)
-		else:
-			output[d] = dedispersed_spectrum
+    if time_domain_output_required:
+      output[d] = IFFT(dedispersed_spectrum)
+    else:
+      output[d] = dedispersed_spectrum
 ```
 
 If a search pipeline ultimately needs time-domain output, an inverse FFT can be
 applied after summation. However, for FFT-based periodicity searches this step
-can be omitted and the dedispersed data can remain in the Fourier domain.
+can be omitted and data can remain in the Fourier domain.
 
-The main motivation for FDD is performance. Time-domain dedispersion performs
-relatively little computation per byte moved and is therefore often limited by
-memory bandwidth. FDD moves more of the work into arithmetic operations on
-Fourier-domain data, making it more compute-dense. This makes FDD competitive
-with and, for large DM counts, faster than optimised time-domain dedispersion on
-GPUs.
+The main motivation for FDD is performance. Time-domain dedispersion is often
+memory-bandwidth limited, while FDD shifts more work into arithmetic on
+Fourier-domain data and can be faster for large DM counts.
 
 ## PACE simplifications
 
 The PACE reference application focuses on the Fourier-domain dedispersion
-algorithm itself rather than on the full real-world dedisp pipeline. The main
-simplifications are:
+algorithm itself rather than on the full real-world dedisp pipeline.
 
-- Only Fourier-domain dedispersion is considered. The time-domain dedispersion
-  algorithm from dedisp is out of scope.
-- The focus is the dedispersion computation on beamformed data, not the broader
-  end-to-end pulsar or transient search pipeline.
-
-## References
-
-- Bassa, C. G., Romein, J. W., Veenboer, B., van der Vlugt, S., Wijnholds, S. J.
-  (2022). Fourier-domain dedispersion. A&A 657, A46.
-- ASTRON dedisp repository. https://git.astron.nl/RD/dedisp
+- Only Fourier-domain dedispersion is considered.
+- Time-domain dedispersion from dedisp is out of scope.
+- Focus is on the dedispersion computation on beamformed data.
 
 ## Fourier-Domain Dedispersion data flow
 
