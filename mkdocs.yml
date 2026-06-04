@@ -1,21 +1,6 @@
 site_name: PACE
 theme:
    name: material
-nav:
-   - Home: index.md
-   - General:
-      - Benchmarking Frameworks: general/benchmarking-frameworks.md
-      - Data Format: general/data-format.md
-   - Programming Languages:
-      - Jax: programming-languages/jax.md
-      - Python: programming-languages/python.md
-      - Rust: programming-languages/rust.md
-   - Applications:
-      - Image-Domain Gridding: applications/image-domain-gridding.md
-      - All-sky Imaging (LOFTY): applications/all-sky-imaging-lofty.md
-      - Fourier-Domain Dedispersion: applications/fourier-domain-dedispersion.md
-      - Fourier Domain Dedispersion (PACE Context): applications/fourier-domain-dedispersion-pace-context.md
-      - Fourier-Domain Dedispersion Details: applications/fourier-domain-dedispersion-details.md
 markdown_extensions:
    - pymdownx.arithmatex:
          generic: true
