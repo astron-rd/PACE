@@ -2,8 +2,8 @@ import argparse
 import json
 import time
 
-import numpy as np
 import h5py
+import numpy as np
 
 from idg_python import idgtypes
 from idg_python.idg import Gridder  # type: ignore
@@ -52,7 +52,7 @@ def main():
         "--load",
         const="input.h5",
         nargs="?",
-        help="Load input data from HDF5 file (optional: specify filename)"
+        help="Load input data from HDF5 file (optional: specify filename)",
     )
     parser.add_argument(
         "--store", action="store_true", default=False, help="Store data in Numpy format"
@@ -125,8 +125,7 @@ def main():
             if not isinstance(frequencies_ds, h5py.Dataset):
                 print("Invalid input file: frequencies is not defined")
                 return
-            frequencies = timeit("Load frequencies",
-                                 lambda: frequencies_ds[...])
+            frequencies = timeit("Load frequencies", lambda: frequencies_ds[...])
             wavenumbers = (frequencies * 2 * np.pi) / SPEED_OF_LIGHT
 
             metadata_ds = input["metadata"]
@@ -140,8 +139,7 @@ def main():
             if not isinstance(visibilities_ds, h5py.Dataset):
                 print("Invalid input file: frequencies is not defined")
                 return
-            visibilities = timeit("Load visibilities",
-                                  lambda: visibilities_ds[...])
+            visibilities = timeit("Load visibilities", lambda: visibilities_ds[...])
 
     else:
         print_header("GENERATING INPUT DATA")
@@ -156,8 +154,7 @@ def main():
 
         frequencies = timeit(
             "Initialize frequencies",
-            lambda: get_frequencies(
-                START_FREQUENCY, FREQUENCY_INCREMENT, NR_CHANNELS),
+            lambda: get_frequencies(START_FREQUENCY, FREQUENCY_INCREMENT, NR_CHANNELS),
         )
         wavenumbers = (frequencies * 2 * np.pi) / SPEED_OF_LIGHT
 
@@ -190,8 +187,7 @@ def main():
         (NR_CORRELATIONS_OUT, GRID_SIZE, GRID_SIZE), dtype=idgtypes.gridtype
     )
 
-    taper = timeit("Initialize taper", lambda: get_taper(
-        subgrid_size=SUBGRID_SIZE))
+    taper = timeit("Initialize taper", lambda: get_taper(subgrid_size=SUBGRID_SIZE))
 
     subgrids = np.zeros(
         shape=(nr_subgrids, NR_CORRELATIONS_OUT, SUBGRID_SIZE, SUBGRID_SIZE),
