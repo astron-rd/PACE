@@ -1,7 +1,7 @@
 import h5py
 
-import initializers
-from config import settings
+from . import initializers
+from .config import settings
 
 
 def main():

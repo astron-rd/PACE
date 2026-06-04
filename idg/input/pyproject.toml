@@ -8,3 +8,10 @@ dependencies = [
     "numpy>=2.3.5",
     "pydantic>=2.12.5",
 ]
+
+[project.scripts]
+idg-input = "idg_input.main:main"
+
+[build-system]
+requires = ["uv_build>=0.11.17,<0.12.0"]
+build-backend = "uv_build"
