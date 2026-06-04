@@ -1,2 +1,3 @@
- theme:
-   name: material
+site_name: PACE
+theme:
+   name: readthedocs
