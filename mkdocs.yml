@@ -1,3 +1,11 @@
 site_name: PACE
 theme:
    name: readthedocs
+nav:
+   - Home: index.md
+   - Benchmarking Frameworks: benchmarking-frameworks.md
+   - Data Format: data-format.md
+   - Fourier-Domain Dedispersion Details: fourier-domain-dedispersion-details.md
+   - Jax: jax.md
+   - Python: python.md
+   - Rust: rust.md
