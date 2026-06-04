@@ -6,7 +6,6 @@
 
 #include <cxxopts.hpp>
 #include <xtensor/containers/xarray.hpp>
-#include <xtensor/io/xnpy.hpp>
 
 #include "h5cpp/dataspace/simple.hpp"
 #include "h5cpp/file/file.hpp"
@@ -38,38 +37,14 @@ cxxopts::Options setupOptions(const char *argv[]) {
   constexpr bool kReportTiming = true;
 
   options.add_options("Load input")(
-      "load_input", "Load input from HDF5 file.",
-      cxxopts::value<std::filesystem::path>()->default_value(inputPath));
-
-  options.add_options("Input parameters")(
-      "subgrid_size", "Size of the subgrid in pixels",
-      cxxopts::value<size_t>()->default_value(std::to_string(kSubgridSize)))(
-      "grid_size", "Size of the grid in pixels",
-      cxxopts::value<size_t>()->default_value(std::to_string(kGridSize)))(
-      "observation_hours", "Length of the observation in hours",
-      cxxopts::value<float>()->default_value(
-          std::to_string(kObservationHours)))(
-      "nr_channels", "Number of frequency channels",
-      cxxopts::value<size_t>()->default_value(std::to_string(kNrChannels)))(
-      "nr_stations", "Number of stations",
-      cxxopts::value<size_t>()->default_value(std::to_string(kNrStations)))(
-      "start_frequency", "Starting frequency in hertz",
-      cxxopts::value<double>()->default_value(std::to_string(kStartFrequency)))(
-      "frequency_increment", "Frequency increment in hertz",
-      cxxopts::value<double>()->default_value(
-          std::to_string(kFrequencyIncrement)));
-
-  options.add_options("Output generated input")(
-      "output_uvw", "Output UVW data",
-      cxxopts::value<bool>()->default_value(std::to_string(kOutputData)))(
-      "output_frequencies", "Output frequencies",
-      cxxopts::value<bool>()->default_value(std::to_string(kOutputData)))(
-      "output_metadata", "Output metadata",
-      cxxopts::value<bool>()->default_value(std::to_string(kOutputData)))(
-      "output_visibilities", "Output visibilities",
-      cxxopts::value<bool>()->default_value(std::to_string(kOutputData)))(
-      "output_taper", "Output taper",
-      cxxopts::value<bool>()->default_value(std::to_string(kOutputData)));
+      "input_path", "Path to the HDF5 file containing the input data.",
+      cxxopts::value<std::filesystem::path>()->default_value(inputPath))(
+      "subgrid_size", "Subgrid size",
+      cxxopts::value<size_t>()->default_value("32"))(
+      "grid_size", "Grid size",
+      cxxopts::value<size_t>()->default_value("1024"))(
+      "nr_correlations_out", "Number of correlations out",
+      cxxopts::value<size_t>()->default_value("1"));
 
   options.add_options("Output gridded data")(
       "output_subgrids", "Output subgrids",
@@ -105,12 +80,7 @@ int main(int argc, const char *argv[]) {
 
   std::vector<std::pair<const std::string, double>> timings;
 
-  Inputs inputs = generate_inputs(settings, timings);
-
-  xt::xarray<float> taper;
-  time_function(timings, "generate taper", [settings, &taper]() {
-    taper = get_taper(settings.subgrid_size);
-  });
+  Inputs inputs = load_inputs(settings, timings);
 
   xt::xarray<std::complex<float>> subgrids;
   time_function(timings, "allocate subgrids", [settings, inputs, &subgrids]() {
@@ -131,13 +101,13 @@ int main(int argc, const char *argv[]) {
   print_header("MAIN");
 
   auto main_start = std::chrono::high_resolution_clock::now();
-  time_function(timings, "grid onto subgrids",
-                [settings, gridder, inputs, taper, &subgrids]() {
-                  gridder.grid_onto_subgrids(
-                      settings.w_step, static_cast<float>(settings.image_size),
-                      settings.grid_size, inputs.wavenumbers, inputs.uvws,
-                      inputs.visibilities, taper, inputs.metadata, subgrids);
-                });
+  time_function(
+      timings, "grid onto subgrids", [settings, gridder, inputs, &subgrids]() {
+        gridder.grid_onto_subgrids(settings.w_step, inputs.image_size,
+                                   settings.grid_size, inputs.wavenumbers,
+                                   inputs.uvws, inputs.visibilities,
+                                   inputs.taper, inputs.metadata, subgrids);
+      });
 
   time_function(timings, "ifft the subgrids",
                 [gridder, &subgrids]() { gridder.ifft_subgrids(subgrids); });

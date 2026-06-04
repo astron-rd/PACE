@@ -40,6 +40,8 @@ struct Inputs {
   xt::xarray<float> wavenumbers;
   xt::xarray<Metadata> metadata;
   xt::xarray<VisibilityType> visibilities;
+  xt::xarray<float> taper;
 
   size_t nr_subgrids;
+  float image_size;
 };
