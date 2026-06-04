@@ -154,10 +154,9 @@ def main():
     print(f"{'Total':<30} {total_time:>8.3f} s")
 
     if args.store:
-        output_file = h5py.File("output.h5", "w")
-        output_file.create_dataset("grid", data=grid)
-        output_file.create_dataset("subgrids", data=subgrids)
-
+        with h5py.File("output.h5", "w") as output_file:
+            output_file.create_dataset("grid", data=grid)
+            output_file.create_dataset("subgrids", data=subgrids)
     if args.json:
         output = {"parameters": {}, "timings": {}}
 
