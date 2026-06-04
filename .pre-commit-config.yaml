@@ -21,11 +21,6 @@ repos:
     hooks:
       - id: cmake-format
       - id: cmake-lint
-  - repo: https://github.com/executablebooks/mdformat
-    rev: 0.7.22
-    hooks:
-      - id: mdformat
-        args: ['--wrap=80']
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.15.11
     hooks:

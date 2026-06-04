@@ -1,7 +1,9 @@
 # Bencher upload script
 
-The `upload.py` script uploads benchmarking results to Bencher
-(https://bencher.dev/) for performance tracking and analysis.
+The Bencher upload script is located at `bencher/upload.py` in the repository.
+
+It uploads benchmarking results to Bencher (https://bencher.dev/) for
+performance tracking and analysis.
 
 ## Prerequisites
 
@@ -17,21 +19,25 @@ export BENCHER_API_TOKEN="your-api-token"
 Upload benchmarking results from a JSON file:
 
 ```
-python3 bencher_upload.py --project $BENCHER_PROJECT --token $BENCHER_API_TOKEN results.json --benchmark idg --branch python results.json
+python3 bencher/upload.py --project "$BENCHER_PROJECT" \
+                          --token "$BENCHER_API_TOKEN" \
+                          --benchmark idg \
+                          --branch python \
+                          results.json
 ```
 
 ### Arguments
 
 - `project`: Bencher UUID
 - `token`: Bencher API token
-- `benchmark`: The application under test, e.g., 'idg'
-- `branch`: The specific implementation of this benchmark, e.g. 'python'. (Not
-  the Git branch name!)
+- `benchmark`: The application under test, e.g. `idg`
+- `branch`: The specific implementation of this benchmark, e.g. `python` (not
+  the Git branch name)
 - `results.json`: Path to JSON file with benchmarking results
 
-### Successful Output
+## Successful output
 
-Upon successful upload, you'll see:
+Upon successful upload, you should see output similar to:
 
 ```
 Successfully uploaded X metrics to Bencher
