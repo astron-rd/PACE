@@ -1,6 +1,9 @@
 # Introduction
 
-PACE provides simplified reference applications from the radio astronomy domain. The goal is not to reproduce full production pipelines, but to capture the key computational patterns that make these applications interesting for evaluating programming languages and parallelisation or acceleration strategies.
+PACE provides simplified reference applications from the radio astronomy domain.
+The goal is not to reproduce full production pipelines, but to capture the key
+computational patterns that make these applications interesting for evaluating
+programming languages and parallelisation or acceleration strategies.
 
 The current PACE applications are:
 

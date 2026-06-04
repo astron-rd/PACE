@@ -1,6 +1,7 @@
 # Fourier Domain Dedispersion (FDD)
 
-This document aims to be a short primer on Fourier-domain dedispersion and related concepts that might be useful for understanding the reference code.
+This document aims to be a short primer on Fourier-domain dedispersion and
+related concepts that might be useful for understanding the reference code.
 
 ## Concepts
 
@@ -13,97 +14,130 @@ Some useful papers and online resources:
 
 ### Dispersion
 
-Due to the varying ISM along the line-of-sight to a radio transient, e.g. a pulsar, the signal is dispersed as a function of frequency. This means there is a time delay between the signal when it is observed at $\nu$ compared to a reference frequency $\nu_0$. The amount of time delay is described by:
+Due to the varying ISM along the line-of-sight to a radio transient, e.g. a
+pulsar, the signal is dispersed as a function of frequency. This means there is
+a time delay between the signal when it is observed at $\\nu$ compared to a
+reference frequency $\\nu_0$. The amount of time delay is described by:
 
-$$
-\Delta t(\nu, \mathrm{DM}) = \mathrm{DM}\,\kappa_{\mathrm{DM}}\left(\nu^{-2} - \nu_0^{-2}\right)
-$$
+$$ \\Delta t(\\nu, \\mathrm{DM}) =
+\\mathrm{DM},\\kappa\_{\\mathrm{DM}}\\left(\\nu^{-2} - \\nu_0^{-2}\\right) $$
 
-where $\kappa_{\mathrm{DM}}$ is a proportionality constant and $\mathrm{DM}$ is the dispersion measure, defined as the path integral over the electron density along the line-of-sight:
+where $\\kappa\_{\\mathrm{DM}}$ is a proportionality constant and $\\mathrm{DM}$
+is the dispersion measure, defined as the path integral over the electron
+density along the line-of-sight:
 
-$$
-\mathrm{DM} = \int n_e(\ell)\,\mathrm{d}\ell
-$$
+$$ \\mathrm{DM} = \\int n_e(\\ell),\\mathrm{d}\\ell $$
 
 ### Time-domain dedispersion
 
-Imagine an astronomer has a Stokes I spectrum (an incoherent spectrum), $I(t, \nu)$. To dedisperse this signal, we apply a time delay $\Delta t(\nu, \mathrm{DM})$ according to the equation above.
+Imagine an astronomer has a Stokes I spectrum (an incoherent spectrum), $I(t,
+\\nu)$. To dedisperse this signal, we apply a time delay $\\Delta t(\\nu,
+\\mathrm{DM})$ according to the equation above.
 
-To obtain the highest signal-to-noise ratio (S/N or SNR), we sum over all channels such that the resultant spectrum is given by:
+To obtain the highest signal-to-noise ratio (S/N or SNR), we sum over all
+channels such that the resultant spectrum is given by:
 
-$$
-I(t, \mathrm{DM}) = \sum_{\nu} I\left(t - \Delta t(\nu, \mathrm{DM}), \nu\right)
-$$
+$$ I(t, \\mathrm{DM}) = \\sum\_{\\nu} I\\left(t - \\Delta t(\\nu, \\mathrm{DM}),
+\\nu\\right) $$
 
-Since the DM is most often unknown, we typically repeat this for 100-1000 trial DMs.
+Since the DM is most often unknown, we typically repeat this for 100-1000 trial
+DMs.
 
-Note on performance: the TDD approach requires significant bandwidth while requiring relatively little computation per memory operation.
+Note on performance: the TDD approach requires significant bandwidth while
+requiring relatively little computation per memory operation.
 
 ### Fourier-domain dedispersion
 
-Instead of applying time delays directly, we can also apply phase shifts in frequency-space. In that manner, the time delay $\Delta t(\nu, \mathrm{DM})$ can be applied as a phasor.
+Instead of applying time delays directly, we can also apply phase shifts in
+frequency-space. In that manner, the time delay $\\Delta t(\\nu, \\mathrm{DM})$
+can be applied as a phasor.
 
-We Fourier-transform each channel (or observation frequency) $\nu$ to obtain the intensity as a function of spin frequency $f_s$, which is associated with the periodic signal of, e.g. the pulsar:
+We Fourier-transform each channel (or observation frequency) $\\nu$ to obtain
+the intensity as a function of spin frequency $f_s$, which is associated with
+the periodic signal of, e.g. the pulsar:
 
-$$
-I(f_s, \nu) = \mathcal{F}_{t \rightarrow f_s}\{I(t, \nu)\} = \int I(t, \nu)\,e^{-2\pi i f_s t}\,\mathrm{d}t
-$$
+$$ I(f_s, \\nu) = \\mathcal{F}\_{t \\rightarrow f_s}{I(t, \\nu)} = \\int I(t,
+\\nu),e^{-2\\pi i f_s t},\\mathrm{d}t $$
 
 In this space, we can apply the time delay as a phase rotation:
 
-$$
-\mathcal{W}(f_s, \nu, \mathrm{DM}) = e^{-2\pi i f_s\,\Delta t(\nu, \mathrm{DM})}
-$$
+$$ \\mathcal{W}(f_s, \\nu, \\mathrm{DM}) = e^{-2\\pi i f_s,\\Delta t(\\nu,
+\\mathrm{DM})} $$
 
 Such that the dedispersed signal is recovered by:
 
-$$
-I(t, \mathrm{DM}) = \sum_{\nu} I\left(t - \Delta t(\nu, \mathrm{DM}), \nu\right)
-$$
+$$ I(t, \\mathrm{DM}) = \\sum\_{\\nu} I\\left(t - \\Delta t(\\nu, \\mathrm{DM}),
+\\nu\\right) $$
+
 # Fourier-Domain Dedispersion (dedisp)
 
 ## Background
 
-Beamformed radio data are commonly searched for dispersed transient and periodic signals such as pulsars and fast radio bursts (FRBs). As a radio pulse propagates through the ionised interstellar medium, lower radio frequencies travel more slowly than higher frequencies. This causes a frequency-dependent arrival-time delay that smears the signal across the observing band.
+Beamformed radio data are commonly searched for dispersed transient and periodic
+signals such as pulsars and fast radio bursts (FRBs). As a radio pulse
+propagates through the ionised interstellar medium, lower radio frequencies
+travel more slowly than higher frequencies. This causes a frequency-dependent
+arrival-time delay that smears the signal across the observing band.
 
-Dedispersion corrects for this effect by realigning the signal across frequency channels for a set of trial dispersion measures (DMs). In practical search pipelines, beamformed data are therefore processed for many DM values to recover sharp pulses and improve detectability.
+Dedispersion corrects for this effect by realigning the signal across frequency
+channels for a set of trial dispersion measures (DMs). In practical search
+pipelines, beamformed data are therefore processed for many DM values to recover
+sharp pulses and improve detectability.
 
 ### Beamformed input data
 
-The input to dedispersion is typically beamformed filterbank data: a two-dimensional array with one time series per frequency channel. Each sample represents detected power in a given channel and time bin. Incoherent dedispersion operates on these detected intensities rather than on the original complex voltages.
+The input to dedispersion is typically beamformed filterbank data: a
+two-dimensional array with one time series per frequency channel. Each sample
+represents detected power in a given channel and time bin. Incoherent
+dedispersion operates on these detected intensities rather than on the original
+complex voltages.
 
-For a trial DM, the relative delay between two frequencies scales approximately as:
+For a trial DM, the relative delay between two frequencies scales approximately
+as:
 
-$$
-\Delta t \propto \mathrm{DM} \left( \nu_1^{-2} - \nu_2^{-2} \right)
-$$
+$$ \\Delta t \\propto \\mathrm{DM} \\left( \\nu_1^{-2} - \\nu_2^{-2} \\right) $$
 
-so lower-frequency channels must be shifted by larger amounts than higher-frequency channels.
+so lower-frequency channels must be shifted by larger amounts than
+higher-frequency channels.
 
 ### Time-domain and Fourier-domain dedispersion
 
-Traditional incoherent dedispersion is performed in the time domain. For each trial DM, every frequency channel is shifted by the appropriate number of samples and the aligned channels are summed. This is straightforward, but when many DMs must be evaluated it becomes compute-intensive and often memory-bandwidth limited.
+Traditional incoherent dedispersion is performed in the time domain. For each
+trial DM, every frequency channel is shifted by the appropriate number of
+samples and the aligned channels are summed. This is straightforward, but when
+many DMs must be evaluated it becomes compute-intensive and often
+memory-bandwidth limited.
 
-Fourier-Domain Dedispersion (FDD) performs the same alignment in the Fourier domain. Instead of shifting channel time series in time, it Fourier-transforms them and applies the corresponding delay as a phase rotation. This increases arithmetic intensity and makes the algorithm better suited to modern accelerators such as GPUs.
+Fourier-Domain Dedispersion (FDD) performs the same alignment in the Fourier
+domain. Instead of shifting channel time series in time, it Fourier-transforms
+them and applies the corresponding delay as a phase rotation. This increases
+arithmetic intensity and makes the algorithm better suited to modern
+accelerators such as GPUs.
 
 ## Fourier-Domain Dedispersion (FDD)
 
-FDD is a brute-force incoherent dedispersion algorithm for beamformed data. It corrects dispersion delays by applying phase rotations to Fourier-transformed time-series data, rather than by shifting samples in the time domain.
+FDD is a brute-force incoherent dedispersion algorithm for beamformed data. It
+corrects dispersion delays by applying phase rotations to Fourier-transformed
+time-series data, rather than by shifting samples in the time domain.
 
-A shift in time corresponds to a phase rotation in the Fourier domain. If a channel time series $x_c[t]$ is transformed to $X_c[k]$, then applying a delay $\tau_c$ for channel $c$ amounts to multiplying each Fourier bin by a complex phasor:
+A shift in time corresponds to a phase rotation in the Fourier domain. If a
+channel time series $x_c[t]$ is transformed to $X_c[k]$, then applying a delay
+$\\tau_c$ for channel $c$ amounts to multiplying each Fourier bin by a complex
+phasor:
 
-$$
-X'\_c[k] = X_c[k] e^{-2\pi i k \tau_c / N}
-$$
+$$ X'\_c[k] = X_c[k] e^{-2\\pi i k \\tau_c / N} $$
 
-where $N$ is the transform length and $\tau_c$ is the delay for the current trial DM relative to a reference frequency. After this correction, the frequency channels are aligned and can be summed to form the dedispersed result.
+where $N$ is the transform length and $\\tau_c$ is the delay for the current
+trial DM relative to a reference frequency. After this correction, the frequency
+channels are aligned and can be summed to form the dedispersed result.
 
 ### Algorithm
 
 For each block of beamformed data, FDD proceeds in three steps:
 
 1. FFT the time series of every frequency channel.
-1. For each trial DM, compute the delay per channel and apply the corresponding phase rotation in the Fourier domain.
+1. For each trial DM, compute the delay per channel and apply the corresponding
+   phase rotation in the Fourier domain.
 1. Sum the corrected channels to form a dedispersed output for that DM.
 
 In pseudocode, the core computation looks like this:
@@ -127,27 +161,42 @@ for each data block:
 			output[d] = dedispersed_spectrum
 ```
 
-If a search pipeline ultimately needs time-domain output, an inverse FFT can be applied after summation. However, for FFT-based periodicity searches this step can be omitted and the dedispersed data can remain in the Fourier domain.
+If a search pipeline ultimately needs time-domain output, an inverse FFT can be
+applied after summation. However, for FFT-based periodicity searches this step
+can be omitted and the dedispersed data can remain in the Fourier domain.
 
-The main motivation for FDD is performance. Time-domain dedispersion performs relatively little computation per byte moved and is therefore often limited by memory bandwidth. FDD moves more of the work into arithmetic operations on Fourier-domain data, making it more compute-dense. This makes FDD competitive with and, for large DM counts, faster than optimised time-domain dedispersion on GPUs.
+The main motivation for FDD is performance. Time-domain dedispersion performs
+relatively little computation per byte moved and is therefore often limited by
+memory bandwidth. FDD moves more of the work into arithmetic operations on
+Fourier-domain data, making it more compute-dense. This makes FDD competitive
+with and, for large DM counts, faster than optimised time-domain dedispersion on
+GPUs.
 
 ## PACE simplifications
 
-The PACE reference application focuses on the Fourier-domain dedispersion algorithm itself rather than on the full real-world dedisp pipeline. The main simplifications are:
+The PACE reference application focuses on the Fourier-domain dedispersion
+algorithm itself rather than on the full real-world dedisp pipeline. The main
+simplifications are:
 
-- Only Fourier-domain dedispersion is considered. The time-domain dedispersion algorithm from dedisp is out of scope.
-- The focus is the dedispersion computation on beamformed data, not the broader end-to-end pulsar or transient search pipeline.
+- Only Fourier-domain dedispersion is considered. The time-domain dedispersion
+  algorithm from dedisp is out of scope.
+- The focus is the dedispersion computation on beamformed data, not the broader
+  end-to-end pulsar or transient search pipeline.
 
 ## References
 
-- Bassa, C. G., Romein, J. W., Veenboer, B., van der Vlugt, S., Wijnholds, S. J. (2022). Fourier-domain dedispersion. A&A 657, A46.
+- Bassa, C. G., Romein, J. W., Veenboer, B., van der Vlugt, S., Wijnholds, S. J.
+  (2022). Fourier-domain dedispersion. A&A 657, A46.
 - ASTRON dedisp repository. https://git.astron.nl/RD/dedisp
 
 ## Fourier-Domain Dedispersion data flow
 
-This describes how data flows through the reference implementation of frequency-domain dedispersion (FDD), including the various data transformations, transposes, and FFT operations.
+This describes how data flows through the reference implementation of
+frequency-domain dedispersion (FDD), including the various data transformations,
+transposes, and FFT operations.
 
-Scope: this page describes the CPU FDD non-segmented execution path (`execute_cpu`).
+Scope: this page describes the CPU FDD non-segmented execution path
+(`execute_cpu`).
 
 **Summary of shapes**:
 
@@ -196,7 +245,8 @@ for nc in [0:nchans]:
 
 **Quantization**
 
-Convert float input to storage format. Float values are quantized to 8-bit unsigned integers (range `[-127.5, 127.5]`):
+Convert float input to storage format. Float values are quantized to 8-bit
+unsigned integers (range `[-127.5, 127.5]`):
 
 ```
 byte input[nsamps * nchans]
@@ -232,7 +282,9 @@ float data_nu[nchans * nsamp_padded]    # [channel][time], time dimension is pad
 float data_dm[ndm * nsamp_padded]       # [dm][time], time dimension is padded
 ```
 
-Transpose from `(time, channel)` to `(channel, time)` layout and convert from 8-bit to float. After transpose, only the first `nsamps` time samples are filled, the rest is zero-padded.
+Transpose from `(time, channel)` to `(channel, time)` layout and convert from
+8-bit to float. After transpose, only the first `nsamps` time samples are
+filled, the rest is zero-padded.
 
 ```
 dst[channel, time] = (src[time, channel] - 127.5) / nchans
@@ -243,21 +295,26 @@ transpose_data(nchans, nsamps, nchans, nsamp_padded, 127.5, nchans, input, data_
 
 Convert time-domain data to frequency domain to enable fast dedispersion.
 
-Perform in-place Real-to-Complex FFT of length `nsamp_fft` (not `nsamp_padded`!):
+Perform in-place Real-to-Complex FFT of length `nsamp_fft` (not
+`nsamp_padded`!):
 
 ```
 fft_r2c_inplace(nsamp_fft, nchans, nsamp_padded, data_nu)
 ```
 
-- Input: `nsamp_fft` real values per channel (zero-padded after `nsamps` samples)
+- Input: `nsamp_fft` real values per channel (zero-padded after `nsamps`
+  samples)
 - Output: `nfreq = nsamp_fft/2 + 1` complex values per channel
 - Batch size: `nchans` (process all channels)
-- Stride: `nsamp_padded` floats between channels = `nsamp_padded/2` complex values between channels
-- Note: Dedispersion only consumes bins `0..nfreq-1`; higher bins from the padded FFT are not used
+- Stride: `nsamp_padded` floats between channels = `nsamp_padded/2` complex
+  values between channels
+- Note: Dedispersion only consumes bins `0..nfreq-1`; higher bins from the
+  padded FFT are not used
 
 **Dedispersion in Frequency Domain**
 
-Core algorithm: apply dispersion correction by summing frequency components across channels with frequency-dependent phase shifts.
+Core algorithm: apply dispersion correction by summing frequency components
+across channels with frequency-dependent phase shifts.
 
 Apply frequency-domain dedispersion kernel:
 
@@ -268,7 +325,9 @@ dedisperse(ndm, nfreq, nchans,
            (complex<float>*)data_nu, (complex<float>*)data_dm)
 ```
 
-For each DM and frequency, we compute the complex sum across all channels with appropriate phase shifts. The phase shift (phasor) accounts for the dispersion delay at each channel.
+For each DM and frequency, we compute the complex sum across all channels with
+appropriate phase shifts. The phase shift (phasor) accounts for the dispersion
+delay at each channel.
 
 Strides are in units of `complex<float>`:
 
@@ -279,21 +338,26 @@ Strides are in units of `complex<float>`:
 
 Convert dedispersed data back to the time domain.
 
-Perform in-place Complex-to-Real FFT of length `nsamp_fft` (not `nsamp_padded`!):
+Perform in-place Complex-to-Real FFT of length `nsamp_fft` (not
+`nsamp_padded`!):
 
 ```
 fft_c2r_inplace(nsamp_fft, ndm, nsamp_padded, data_dm)
 ```
 
-- Input: `data_dm` contains nfreq complex values per DM (rest is zero from initialisation)
+- Input: `data_dm` contains nfreq complex values per DM (rest is zero from
+  initialisation)
 - Output: `nsamp_fft` real values per DM (zero-padded to `nsamp_padded`)
 - Batch size: `ndm` (process all output DMs)
 - Stride: `nsamp_padded` floats between DMs
-- Note: The FFT length is `nsamp_fft` (not `nsamp_padded`), so only the first `nsamp_fft` time samples are computed, the remaining padded region is undefined
+- Note: The FFT length is `nsamp_fft` (not `nsamp_padded`), so only the first
+  `nsamp_fft` time samples are computed, the remaining padded region is
+  undefined
 
 **Copy output (trimmed to valid region)**
 
-Extract the valid output region, discarding samples corrupted by dispersion delay edge effects.
+Extract the valid output region, discarding samples corrupted by dispersion
+delay edge effects.
 
 Copy only the first `nsamps_computed` valid samples from each DM:
 
@@ -306,15 +370,19 @@ copy_data(ndm, nsamps_computed, nsamp_padded, nsamps_computed, data_dm, output)
 
 **Why only `nsamps_computed`?**
 
-- We keep the earliest `nsamps_computed = nsamps - max_delay` samples from each DM output row
-- We drop the last `max_delay` samples, which depend on data beyond the observed time window
+- We keep the earliest `nsamps_computed = nsamps - max_delay` samples from each
+  DM output row
+- We drop the last `max_delay` samples, which depend on data beyond the observed
+  time window
 - This avoids edge effects from delay alignment near the end of the buffer
 
 **Buffer visualisation**
 
-This view shows one row of each 2D buffer (one channel or one DM), how wide it is in samples/elements, and which part is consumed by each step.
+This view shows one row of each 2D buffer (one channel or one DM), how wide it
+is in samples/elements, and which part is consumed by each step.
 
-Note: bars are schematic (not exact scale); they show the relative used vs padded/discarded regions.
+Note: bars are schematic (not exact scale); they show the relative used vs
+padded/discarded regions.
 
 Legend:
 
