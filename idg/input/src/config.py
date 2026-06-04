@@ -22,7 +22,6 @@ class Settings(BaseModel):
     grid_size: int = Field(1024, description="Size of the grid in pixels")
     subgrid_size: int = Field(32, description="Size of the subgrid in pixels")
     observation_hours: float = Field(4.0, description="Observation length in hours")
-    output_npy: bool = Field(False, description="Use .npy format instead of .npz")
 
     # Computed fields
     @computed_field

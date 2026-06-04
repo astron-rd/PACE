@@ -17,6 +17,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Astronomy",
 ]
 dependencies = [
+    "h5py>=3.16.0",
     "jax>=0.5",
     "numba>=0.61.2",
     "numpy>=1.26.4",
