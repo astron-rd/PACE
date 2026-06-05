@@ -4,10 +4,11 @@ import time
 import h5py
 import numpy as np
 
-from . import idgtypes
 from .config import settings
-from .idg import Gridder
+from .idg import FOURIER_DOMAIN_TO_IMAGE_DOMAIN, Gridder
 from .init import get_taper
+
+gridtype = np.complex64
 
 # Dictionary to store all timings
 timings = {}
@@ -78,14 +79,14 @@ def main():
         print(f"{key:<39} {value:>10}")
 
     grid = np.zeros(
-        (settings.nr_correlations_out, grid_size, grid_size), dtype=idgtypes.gridtype
+        (settings.nr_correlations_out, grid_size, grid_size), dtype=gridtype
     )
 
     taper = timeit("Initialize taper", lambda: get_taper(subgrid_size=subgrid_size))
 
     subgrids = np.zeros(
         shape=(nr_subgrids, settings.nr_correlations_out, subgrid_size, subgrid_size),
-        dtype=idgtypes.gridtype,
+        dtype=gridtype,
     )
 
     gridder = timeit(
@@ -122,9 +123,7 @@ def main():
 
     timeit(
         "Transform grid",
-        lambda: gridder.transform(
-            direction=idgtypes.FOURIER_DOMAIN_TO_IMAGE_DOMAIN, grid=grid
-        ),
+        lambda: gridder.transform(direction=FOURIER_DOMAIN_TO_IMAGE_DOMAIN, grid=grid),
     )
 
     print_header("TIMINGS")

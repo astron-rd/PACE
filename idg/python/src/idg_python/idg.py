@@ -1,11 +1,13 @@
 import numpy as np
 
-from . import idgtypes
 from .kernels.numba import (
     add_subgrid_to_grid,
     compute_phasor,
     visibilities_to_subgrids,
 )
+
+FOURIER_DOMAIN_TO_IMAGE_DOMAIN = 0
+IMAGE_DOMAIN_TO_FOURIER_DOMAIN = 1
 
 
 class Gridder:
@@ -109,7 +111,7 @@ class Gridder:
         grid[:] = np.fft.fftshift(grid, axes=(1, 2))
 
         # FFT
-        if direction == idgtypes.FOURIER_DOMAIN_TO_IMAGE_DOMAIN:
+        if direction == FOURIER_DOMAIN_TO_IMAGE_DOMAIN:
             grid[:] = np.fft.ifft2(grid, axes=(1, 2))
         else:
             grid[:] = np.fft.fft2(grid, axes=(1, 2))
@@ -119,7 +121,7 @@ class Gridder:
 
         # Scaling
         scale = 2 + 0j
-        if direction == idgtypes.FOURIER_DOMAIN_TO_IMAGE_DOMAIN:
+        if direction == FOURIER_DOMAIN_TO_IMAGE_DOMAIN:
             grid *= scale
         else:
             grid /= scale

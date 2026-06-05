@@ -1,6 +1,5 @@
 import numpy as np
 
-from . import idgtypes
 from .kernels.numba import evaluate_spheroidal
 
 
@@ -24,4 +23,4 @@ def get_taper(subgrid_size: int) -> np.ndarray:
     taper = x_spheroidal[np.newaxis, :] * x_spheroidal[:, np.newaxis]
 
     # Cast to correct type
-    return taper.astype(idgtypes.tapertype)
+    return taper.astype(np.float32)
