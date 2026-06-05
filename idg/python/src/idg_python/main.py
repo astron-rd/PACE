@@ -5,8 +5,8 @@ import h5py
 import numpy as np
 
 from .config import settings
-from .idg import FOURIER_DOMAIN_TO_IMAGE_DOMAIN, Gridder
-from .init import get_taper
+from .gridder import FOURIER_DOMAIN_TO_IMAGE_DOMAIN, Gridder
+from .taper import get_taper
 
 GRIDTYPE = np.complex64
 
@@ -105,7 +105,6 @@ def main():
     )
 
     timer.print_header("MAIN")
-
     timer.time(
         "Grid visibilities",
         lambda: gridder.grid_onto_subgrids(
@@ -144,6 +143,7 @@ def main():
         with h5py.File("output.h5", "w") as output_file:
             output_file.create_dataset("grid", data=grid)
             output_file.create_dataset("subgrids", data=subgrids)
+
     if settings.json_output:
         output = {"parameters": {}, "timings": {}}
 
