@@ -1,7 +1,7 @@
 import numpy as np
 
-from idg_python import idgtypes
-from idg_python.kernels.numba import evaluate_spheroidal
+from . import idgtypes
+from .kernels.numba import evaluate_spheroidal
 
 
 def get_taper(subgrid_size: int) -> np.ndarray:

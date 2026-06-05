@@ -4,10 +4,10 @@ import time
 import h5py
 import numpy as np
 
-from idg_python import idgtypes
-from idg_python.config import settings
-from idg_python.idg import Gridder
-from idg_python.init import get_taper
+from . import idgtypes
+from .config import settings
+from .idg import Gridder
+from .init import get_taper
 
 # Dictionary to store all timings
 timings = {}
