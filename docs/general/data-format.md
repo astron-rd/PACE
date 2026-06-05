@@ -22,10 +22,10 @@ considered:
 
 The following factors were considered:
 
-1. Supported features  
-  a. Complex Numbers   
-  b. Compound Datatypes  
-  c. N-dimensional Arrays  
+1. Supported features
+  a. Complex Numbers
+  b. Compound Datatypes
+  c. N-dimensional Arrays
 2. Library support
 3. Ease of use
 
