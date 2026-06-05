@@ -1,9 +1,21 @@
 # Code examples for the ***PACE*** project
 
-This repository contains applications for the **PACE** project, implemented in
-multiple programming languages and using a variety of frameworks. It is intended
-as a reference for comparing approaches, learning patterns, and testing
-framework-specific or language-specific features.
+This repository provides simplified reference implementations from the radio
+astronomy domain. It focuses on key computational patterns for the following
+PACE applications:
+
+- Image-Domain Gridding (IDG)
+- All-sky Imaging (LOFTY)
+- Fourier-Domain Dedispersion (FDD)
+
+Each application is implemented in one or more languages/frameworks to support
+comparison, experimentation, benchmarking, and learning.
+
+This project is also published on Read the Docs at:
+
+https://astron-pace.readthedocs.io/
+
+The Read the Docs landing page is generated from `docs/index.md`.
 
 ## Structure
 

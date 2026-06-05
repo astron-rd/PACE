@@ -5,13 +5,20 @@ The goal is not to reproduce full production pipelines, but to capture the key
 computational patterns that make these applications interesting for evaluating
 programming languages and parallelisation or acceleration strategies.
 
+This documentation is published on Read the Docs at:
+
+https://astron-pace.readthedocs.io/
+
+The top-level repository `README.md` is a brief summary, the main documentation is
+hosted here.
+
 The current PACE applications are:
 
 - Image-Domain Gridding (IDG)
 - All-sky Imaging (LOFTY)
 - Fourier-Domain Dedispersion (FDD/dedisp)
 
-## Documentation Structure
+## Documentation structure
 
 The documentation is organized into three categories:
 
