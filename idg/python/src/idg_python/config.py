@@ -1,33 +1,18 @@
 import argparse
-from typing import ClassVar
-
-from pydantic import BaseModel, Field
 
 
-class Settings(BaseModel):
+class Settings:
     """Configuration settings for the IDG gridding process."""
 
-    # Constants
-    nr_correlations_out: ClassVar[int] = 1  # I
-    w_step: ClassVar[float] = 1.0  # w step in wavelengths
-    speed_of_light: ClassVar[float] = 299792458.0
+    nr_correlations_out = 1  # I
+    w_step = 1.0  # w step in wavelengths
+    speed_of_light = 299792458.0
 
-    # Arguments
-    input: str = Field(description="Input HDF5 file")
-    store: bool = Field(False, description="Store data in HDF5 format")
-    json_output: str | None = Field(
-        None, description="Output timings in JSON format (optional: specify filename)"
-    )
-
-    @classmethod
-    def from_args(cls) -> "Settings":
+    def __init__(self):
         parser = argparse.ArgumentParser()
         parser.add_argument("input", help="Input HDF5 file")
         parser.add_argument(
-            "--store",
-            action="store_true",
-            default=False,
-            help="Store data in HDF5 format",
+            "--store", action="store_true", help="Store data in HDF5 format"
         )
         parser.add_argument(
             "--json",
@@ -37,7 +22,7 @@ class Settings(BaseModel):
             nargs="?",
             help="Output timings in JSON format (optional: specify filename)",
         )
-        return cls(**vars(parser.parse_args()))
+        parser.parse_args(namespace=self)
 
 
-settings = Settings.from_args()
+settings = Settings()
