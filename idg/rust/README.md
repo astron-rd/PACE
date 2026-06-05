@@ -4,12 +4,14 @@ This is a Rust implementation of IDG. It can generate input data or read it from
 
 ## Building
 
-To build the application, you will need Rust. You can install rust from [rustup](https://rustup.rs).
+To build the application, you will need Rust. You can install Rust from [rustup](https://rustup.rs).
 
 1. Install the HDF5 and FFTW libraries on your system. You can use the system package manager or the module system if you're building on an HPC cluster.
 2. Run `cargo build --release` to build idg.
 
 Your executable will be `target/release/idg[.exe]`.
+
+## Usage
 
 ### Generating input
 
