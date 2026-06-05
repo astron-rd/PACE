@@ -7,9 +7,9 @@ def polyval(coefficients: np.ndarray, x: np.ndarray) -> np.ndarray:
     """
     Numba-compatible polynomial evaluation (equivalent to np.polyval).
 
-    :param coeffs: Polynomial coefficients in descending order [a_n, a_{n-1}, ..., a_0]
+    :param coefficients: Polynomial coefficients in descending order [a_n, a_{n-1}, ..., a_0]
     :param x: Value(s) at which to evaluate the polynomial
-    :return Array of evaluated polynomial values, shape (len(x))
+    :return: Array of evaluated polynomial values, shape (len(x))
     """
     result = np.zeros_like(x)
     for i in range(len(x)):
