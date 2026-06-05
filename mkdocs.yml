@@ -1,6 +1,8 @@
 site_name: PACE
 theme:
   name: material
+  logo: pace.png
+  favicon: pace.png
 markdown_extensions:
   - pymdownx.arithmatex:
       generic: true
