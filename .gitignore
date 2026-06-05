@@ -222,3 +222,6 @@ __marimo__/
 # HDF5 data files
 *.h5
 *.hdf5
+
+# All Sky benchmark test files
+!all-sky/python/tests/**/*.npy
