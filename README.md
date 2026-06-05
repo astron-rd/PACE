@@ -1,8 +1,9 @@
 # Code examples for the ***PACE*** project
 
 This repository provides simplified reference implementations from the radio
-astronomy domain. It focuses on key computational patterns for the following
-PACE applications:
+astronomy domain. PACE stands for Post-Correlation Acceleration for Astronomical
+Data Processing Efficiency. It focuses on key computational patterns for the
+following applications:
 
 - Image-Domain Gridding (IDG)
 - All-sky Imaging (LOFTY)
