@@ -33,6 +33,14 @@ class Timer:
         self.timings[description] = duration
         return result
 
+    def print_timings(self):
+        self.print_header("TIMINGS")
+        total_time = sum(self.timings.values())
+        for operation, duration in self.timings.items():
+            percentage = (duration / total_time) * 100
+            print(f"{operation:<30} {duration:>8.3f} s ({percentage:>5.1f}%)")
+        print(f"{'Total':<30} {total_time:>8.3f} s")
+
 
 def main():
     timer = Timer()
@@ -132,12 +140,7 @@ def main():
         lambda: gridder.transform(direction=FOURIER_DOMAIN_TO_IMAGE_DOMAIN, grid=grid),
     )
 
-    timer.print_header("TIMINGS")
-    total_time = sum(timer.timings.values())
-    for operation, duration in timer.timings.items():
-        percentage = (duration / total_time) * 100
-        print(f"{operation:<30} {duration:>8.3f} s ({percentage:>5.1f}%)")
-    print(f"{'Total':<30} {total_time:>8.3f} s")
+    timer.print_timings()
 
     if settings.store:
         with h5py.File("output.h5", "w") as output_file:
