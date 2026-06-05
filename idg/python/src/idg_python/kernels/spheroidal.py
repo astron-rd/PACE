@@ -25,8 +25,8 @@ def evaluate_spheroidal(nu: np.ndarray) -> np.ndarray:
     """
     Evaluate the prolate spheroidal wave function.
 
-    param: nu: parameters of the spheroidal wave function
-    return: array with value of the spheroidal wave function, shape (len(nu))
+    :param nu: Parameters of the spheroidal wave function.
+    :return: Array with values of the spheroidal wave function, shape (len(nu)).
     """
     P = np.array(
         [
