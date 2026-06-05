@@ -4,9 +4,15 @@ import argparse
 class Settings:
     """Configuration settings for the IDG gridding process."""
 
+    # Constants
     nr_correlations_out = 1  # I
     w_step = 1.0  # w step in wavelengths
     speed_of_light = 299792458.0
+
+    # Arguments
+    input: str
+    store: bool
+    json_output: str | None
 
     def __init__(self):
         parser = argparse.ArgumentParser()

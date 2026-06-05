@@ -5,9 +5,7 @@ from .kernels.gridding import (
     compute_phasor,
     visibilities_to_subgrids,
 )
-
-FOURIER_DOMAIN_TO_IMAGE_DOMAIN = 0
-IMAGE_DOMAIN_TO_FOURIER_DOMAIN = 1
+from .types import FOURIER_DOMAIN_TO_IMAGE_DOMAIN
 
 
 class Gridder:

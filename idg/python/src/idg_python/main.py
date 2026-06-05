@@ -5,10 +5,9 @@ import h5py
 import numpy as np
 
 from .config import settings
-from .gridder import FOURIER_DOMAIN_TO_IMAGE_DOMAIN, Gridder
+from .gridder import Gridder
 from .taper import get_taper
-
-GRIDTYPE = np.complex64
+from .types import FOURIER_DOMAIN_TO_IMAGE_DOMAIN, GRIDTYPE
 
 
 class Timer:
