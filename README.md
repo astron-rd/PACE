@@ -11,6 +11,8 @@ PACE applications:
 Each application is implemented in one or more languages/frameworks to support
 comparison, experimentation, benchmarking, and learning.
 
+## Project documentation
+
 This project is also published on Read the Docs at:
 
 https://astron-pace.readthedocs.io/
