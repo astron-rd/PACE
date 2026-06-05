@@ -1,6 +1,6 @@
 import numpy as np
 
-from .kernels.numba import (
+from .kernels import (
     add_subgrid_to_grid,
     compute_phasor,
     visibilities_to_subgrids,

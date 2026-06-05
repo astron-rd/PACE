@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from idg_python.kernels.numba import evaluate_spheroidal
+from idg_python.kernels import evaluate_spheroidal
 
 
 def test_evaluate_spheroidal(benchmark):

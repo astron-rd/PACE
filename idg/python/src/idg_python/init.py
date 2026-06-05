@@ -1,6 +1,6 @@
 import numpy as np
 
-from .kernels.numba import evaluate_spheroidal
+from .kernels import evaluate_spheroidal
 
 
 def get_taper(subgrid_size: int) -> np.ndarray:
