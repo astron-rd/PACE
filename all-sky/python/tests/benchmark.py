@@ -17,10 +17,7 @@ def _load_npy(settings: Settings) -> (np.ndarray, np.ndarray):
     path, file = settings.baselines_path.rsplit("/", 1)
     baselines = np.load(files(path).joinpath(file))
 
-    return (
-        visibilities,
-        baselines,
-    )
+    return (visibilities, baselines)
 
 
 def measure_imager(fn: Callable, settings: Settings):
