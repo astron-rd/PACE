@@ -21,7 +21,6 @@ def _load_npy(settings: Settings) -> (np.ndarray, np.ndarray):
 
 
 def measure_imager(fn: Callable, settings: Settings):
-
     visibilities, baselines = _load_npy(settings)
 
     measure = Measure(settings)
