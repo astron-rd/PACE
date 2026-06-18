@@ -197,7 +197,7 @@ fn visibility_to_subgrid(
             let n = compute_n(l, m);
 
             let pixels = compute_pixels(
-                metadata.timestep_count,
+                metadata.nr_timesteps,
                 metadata.time_index,
                 uvw,
                 metadata.baseline,
@@ -241,18 +241,18 @@ fn compute_n(l: Float, m: Float) -> Float {
 }
 
 fn compute_pixels(
-    timestep_count: u32,
-    offset: u32,
+    timestep_count: i32,
+    offset: i32,
     uvw: &UvwArray,
-    baseline: u32,
+    baseline: i32,
     l: Float,
     m: Float,
     n: Float,
     u_offset: Float,
     v_offset: Float,
     w_offset: Float,
-    channel_begin: u32,
-    channel_end: u32,
+    channel_begin: i32,
+    channel_end: i32,
     correlation_count_in: u32,
     correlation_count_out: u32,
     wavenumbers: &Array1<Float>,
@@ -302,8 +302,8 @@ fn add_subgrid_to_grid(
     let subgrid_size = subgrid.shape()[1];
     let correlation_count = subgrid.shape()[0];
 
-    assert!(metadata.coordinate.x < (grid_size - subgrid_size) as u32);
-    assert!(metadata.coordinate.y < (grid_size - subgrid_size) as u32);
+    assert!(metadata.coordinate.x < (grid_size - subgrid_size) as i32);
+    assert!(metadata.coordinate.y < (grid_size - subgrid_size) as i32);
 
     for y in 0..subgrid_size {
         for x in 0..subgrid_size {

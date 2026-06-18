@@ -6,20 +6,20 @@ use ndarray::prelude::*;
 #[derive(Debug, PartialEq, Eq, H5Type)]
 #[repr(C)]
 pub struct Metadata {
-    pub baseline: u32,
-    pub time_index: u32,
-    pub timestep_count: u32,
-    pub channel_begin: u32,
-    pub channel_end: u32,
+    pub baseline: i32,
+    pub time_index: i32,
+    pub nr_timesteps: i32,
+    pub channel_begin: i32,
+    pub channel_end: i32,
     pub coordinate: Coordinate,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, H5Type)]
 #[repr(C)]
 pub struct Coordinate {
-    pub x: u32,
-    pub y: u32,
-    pub z: u32,
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
 }
 
 pub type MetadataArray = Array1<Metadata>;
@@ -75,7 +75,7 @@ fn compute_metadata(
     grid_size: u32,
     subgrid_size: u32,
     channel_count: u32,
-    baseline: u32,
+    baseline: i32,
     u_pixels: &ArrayView1<Float>,
     v_pixels: &ArrayView1<Float>,
     max_group_size: u32,
@@ -111,25 +111,25 @@ fn compute_metadata(
             .mean()
             .expect("This slice should not be empty");
 
-        let subgrid_x = (group_u as u32)
-            .checked_sub(subgrid_size / 2)
+        let subgrid_x = (group_u as i32)
+            .checked_sub(subgrid_size as i32 / 2)
             .expect("shouldn't underflow");
-        let subgrid_y = (group_v as u32)
-            .checked_sub(subgrid_size / 2)
+        let subgrid_y = (group_v as i32)
+            .checked_sub(subgrid_size as i32 / 2)
             .expect("shouldn't underflow");
         assert!(
             subgrid_size <= grid_size,
             "subgrid shouldn't be larger than grid"
         );
-        let subgrid_x = subgrid_x.clamp(0, grid_size - subgrid_size);
-        let subgrid_y = subgrid_y.clamp(0, grid_size - subgrid_size);
+        let subgrid_x = subgrid_x.clamp(0, (grid_size - subgrid_size) as i32);
+        let subgrid_y = subgrid_y.clamp(0, (grid_size - subgrid_size) as i32);
 
         metadata.push(Metadata {
             baseline,
             time_index: timestep.try_into().unwrap(),
-            timestep_count: group_size.try_into().unwrap(),
+            nr_timesteps: group_size.try_into().unwrap(),
             channel_begin: 0,
-            channel_end: channel_count,
+            channel_end: channel_count.try_into().unwrap(),
             coordinate: Coordinate {
                 x: subgrid_x,
                 y: subgrid_y,
