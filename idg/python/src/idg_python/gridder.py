@@ -1,11 +1,11 @@
 import numpy as np
 
-from idg_python import idgtypes
-from idg_python.kernels.numba import (
+from .kernels.gridding import (
     add_subgrid_to_grid,
     compute_phasor,
     visibilities_to_subgrids,
 )
+from .types import FOURIER_DOMAIN_TO_IMAGE_DOMAIN
 
 
 class Gridder:
@@ -109,7 +109,7 @@ class Gridder:
         grid[:] = np.fft.fftshift(grid, axes=(1, 2))
 
         # FFT
-        if direction == idgtypes.FOURIER_DOMAIN_TO_IMAGE_DOMAIN:
+        if direction == FOURIER_DOMAIN_TO_IMAGE_DOMAIN:
             grid[:] = np.fft.ifft2(grid, axes=(1, 2))
         else:
             grid[:] = np.fft.fft2(grid, axes=(1, 2))
@@ -119,7 +119,7 @@ class Gridder:
 
         # Scaling
         scale = 2 + 0j
-        if direction == idgtypes.FOURIER_DOMAIN_TO_IMAGE_DOMAIN:
+        if direction == FOURIER_DOMAIN_TO_IMAGE_DOMAIN:
             grid *= scale
         else:
             grid /= scale

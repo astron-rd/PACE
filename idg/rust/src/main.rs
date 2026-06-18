@@ -38,39 +38,45 @@ fn main() -> Result<()> {
 
     print_header!("OUTPUT");
 
-    let output_dir = cli.numpy_output.clone().unwrap_or(std::env::current_dir()?);
-    std::fs::create_dir_all(&output_dir)?;
+    let output_file = hdf5_metno::File::create(
+        std::env::current_dir()?.join(cli.output_file.unwrap_or("output.h5".into())),
+    )?;
 
-    time_function!(
-        "writing grid.npy",
-        ndarray_npy::write_npy(output_dir.join("grid.npy"), gridder.grid())?
-    );
+    time_function!("writing grid", {
+        let builder = output_file.new_dataset_builder();
+        builder.with_data(gridder.grid()).create("grid")?;
+    });
     if cli.output_subgrids {
-        time_function!(
-            "writing subgrids.npy",
-            ndarray_npy::write_npy(output_dir.join("subgrids.npy"), gridder.subgrids())?
-        );
+        time_function!("writing subgrids", {
+            let builder = output_file.new_dataset_builder();
+            builder.with_data(gridder.subgrids()).create("subgrids")?;
+        });
     }
-    if cli.output_metadata {
-        time_function!(
-            "writing metadata.npy",
-            ndarray_npy::write_npy(output_dir.join("metadata.npy"), &input.metadata)?
-        );
-    }
+
     if let Commands::Generate { output_input, .. } = cli.command {
         if output_input {
-            time_function!(
-                "writing uvw.npy",
-                ndarray_npy::write_npy(output_dir.join("uvw.npy"), &input.uvw)?
-            );
-            time_function!(
-                "writing frequencies.npy",
-                ndarray_npy::write_npy(output_dir.join("frequencies.npy"), &input.frequencies)?
-            );
-            time_function!(
-                "writing visibilities.npy",
-                ndarray_npy::write_npy(output_dir.join("visibilities.npy"), &input.visibilities)?
-            );
+            let inputs_file =
+                hdf5_metno::File::create(std::env::current_dir()?.join("inputs.h5"))?;
+            time_function!("writing uvw", {
+                let builder = inputs_file.new_dataset_builder();
+                builder.with_data(&input.uvw).create("uvws")?;
+            });
+            time_function!("writing frequencies", {
+                let builder = inputs_file.new_dataset_builder();
+                builder
+                    .with_data(&input.frequencies)
+                    .create("frequencies")?;
+            });
+            time_function!("writing visibilities", {
+                let builder = inputs_file.new_dataset_builder();
+                builder
+                    .with_data(&input.visibilities)
+                    .create("visibilities")?;
+            });
+            time_function!("writing metadata", {
+                let builder = inputs_file.new_dataset_builder();
+                builder.with_data(&input.metadata).create("metadata")?;
+            });
         }
     }
 

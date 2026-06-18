@@ -1,20 +1,19 @@
 import argparse
-from pydantic import Field, computed_field, BaseModel
+from typing import ClassVar
+
+from pydantic import BaseModel, Field, computed_field
 
 
 class Settings(BaseModel):
-    """
-    Configuration settings for input data generation process.
-    Fields with descriptions are exposed as command-line arguments.
-    """
+    """Configuration settings for input data generation process."""
 
     # Constants
-    nr_correlations_in: int = 2  # XX, XY
-    nr_correlations_out: int = 1  # I
-    w_step: float = 1.0  # w step in wavelengths
-    start_frequency: float = 150e6  # 150 MHz
-    frequency_increment: float = 1e6  # 1 MHz
-    speed_of_light: float = 299792458.0
+    nr_correlations_in: ClassVar[int] = 2  # XX, XY
+    nr_correlations_out: ClassVar[int] = 1  # I
+    w_step: ClassVar[float] = 1.0  # w step in wavelengths
+    start_frequency: ClassVar[float] = 150e6  # 150 MHz
+    frequency_increment: ClassVar[float] = 1e6  # 1 MHz
+    speed_of_light: ClassVar[float] = 299792458.0
 
     # Arguments
     nr_stations: int = Field(20, description="Number of stations")
@@ -22,7 +21,6 @@ class Settings(BaseModel):
     grid_size: int = Field(1024, description="Size of the grid in pixels")
     subgrid_size: int = Field(32, description="Size of the subgrid in pixels")
     observation_hours: float = Field(4.0, description="Observation length in hours")
-    output_npy: bool = Field(False, description="Use .npy format instead of .npz")
 
     # Computed fields
     @computed_field
@@ -49,20 +47,11 @@ class Settings(BaseModel):
     def from_args(cls) -> "Settings":
         parser = argparse.ArgumentParser()
         for name, field in cls.model_fields.items():
-            if not field.description:
-                continue
-
-            kwargs = {}
-            if field.annotation is bool:
-                kwargs["action"] = "store_true"
-            else:
-                kwargs["type"] = field.annotation
-
             parser.add_argument(
                 f"--{name}",
+                type=field.annotation,
                 default=field.default,
                 help=field.description,
-                **kwargs,
             )
 
         return cls(**vars(parser.parse_args()))

@@ -13,11 +13,11 @@ pub struct Cli {
     #[arg(long, default_value = "1.0")]
     pub w_step: Float,
 
-    /// Output numpy data
+    /// Output file path
     #[arg(short = 'o', long, value_name = "OUTPUT_PATH")]
-    pub numpy_output: Option<PathBuf>,
+    pub output_file: Option<PathBuf>,
 
-    /// Output intermediary subgrids
+    /// Output subgrids
     #[arg(short = 's', long, default_value = "false")]
     pub output_subgrids: bool,
 
@@ -92,31 +92,11 @@ pub enum Commands {
         #[arg(long, default_value = "false")]
         output_input: bool,
     },
-    /// Load the input data from .npy files
+    /// Load the input data from a HDF5 file.
     Load {
-        /// Location of the data directory, defaults to current working directory.
-        #[arg(long, short = 'd')]
-        data_dir: Option<PathBuf>,
-
-        /// Location of the UVW file, relative to `data_dir`
-        #[arg(long, default_value = "uvw.npy")]
-        uvw_file: PathBuf,
-
-        /// Location of the frequencies file, relative to `data_dir`
-        #[arg(long, default_value = "frequencies.npy")]
-        frequencies_file: PathBuf,
-
-        /// Location of the visibilities file, relative to `data_dir`
-        #[arg(long, default_value = "visibilities.npy")]
-        visibilities_file: PathBuf,
-
-        /// Location of the metadata file, relative to `data_dir`
-        #[arg(long)]
-        metadata_file: Option<PathBuf>,
-
-        /// Location of the taper file, relative to `data_dir`
-        #[arg(long)]
-        taper_file: Option<PathBuf>,
+        /// Location of the HDF5 file
+        #[arg(long, short = 'f', default_value = "input.h5")]
+        filename: PathBuf,
 
         /// Size of the subgrid in pixels
         #[arg(long, default_value = "32")]

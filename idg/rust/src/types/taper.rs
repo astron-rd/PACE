@@ -1,5 +1,3 @@
-use std::path::Path;
-
 use ndarray::{linspace, prelude::*};
 
 use crate::constants::Float;
@@ -8,9 +6,6 @@ pub type Taper = Array2<Float>;
 
 pub trait TaperExtension {
     fn generate(subgrid_size: u32) -> Self;
-    fn from_file(path: &Path) -> Result<Self, ndarray_npy::ReadNpyError>
-    where
-        Self: Sized;
 }
 
 impl TaperExtension for Taper {
@@ -26,10 +21,6 @@ impl TaperExtension for Taper {
         let mat_n1 = mat_1n.clone().reversed_axes();
 
         (mat_1n * mat_n1).to_owned()
-    }
-
-    fn from_file(path: &Path) -> Result<Self, ndarray_npy::ReadNpyError> {
-        ndarray_npy::read_npy(path)
     }
 }
 

@@ -17,6 +17,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Astronomy",
 ]
 dependencies = [
+    "h5py>=3.16.0",
     "jax>=0.5",
     "numba>=0.61.2",
     "numpy>=1.26.4",
@@ -29,11 +30,8 @@ homepage = "https://github.com/astron-rd/pace"
 idg = "idg_python.main:main"
 
 [build-system]
-requires = ["setuptools>=70.0"]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools.packages]
-find = {}
+requires = ["uv_build>=0.11.17,<0.12.0"]
+build-backend = "uv_build"
 
 [tool.ruff]
 exclude = [
@@ -57,7 +55,7 @@ ignore = ["E203", "E741", "E501", "N806", "S101", "S311"]
 branch = true
 
 [tool.pytest.ini_options]
-env = [{"PYTHONWARNINGS"="default::DeprecationWarning"}]
+env = ["PYTHONWARNINGS=default::DeprecationWarning"]
 addopts = "--cov-report term --cov-report xml --cov-report html --cov=idg_python --benchmark-skip --benchmark-warmup on"
 testpaths = ["tests"]
 
@@ -67,4 +65,5 @@ dev = [
     "pytest>=7.0.0",
     "pytest-cov>=3.0.0",
     "pytest-benchmark>=5.2.3",
+    "pytest-env>=1.6.0",
 ]

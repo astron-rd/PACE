@@ -1,7 +1,7 @@
-import numpy as np
+import h5py
 
-import initializers
-from config import settings
+from . import initializers
+from .config import settings
 
 
 def main():
@@ -32,19 +32,13 @@ def main():
         uvw=uvw,
     )
 
-    if settings.output_npy:
-        np.save("uvw.npy", uvw)
-        np.save("frequencies.npy", frequencies)
-        np.save("metadata.npy", metadata)
-        np.save("visibilities.npy", visibilities)
-    else:
-        np.savez(
-            "artifact.npz",
-            uvw=uvw,
-            frequencies=frequencies,
-            metadata=metadata,
-            visibilities=visibilities,
-        )
+    with h5py.File("inputs.h5", "w") as output_file:
+        output_file.attrs["grid_size"] = settings.grid_size
+        output_file.attrs["subgrid_size"] = settings.subgrid_size
+        output_file.create_dataset("uvws", data=uvw)
+        output_file.create_dataset("frequencies", data=frequencies)
+        output_file.create_dataset("metadata", data=metadata)
+        output_file.create_dataset("visibilities", data=visibilities)
 
 
 if __name__ == "__main__":

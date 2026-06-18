@@ -122,62 +122,32 @@ impl Input {
                 })
             }
             Commands::Load {
-                data_dir,
-                uvw_file,
-                frequencies_file,
-                visibilities_file,
-                metadata_file,
-                taper_file,
+                filename,
                 subgrid_size,
                 grid_size,
                 correlation_count_out,
             } => {
                 print_header!("READING INPUT DATA");
 
-                let data_dir = data_dir.clone().unwrap_or(std::env::current_dir()?);
+                let file = hdf5_metno::File::open(std::env::current_dir()?.join(filename))?;
 
-                let uvw: UvwArray =
-                    time_function!("load uvws", UvwArray::from_file(&data_dir.join(uvw_file))?);
+                let uvw: UvwArray = time_function!("load uvws", UvwArray::from_file(&file)?);
 
-                let frequencies: FrequencyArray = time_function!(
-                    "load frequencies",
-                    FrequencyArray::from_file(&data_dir.join(frequencies_file))?
-                );
+                let frequencies: FrequencyArray =
+                    time_function!("load frequencies", FrequencyArray::from_file(&file)?);
 
                 let wavenumbers: WavenumberArray = time_function!(
                     "derive wavenumbers",
                     WavenumberArray::from_frequencies(&frequencies)
                 );
 
-                let visibilities: VisibilityArray = time_function!(
-                    "load visibilities",
-                    VisibilityArray::from_file(&data_dir.join(visibilities_file))?
-                );
+                let visibilities: VisibilityArray =
+                    time_function!("load visibilities", VisibilityArray::from_file(&file)?);
 
-                let channel_count = frequencies.shape()[0];
+                let metadata: MetadataArray =
+                    time_function!("load metadata", MetadataArray::from_file(&file)?);
 
-                let metadata: MetadataArray = match metadata_file {
-                    None => time_function!(
-                        "generate metadata",
-                        MetadataArray::generate(
-                            *grid_size,
-                            *subgrid_size,
-                            channel_count as u32,
-                            &uvw
-                        )
-                    ),
-                    Some(path) => time_function!(
-                        "load metadata",
-                        MetadataArray::from_file(&data_dir.join(path))?
-                    ),
-                };
-
-                let taper: Taper = match taper_file {
-                    None => time_function!("generate taper", Taper::generate(*subgrid_size)),
-                    Some(path) => {
-                        time_function!("load taper", Taper::from_file(&data_dir.join(path))?)
-                    }
-                };
+                let taper: Taper = time_function!("generate taper", Taper::generate(*subgrid_size));
 
                 Ok(Self {
                     subgrid_count: metadata.len(),
