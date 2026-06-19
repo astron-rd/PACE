@@ -51,7 +51,7 @@ function visibility_to_subgrid!(
             n = compute_n(l, m)
 
             pixels = compute_pixels(
-                metadatum.timestep_count,
+                metadatum.nr_timesteps,
                 metadatum.time_index,
                 uvw,
                 metadatum.baseline,
@@ -93,7 +93,7 @@ function compute_n(l, m)
 end
 
 function compute_pixels(
-    timestep_count,
+    nr_timesteps,
     offset,
     uvws,
     baseline,
@@ -112,7 +112,7 @@ function compute_pixels(
 )
     pixels = zeros(ComplexF32, Constants.CORRELATION_COUNT_OUT)
 
-    for time in 0:timestep_count-1
+    for time in 0:nr_timesteps-1
         idx = offset + time
         (; u, v, w) = uvws[baseline+1, idx+1]
 
