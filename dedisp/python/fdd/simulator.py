@@ -1,5 +1,6 @@
 import argparse
 
+import h5py
 import numpy as np
 
 
@@ -16,17 +17,31 @@ class Simulator:
         arrival_time: float,
         dispersion_measure: float,
     ):
+        """
+        Simulate a dispersed signal on top of background noise.
+
+        :param observation_duration: duration in seconds
+        :param time_resolution: sample integration time in seconds
+        :param n_channels: number of channels
+        :param bandwidth: frequency range in MHz
+        :param observation_duration: duration in seconds
+        :return: ...
+        """
         self.n_samples = int(observation_duration / time_resolution)
         self.n_channels = n_channels
 
         self.time_resolution = time_resolution
-        self.frequency_resolution = -1.0 * bandwidth / n_channels
+        self.frequency_resolution = (
+            -1.0 * bandwidth / n_channels
+        )  # MHz (this must be negative!)
 
         self.peak_frequency = peak_frequency
         self.noise_rms = noise_rms
         self.intensity = intensity
         self.arrival_time = arrival_time
         self.dm = dispersion_measure
+
+        self.dynamic_spectrum = None
 
     def generate(self, quantise: bool = False, random_seed: int = 0) -> np.ndarray:
         rng = np.random.default_rng(random_seed)
@@ -59,10 +74,26 @@ class Simulator:
 
             return np.clip(shifted_data, a_min=0.0, a_max=255.0).astype(np.uint8)
 
+        self.dynamic_spectrum = data
+
         return data
 
-    def to_hdf5(self, data: np.ndarray, filename: str):
-        pass
+    def to_hdf5(self, filename: str):
+        with h5py.File(filename, "w") as output_file:
+            dyn_spec = output_file.create_dataset("dynspec", data=self.dynamic_spectrum)
+
+            # Properties of the dynamic spectrum
+            dyn_spec.attrs["samples"] = self.n_channels
+            dyn_spec.attrs["channels"] = self.n_samples
+            dyn_spec.attrs["integration_time"] = self.time_resolution
+            dyn_spec.attrs["channel_width"] = -self.frequency_resolution
+            dyn_spec.attrs["peak_frequency"] = self.peak_frequency
+
+            # Meta data used to generate the mock signal
+            output_file.attrs["noise_rms"] = self.noise_rms
+            output_file.attrs["intensity"] = self.intensity
+            output_file.attrs["dispersion_measure"] = self.dm
+            output_file.attrs["arrival_time"] = self.arrival_time
 
 
 def main():
@@ -130,8 +161,8 @@ def main():
         args.dm,
     )
 
-    data = sim.generate(quantise=args.quantise, random_seed=args.seed)
+    sim.generate(quantise=args.quantise, random_seed=args.seed)
 
     if args.file:
-        print(f"Writing the simulated signal disk: {args.file}")
-        sim.to_hdf5(data, args.file)
+        print(f"Writing the simulated signal to disk: {args.file}")
+        sim.to_hdf5(args.file)
