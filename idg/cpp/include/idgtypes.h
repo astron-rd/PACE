@@ -1,8 +1,10 @@
 #pragma once
 
 #include <complex>
+#include <cstdint>
 #include <xtensor/containers/xarray.hpp>
 #include <xtensor/core/xtensor_forward.hpp>
+#include <cstdint>
 
 using VisibilityType = std::complex<float>;
 
@@ -15,17 +17,17 @@ struct UVW {
 };
 
 struct Coordinate {
-  int x;
-  int y;
-  int z;
+  uint32_t x;
+  uint32_t y;
+  uint32_t z;
 };
 
 struct Metadata {
-  int baseline;
-  int time_index;
-  int nr_timesteps;
-  int channel_begin;
-  int channel_end;
+  uint32_t baseline;
+  uint32_t time_index;
+  uint32_t nr_timesteps;
+  uint32_t channel_begin;
+  uint32_t channel_end;
   Coordinate coordinate;
 };
 

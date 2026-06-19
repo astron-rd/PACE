@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cmath>
 #include <complex>
+#include <cstdint>
 #include <vector>
 
 #include <xtensor/containers/xarray.hpp>
@@ -191,18 +192,18 @@ std::vector<Metadata> compute_metadata(size_t grid_size, size_t subgrid_size,
     group_u /= group_size;
     group_v /= group_size;
 
-    size_t subgrid_x = group_u - subgrid_size / 2;
-    size_t subgrid_y = group_v - subgrid_size / 2;
-    subgrid_x = std::max(0ul, std::min(grid_size - subgrid_size, subgrid_x));
-    subgrid_y = std::max(0ul, std::min(grid_size - subgrid_size, subgrid_y));
+    size_t subgrid_x = (size_t)group_u - subgrid_size / 2;
+    size_t subgrid_y = (size_t)group_v - subgrid_size / 2;
+    subgrid_x = std::clamp(subgrid_x, 0ul, grid_size - subgrid_size);
+    subgrid_y = std::clamp(subgrid_y, 0ul, grid_size - subgrid_size);
 
-    const Metadata entry{
-        static_cast<int>(bl),
-        static_cast<int>(timestep),
-        static_cast<int>(group_size),
-        0,
-        static_cast<int>(nr_channels),
-        {static_cast<int>(subgrid_x), static_cast<int>(subgrid_y), 0}};
+    const Metadata entry{static_cast<uint32_t>(bl),
+                         static_cast<uint32_t>(timestep),
+                         static_cast<uint32_t>(group_size),
+                         0,
+                         static_cast<uint32_t>(nr_channels),
+                         {static_cast<uint32_t>(subgrid_x),
+                          static_cast<uint32_t>(subgrid_y), 0}};
 
     metadata.push_back(entry);
     timestep += group_size;
