@@ -5,6 +5,8 @@ include("Constants.jl")
 include("Gridder.jl")
 include("Util.jl")
 
+using HDF5
+
 function run()
     inputs = Input.load_inputs()
 
@@ -19,7 +21,11 @@ function run()
 
     Util.time_function("transform grid", () -> Gridder.transform_grid!(grid))
 
-    grid
+    grid = Util.reverse_dims(grid)
+
+    outfile = HDF5.h5open("output.h5", "w")
+    create_dataset(outfile, "grid", grid)
+    write(outfile["grid"], grid)
 end
 
 end # module IDG
