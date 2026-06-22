@@ -43,13 +43,15 @@ class FDDPlan:
             self.round_up(n_samples + 1, 16384) if use_zero_padding else n_samples
         )
         n_samples_padded = self.round_up(n_samples_fft + 1, 1024)
+        n_fft_frequency_bins = n_samples_padded // 2 + 1
 
-        print(f"padded samps = {n_samples_padded}")
+        print(f"padded samps  = {n_samples_padded}")
+        print(f"FFT freq bins = {n_fft_frequency_bins}")
 
         # 1. Generate spin table
         self.generate_spin_frequency_table(n_spin_frequencies, n_samples)
 
-        # TODO: 2. Pad the spectrum and transpose the data (convert input bytes to floats)
+        # 2. Pad the spectrum and transpose the data (convert input bytes to floats)
         padding = n_samples_padded - n_samples
         padded_spectrum = np.pad(spectrum, [(0, padding), (0, 0)], mode="constant")
 
@@ -60,14 +62,17 @@ class FDDPlan:
 
         print("transposed spectrum shape = {}".format(transposed_spectrum.shape))
 
-        # TODO: 3. Real-to-complex FFT: time series data to frequency domain
-        print()
-        fd_scratch = np.fft.fft(transposed_spectrum, axis=1)
+        # 3. Real-to-complex FFT: time series data to frequency domain
+        fd_scratch = np.fft.rfft(transposed_spectrum, axis=1)
+        print("fd_scratch = ", fd_scratch.shape)
 
-        # TODO: 4. Run dedispersion algorithm (CPU reference or optimised version)
+        # 4. Run dedispersion algorithm (CPU reference or optimised version)
         print(self.dm_table)
-        dm_scratch = fourier_domain_dedisperse(
+
+        dm_scratch = np.zeros((self.dm_count, fd_scratch.shape[1]))
+        fourier_domain_dedisperse(
             fd_scratch,
+            dm_scratch,
             self.dm_count,
             n_spin_frequencies,
             self.n_channels,
@@ -78,8 +83,8 @@ class FDDPlan:
         )  # output has shape: DMs x samples
         print("dm_scratch shape = {}".format(dm_scratch.shape))
 
-        # TODO: 5. Complex-to-real FFT: frequency domain back to time series data
-        dm_data = np.fft.ifft(dm_scratch, axis=1)
+        # 5. Complex-to-real FFT: frequency domain back to time series data
+        dm_data = np.fft.irfft(dm_scratch, axis=1)
         print("dm_data shape = {}".format(dm_data.shape))
 
         # 6. Only return n_output_samples samples and transpose the array to match the expected shape (samples x DMs)

@@ -68,4 +68,5 @@ dev = [
     "pytest>=7.0.0",
     "pytest-cov>=3.0.0",
     "pytest-benchmark>=5.2.3",
+    "matplotlib"
 ]
