@@ -8,7 +8,7 @@ use ndarray::prelude::*;
 pub struct Metadata {
     pub baseline: u32,
     pub time_index: u32,
-    pub timestep_count: u32,
+    pub nr_timesteps: u32,
     pub channel_begin: u32,
     pub channel_end: u32,
     pub coordinate: Coordinate,
@@ -127,7 +127,7 @@ fn compute_metadata(
         metadata.push(Metadata {
             baseline,
             time_index: timestep.try_into().unwrap(),
-            timestep_count: group_size.try_into().unwrap(),
+            nr_timesteps: group_size.try_into().unwrap(),
             channel_begin: 0,
             channel_end: channel_count,
             coordinate: Coordinate {
