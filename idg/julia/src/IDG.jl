@@ -21,11 +21,18 @@ function run()
 
     Util.time_function("transform grid", () -> Gridder.transform_grid!(grid))
 
-    grid = Util.reverse_dims(grid)
-
+    
     outfile = HDF5.h5open("output.h5", "w")
+    
+    subgrids = Util.reverse_dims(subgrids)
+    create_dataset(outfile, "subgrids", subgrids)
+    write(outfile["subgrids"], subgrids)    
+    
+    grid = Util.reverse_dims(grid)
     create_dataset(outfile, "grid", grid)
     write(outfile["grid"], grid)
+
+    close(outfile)
 end
 
 end # module IDG

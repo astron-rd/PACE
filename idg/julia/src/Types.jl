@@ -2,7 +2,7 @@ module Types
 
 UVW = @NamedTuple{u::Float32, v::Float32, w::Float32}
 
-Metadata = @NamedTuple{baseline::UInt32, time_index::UInt32, timestep_count::UInt32, channel_begin::UInt32, channel_end::UInt32, coordinate::@NamedTuple{x::UInt32, y::UInt32, z::UInt32}}
+Metadata = @NamedTuple{baseline::UInt32, time_index::UInt32, nr_timesteps::UInt32, channel_begin::UInt32, channel_end::UInt32, coordinate::@NamedTuple{x::UInt32, y::UInt32, z::UInt32}}
 
 function generate_taper(subgrid_size::Integer)
     x = LinRange(-1.0, 1.0, subgrid_size)

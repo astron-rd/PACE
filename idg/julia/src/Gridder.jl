@@ -152,7 +152,7 @@ function compute_phasor(subgrid_size)
     phasor = zeros(ComplexF32, subgrid_size, subgrid_size)
     for y in 1:subgrid_size
         for x in 1:subgrid_size
-            phase = π * (x + y - subgrid_size) / subgrid_size
+            phase = π * ((x - 1) + (y - 1) - subgrid_size) / subgrid_size
             phasor[x, y] = exp(phase * im)
         end
     end
@@ -176,6 +176,7 @@ function transform_grid!(grid)
     shifted_grid = FFTW.fftshift(grid)
     fourierd_grid = FFTW.ifft(shifted_grid)
     FFTW.ifftshift!(grid, fourierd_grid)
+    grid .*= 2.0
 end
 
 end
