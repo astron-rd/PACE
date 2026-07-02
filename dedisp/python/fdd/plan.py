@@ -17,7 +17,7 @@ class FDDPlan:
 
         self.time_resolution: float = time_resolution
         self.peak_frequency: float = peak_frequency
-        self.frequency_resolution: float = frequency_resolution
+        self.frequency_resolution: float = -abs(frequency_resolution)
 
         self.dm_table: np.ndarray | None = None
         self.delay_table: np.ndarray | None = None
@@ -37,6 +37,9 @@ class FDDPlan:
         n_samples = spectrum.shape[0]
         n_spin_frequencies = n_samples // 2 + 1
         n_output_samples = n_samples - self.max_delay
+        print(f"DEBUG: samples        = {n_samples}")
+        print(f"DEBUG: spin freq.     = {n_spin_frequencies}")
+        print(f"DEBUG: output samples = {n_output_samples}\n")
 
         use_zero_padding = True
         n_samples_fft = (
@@ -45,14 +48,16 @@ class FDDPlan:
         n_samples_padded = self.round_up(n_samples_fft + 1, 1024)
         n_fft_frequency_bins = n_samples_padded // 2 + 1
 
-        print(f"padded samps  = {n_samples_padded}")
-        print(f"FFT freq bins = {n_fft_frequency_bins}")
+        print(f"DEBUG: FFT samples   = {n_samples_fft}")
+        print(f"DEBUG: padded samps  = {n_samples_padded}")
+        print(f"DEBUG: FFT freq bins = {n_fft_frequency_bins}")
 
         # 1. Generate spin table
         self.generate_spin_frequency_table(n_spin_frequencies, n_samples)
 
         # 2. Pad the spectrum and transpose the data (convert input bytes to floats)
         padding = n_samples_padded - n_samples
+        print("DEBUG: padding = {}".format(padding))
         padded_spectrum = np.pad(spectrum, [(0, padding), (0, 0)], mode="constant")
 
         byte_offset = 127.5
@@ -60,37 +65,50 @@ class FDDPlan:
             padded_spectrum, byte_offset, self.n_channels
         )
 
-        print("transposed spectrum shape = {}".format(transposed_spectrum.shape))
+        print("DEBUG: transposed spectrum shape = {}".format(transposed_spectrum.shape))
 
         # 3. Real-to-complex FFT: time series data to frequency domain
         fd_scratch = np.fft.rfft(transposed_spectrum, axis=1)
-        print("fd_scratch = ", fd_scratch.shape)
+        print(
+            "DEBUG: real-to-complex FFT output has shape (channels, FFT bins): ",
+            fd_scratch.shape,
+            "type = ",
+            fd_scratch.dtype,
+        )
+        # print("DEBUG:", fd_scratch)
 
         # 4. Run dedispersion algorithm (CPU reference or optimised version)
-        print(self.dm_table)
+        print("DEBUG: DM table = ", self.dm_table)
 
-        dm_scratch = np.zeros((self.dm_count, fd_scratch.shape[1]))
+        dm_scratch = np.zeros((self.dm_count, fd_scratch.shape[1]), dtype=complex)
         fourier_domain_dedisperse(
             fd_scratch,
             dm_scratch,
-            self.dm_count,
-            n_spin_frequencies,
-            self.n_channels,
             self.time_resolution,
             self.spin_frequency_table,
             self.dm_table,
             self.delay_table,
         )  # output has shape: DMs x samples
-        print("dm_scratch shape = {}".format(dm_scratch.shape))
+        print(
+            "DEBUG: kernel output has shape (DMs, spin freq.): {}".format(
+                dm_scratch.shape
+            ),
+            "type = ",
+            dm_scratch.dtype,
+        )
 
         # 5. Complex-to-real FFT: frequency domain back to time series data
         dm_data = np.fft.irfft(dm_scratch, axis=1)
-        print("dm_data shape = {}".format(dm_data.shape))
+        print(
+            "DEBUG: complex-to-real FFT output has shape (DMs, padded samples): {}".format(
+                dm_data.shape
+            )
+        )
 
         # 6. Only return n_output_samples samples and transpose the array to match the expected shape (samples x DMs)
         computed_samples = dm_data[:, :n_output_samples].T
         print(
-            "computed_samples shape = {} / output samples = {}".format(
+            "DEBUG: computed_samples shape = {} / output samples = {}".format(
                 computed_samples.shape, n_output_samples
             )
         )
@@ -107,7 +125,49 @@ class FDDPlan:
         :param pulse_width: ...
         :param tolerance: ...
         """
-        pass
+        time_resolution = self.time_resolution * 1e6
+        print(f"freq res = {self.frequency_resolution}")
+        print(f"val = {((self.n_channels // 2) - 0.5)}")
+        print(f"peak = {self.peak_frequency}")
+        f = (
+            self.peak_frequency
+            + ((self.n_channels // 2) - 0.5) * self.frequency_resolution
+        ) * 1e-3
+        a = 8.3 * self.frequency_resolution / (f * f * f)
+        a_squared = a**2
+        b_squared = a_squared * (self.n_channels**2 / 16.0)
+        tolerance_squared = tolerance**2
+        c = (time_resolution**2 + pulse_width**2) * (tolerance_squared - 1.0)
+        print(f"""
+            {time_resolution}
+            {f}
+            {a}
+            {a_squared}
+            {b_squared}
+            {tolerance_squared}
+            {c}
+        """)
+
+        dm_list = [dm_start]
+        while dm_list[-1] < dm_end:
+            previous_dm = dm_list[-1]
+            previous_dm_squared = previous_dm**2
+            k = c + tolerance_squared * a_squared * previous_dm_squared
+            dm = (
+                b_squared * previous_dm
+                + np.sqrt(
+                    -a_squared * b_squared * previous_dm_squared
+                    + (a_squared + b_squared) * k
+                )
+            ) / (a_squared + b_squared)
+
+            dm_list.append(dm)
+
+        self.dm_table = np.array(dm_list)
+        self.dm_count = self.dm_table.size
+        self.max_delay = int(dm_list[-1] * self.delay_table[-1] + 0.5)
+
+        return dm_list
 
     def generate_linear_dm_list(
         self, dm_start: float, dm_end: float, dm_step: float

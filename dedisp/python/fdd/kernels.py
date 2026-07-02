@@ -12,16 +12,22 @@ def fourier_domain_dedisperse(
     # TODO: could also completely vectorize...!
     # Caveat: might require a lot of memory? Is that smart...?
     n_spin_frequencies = spin_frequencies.size
+    print(f"running the dispersion kernel for {dispersion_measures.size} DMs:", end="")
     for dm_index, dm in enumerate(dispersion_measures):
+        print(f" {dm_index}", end="")
         dm_delays = dm * delays * time_resolution
 
         phases = (
             2.0 * np.pi * spin_frequencies[:, np.newaxis] * dm_delays[np.newaxis, :]
         )
         phasors = np.exp(1j * phases)
-        print("phasors.shape = ", phasors.shape)
+        # print("DEBUG: phasors.shape = ", phasors.shape, "phasors.dtype = ", phasors.dtype)
 
-        print("input_data.shape", input_data.shape)
+        # print("DEBUG: input_data.shape", input_data.shape)
         samples = input_data[:, :n_spin_frequencies].T
 
-        output_data[dm_index, :n_spin_frequencies] = np.sum(samples * phasors, axis=1)
+        s = np.sum(samples * phasors, axis=1)
+        # print("DEBUG: s.shape = ", s.shape, "s.dtype = ", s.dtype)
+        output_data[dm_index, :n_spin_frequencies] = s
+
+    print(";")

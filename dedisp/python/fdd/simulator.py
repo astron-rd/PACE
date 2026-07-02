@@ -27,7 +27,7 @@ class Simulator:
         :param observation_duration: duration in seconds
         :return: ...
         """
-        self.n_samples = int(observation_duration / time_resolution)
+        self.n_samples = int(observation_duration // time_resolution)
         self.n_channels = n_channels
 
         self.time_resolution = time_resolution

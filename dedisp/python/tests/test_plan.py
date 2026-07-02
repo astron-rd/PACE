@@ -32,9 +32,9 @@ def test_plan():
 
 def test_plan_with_simulated_spectrum():
     # Simulate a dynamic spectrum with a dispersed signal
-    duration = 15
+    duration = 30.0
     timeresolution = 250e-6
-    channels = 256
+    channels = 1024
     bandwidth = 100.0
     peakfrequency = 1581.0
     noiserms = 25.0
@@ -61,16 +61,16 @@ def test_plan_with_simulated_spectrum():
     channel_width = bandwidth / channels
     plan = FDDPlan(n_channels, timeresolution, peakfrequency, channel_width)
 
-    dm_start = 30
-    dm_end = 50
-    dm_step = 0.5
-    dm_list = plan.generate_linear_dm_list(dm_start, dm_end, dm_step)
-    print(dm_list)
+    dm_start = 2.0
+    dm_end = 100.0
+    pulse_width = 4.0
+    dm_tolerance = 1.25
+    plan.generate_dm_list(dm_start, dm_end, pulse_width, dm_tolerance)
 
     output = plan.execute(simulated_spectrum)
 
     # Plot the input
-    dt = 0.02
+    dt = 0.05
     select_start = arrivaltime - dt
     select_end = arrivaltime + dt
 
@@ -78,15 +78,18 @@ def test_plan_with_simulated_spectrum():
     samp_end = int(select_end / timeresolution)
 
     f_min = peakfrequency - bandwidth
-    plt.imshow(
+    fig, frames = plt.subplots(
+        2, 1, sharex=True, figsize=(8, 8), gridspec_kw=dict(height_ratios=[1, 1])
+    )
+
+    frames[0].imshow(
         simulated_spectrum[samp_start:samp_end, :].T,
         aspect="auto",
-        extent=(select_start, select_end, f_min, peakfrequency),
+        extent=(samp_start, samp_end, f_min, peakfrequency),
     )
-    plt.show()
 
     # Plot the output
-    plt.imshow(
+    frames[1].imshow(
         output[samp_start:samp_end, :].T,
         origin="lower",
         aspect="auto",
