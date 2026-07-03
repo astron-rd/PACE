@@ -26,3 +26,7 @@ results.json
 
 # HDF5 data files
 *.hdf5
+*.h5
+
+# Image files
+*.png
