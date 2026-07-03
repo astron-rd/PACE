@@ -1,0 +1,127 @@
+import argparse
+
+import h5py
+import matplotlib.pyplot as plt
+import numpy as np
+
+from fdd.signal import Signal
+
+
+def load_fdd_result(filename: str):
+    with h5py.File(filename, "r") as input_file:
+        fdd_result_ds = input_file["fddresult"]
+        if not isinstance(fdd_result_ds, h5py.Dataset):
+            raise Exception("Invalid input file: FDD result not found.")
+
+        # Properties of the dynamic spectrum
+        dm_list = fdd_result_ds.attrs["dispersion_measures"]
+        computed_samples = fdd_result_ds.attrs["computed_samples"]
+        time_resolution = fdd_result_ds.attrs["integration_time"]
+
+        duration = computed_samples * time_resolution
+
+        return fdd_result_ds[...], dm_list, duration
+
+
+def plot_burst(
+    dynspec_filename: str | None = None,
+    result_filename: str | None = None,
+    image_filename: str | None = None,
+):
+    signal = Signal.from_hdf5(dynspec_filename)
+    result, dm_table, duration = load_fdd_result(result_filename)
+
+    # Settings
+    t_burst = signal.arrival_time
+    t_samp = signal.time_resolution
+    # n_samp = signal.n_samples
+
+    # t_start = 0
+    # t_end = t_samp * n_samp
+
+    f_max = signal.peak_frequency
+    chan_width = abs(signal.frequency_resolution)
+    n_chans = signal.n_channels
+
+    f_min = f_max - chan_width * n_chans
+
+    dt = 0.05  # TODO: create CLI argument
+    select_start = t_burst - dt
+    select_end = t_burst + dt
+
+    samp_start = int(select_start / t_samp)
+    samp_end = int(select_end / t_samp)
+
+    # Plot the burst and the trial DMs
+    fig, frames = plt.subplots(
+        3, 1, sharex=True, figsize=(8, 8), gridspec_kw=dict(height_ratios=[0.3, 1, 1])
+    )
+
+    # Plot the channel-averaged burst
+    mean_intensity = np.mean(result[samp_start:samp_end, :], axis=1)
+    time_axis = np.arange(samp_start, samp_end) * t_samp
+    frames[0].plot(time_axis, mean_intensity, lw=1, color="black")
+
+    # Plot the input data (samples, channel)
+    frames[1].imshow(
+        signal.dynamic_spectrum[samp_start:samp_end, :].T,
+        aspect="auto",
+        extent=(select_start, select_end, f_min, f_max),
+    )
+
+    # Plot the output trial DM space (samples, trial DMs)
+    frames[2].imshow(
+        result[samp_start:samp_end, :].T,
+        origin="lower",
+        aspect="auto",
+        extent=(select_start, select_end, dm_table.min(), dm_table.max()),
+    )
+
+    # Axes settings
+    frames[0].set_title(r"$\it{testfdd.cpp}$ mock burst")
+    frames[0].set_ylabel("Mean intensity")
+    frames[0].set_ylim(mean_intensity.mean() - 5, mean_intensity.mean() + 5)
+
+    frames[1].axvline(t_burst, color="black", ls="--", lw=0.5)
+    frames[1].set_ylabel("frequency (MHz)")
+
+    frames[2].axvline(t_burst, color="black", ls="--", lw=0.5)
+    frames[2].set_xlabel("Time from start  of the observation (s)")
+    frames[2].set_ylabel(r"DM (pc cm$^{-3}$)")
+
+    plt.tight_layout()
+
+    if image_filename:
+        fig.savefig(image_filename, dpi=300)
+    else:
+        plt.show()
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--dynspec", type=str, help="Path to the dynamic spectrum (HDF5)"
+    )
+    parser.add_argument(
+        "--result",
+        type=str,
+        help="Path to the FDD result (HDF5)",
+    )
+    parser.add_argument(
+        "--image",
+        type=str,
+        help="Filename for the output image",
+    )
+    args = parser.parse_args()
+
+    if args.dynspec is None and args.result is None:
+        print(
+            "Expected a dynamic spectrum '--dynspec' and/or a path to the FDD result '--result'."
+        )
+        return
+
+    plot_burst(
+        dynspec_filename=args.dynspec,
+        result_filename=args.result,
+        image_filename=args.image,
+    )

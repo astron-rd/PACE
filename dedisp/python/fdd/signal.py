@@ -80,11 +80,13 @@ class Signal:
             # Shift data to the 8-bit range and clip if any value is outside of the [0, 255] range
             shifted_data = data + 127.5
 
-            return np.clip(shifted_data, a_min=0.0, a_max=255.0).astype(np.uint8)
+            self.dynamic_spectrum = np.clip(
+                shifted_data, a_min=0.0, a_max=255.0
+            ).astype(np.uint8)
+        else:
+            self.dynamic_spectrum = data
 
-        self.dynamic_spectrum = data
-
-        return data
+        return self.dynamic_spectrum
 
     def to_hdf5(self, filename: str):
         if self.dynamic_spectrum is None:
@@ -94,8 +96,8 @@ class Signal:
             dyn_spec = output_file.create_dataset("dynspec", data=self.dynamic_spectrum)
 
             # Properties of the dynamic spectrum
-            dyn_spec.attrs["samples"] = self.n_channels
-            dyn_spec.attrs["channels"] = self.n_samples
+            dyn_spec.attrs["samples"] = self.n_samples
+            dyn_spec.attrs["channels"] = self.n_channels
             dyn_spec.attrs["integration_time"] = self.time_resolution
             dyn_spec.attrs["channel_width"] = abs(self.frequency_resolution)
             dyn_spec.attrs["peak_frequency"] = self.peak_frequency
@@ -123,8 +125,8 @@ class Signal:
                 raise Exception("Invalid input file: dynamic spectrum not found.")
 
             # Properties of the dynamic spectrum
-            n_channels = dyn_spec_ds.attrs["samples"]
-            n_samples = dyn_spec_ds.attrs["channels"]
+            n_samples = dyn_spec_ds.attrs["samples"]
+            n_channels = dyn_spec_ds.attrs["channels"]
             time_resolution = dyn_spec_ds.attrs["integration_time"]
             frequency_resolution = abs(dyn_spec_ds.attrs["channel_width"])
             peak_frequency = dyn_spec_ds.attrs["peak_frequency"]
@@ -187,7 +189,7 @@ def main():
     )
     parser.add_argument("--dm", type=float, default=41.159, help="Dispersion measure")
     parser.add_argument(
-        "--quantise", action="store_true", default=False, help="Quantise the output"
+        "--togglequantisation", action="store_false", help="Toggle quantisation off"
     )
     parser.add_argument(
         "--seed",
@@ -203,8 +205,6 @@ def main():
     )
     args = parser.parse_args()
 
-    print(args)
-
     signal = Signal(
         args.duration,
         args.timeresolution,
@@ -217,7 +217,7 @@ def main():
         args.dm,
     )
 
-    signal.simulate(quantise=args.quantise, random_seed=args.seed)
+    signal.simulate(quantise=args.togglequantisation, random_seed=args.seed)
 
     if args.file:
         print(f"Writing the simulated signal to disk: {args.file}")

@@ -27,7 +27,8 @@ homepage = "https://github.com/astron-rd/pace"
 
 [project.scripts]
 fdd = "fdd.main:main"
-fdd-sim = "fdd.simulator:main"
+fdd-sim = "fdd.signal:main"
+fdd-plot = "fdd.visualise:main"
 
 [build-system]
 requires = ["setuptools>=70.0"]

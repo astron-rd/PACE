@@ -1,3 +1,4 @@
+import h5py
 import numpy as np
 
 from fdd.kernels import fourier_domain_dedisperse
@@ -23,6 +24,8 @@ class FDDPlan:
         self.dm_table: np.ndarray | None = None
         self.delay_table: np.ndarray | None = None
         self.spin_frequency_table: np.ndarray | None = None
+
+        self.result: np.ndarray | None = None
 
         self.generate_delay_table()
 
@@ -142,6 +145,8 @@ class FDDPlan:
         Output copy time    : {output_timer.duration():.6f} sec.
         """)
 
+        self.result = computed_samples
+
         return computed_samples
 
     def generate_dm_list(
@@ -258,6 +263,20 @@ class FDDPlan:
           frequency resolution: {frequency_resolution:.3f}
           peak fequency:        {self.peak_frequency:.3f}
         """)
+
+    def to_hdf5(self, filename: str):
+        if self.result is None:
+            raise Exception(
+                "There's no results to write to HDF5. Please execute the plan."
+            )
+
+        with h5py.File(filename, "w") as output_file:
+            fdd_result = output_file.create_dataset("fddresult", data=self.result)
+
+            # Properties of the dynamic spectrum
+            fdd_result.attrs["dispersion_measures"] = self.dm_table
+            fdd_result.attrs["computed_samples"] = self.result.shape[0]
+            fdd_result.attrs["integration_time"] = self.time_resolution
 
     def transpose_data(self, data: np.ndarray, offset: float, scale: float):
         """
