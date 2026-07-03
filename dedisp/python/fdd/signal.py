@@ -23,20 +23,23 @@ class Signal:
         dispersion_measure: float,
     ):
         """
+        Initialises a Signal object.
+
         :param observation_duration: duration in seconds
         :param time_resolution: sample integration time in seconds
         :param n_channels: number of channels
         :param bandwidth: frequency range in MHz
-        :param observation_duration: duration in seconds
-        ...
+        :param peak_frequency: maximum frequency in MHz
+        :param noise_rms: background noise level
+        :param intensity: signal intensity
+        :param arrival_time: pulse arrival time in seconds
+        :param dispersion_measure: the dispersion measure associated to the signal
         """
         self.n_samples = int(observation_duration // time_resolution)
         self.n_channels = n_channels
 
         self.time_resolution = time_resolution
-        self.frequency_resolution = (
-            -1.0 * bandwidth / n_channels
-        )  # MHz (this must be negative!)
+        self.frequency_resolution = bandwidth / n_channels
 
         self.peak_frequency = peak_frequency
         self.noise_rms = noise_rms
@@ -51,15 +54,21 @@ class Signal:
         quantise: bool = False,
         random_seed: int = 0,
     ) -> np.ndarray:
-        # Generate background and inject a pulse
+        """
+        Generate background and inject a pulse
+
+        :param quantise: duration in seconds
+        :param random_seed: sample integration time in seconds
+        :returns: dynamic spectrum with shape (samples, channels)
+        """
         rng = np.random.default_rng(random_seed)
         data = rng.normal(
             loc=0.0, scale=self.noise_rms, size=(self.n_samples, self.n_channels)
         )
 
         channel_indices = np.arange(self.n_channels)
-        channel_frequencies = (
-            self.peak_frequency + channel_indices * self.frequency_resolution
+        channel_frequencies = self.peak_frequency - channel_indices * abs(
+            self.frequency_resolution
         )
         inverse_channel_frequencies_squared = 1 / channel_frequencies**2
         inverse_peak_frequency_squared = 1.0 / self.peak_frequency**2
@@ -89,8 +98,13 @@ class Signal:
         return self.dynamic_spectrum
 
     def to_hdf5(self, filename: str):
+        """
+        Dump the simulated dynamic spectrum to disk as a HDF5 file.
+
+        :param filename: HDF5 file name
+        """
         if self.dynamic_spectrum is None:
-            raise Exception("There's no dynamic spectrum to write to HDF5.")
+            raise RuntimeError("There's no dynamic spectrum to write to HDF5.")
 
         with h5py.File(filename, "w") as output_file:
             dyn_spec = output_file.create_dataset("dynspec", data=self.dynamic_spectrum)
@@ -99,7 +113,7 @@ class Signal:
             dyn_spec.attrs["samples"] = self.n_samples
             dyn_spec.attrs["channels"] = self.n_channels
             dyn_spec.attrs["integration_time"] = self.time_resolution
-            dyn_spec.attrs["channel_width"] = abs(self.frequency_resolution)
+            dyn_spec.attrs["channel_width"] = self.frequency_resolution
             dyn_spec.attrs["peak_frequency"] = self.peak_frequency
 
             # Meta data used to generate the mock signal
@@ -109,9 +123,14 @@ class Signal:
             output_file.attrs["arrival_time"] = self.arrival_time
 
     def set_dynamic_spectrum(self, dynamic_spectrum: np.ndarray):
+        """
+        Set the dynamic spectrum.
+
+        :param dynamic_spectrum: dynamic spectrum with shape (samples, channels)
+        """
         expected_shape = (self.n_samples, self.n_channels)
         if dynamic_spectrum.shape != expected_shape:
-            raise Exception(
+            raise RuntimeError(
                 f"The dynamic spectrum has the incompatible dimensions: expected {expected_shape}, but got {dynamic_spectrum.shape}"
             )
 
@@ -119,16 +138,21 @@ class Signal:
 
     @classmethod
     def from_hdf5(cls, filename: str):
+        """
+        Read a dynamic spectrum from disk to construct a Signal object.
+
+        :param filename: file name of the dynamic spectrum stored as HDF5
+        """
         with h5py.File(filename, "r") as input_file:
             dyn_spec_ds = input_file["dynspec"]
             if not isinstance(dyn_spec_ds, h5py.Dataset):
-                raise Exception("Invalid input file: dynamic spectrum not found.")
+                raise RuntimeError("Invalid input file: dynamic spectrum not found.")
 
             # Properties of the dynamic spectrum
             n_samples = dyn_spec_ds.attrs["samples"]
             n_channels = dyn_spec_ds.attrs["channels"]
             time_resolution = dyn_spec_ds.attrs["integration_time"]
-            frequency_resolution = abs(dyn_spec_ds.attrs["channel_width"])
+            frequency_resolution = dyn_spec_ds.attrs["channel_width"]
             peak_frequency = dyn_spec_ds.attrs["peak_frequency"]
 
             # Meta data used to generate the mock signal
@@ -155,6 +179,7 @@ class Signal:
 
 
 def main():
+    """Entry of 'fdd-sim'."""
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--duration", type=float, default=30.0, help="Observation duration in seconds"
