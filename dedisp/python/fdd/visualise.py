@@ -27,6 +27,7 @@ def plot_burst(
     dynspec_filename: str | None = None,
     result_filename: str | None = None,
     image_filename: str | None = None,
+    zoom_width: float | None = None,
 ):
     signal = Signal.from_hdf5(dynspec_filename)
     result, dm_table, duration = load_fdd_result(result_filename)
@@ -34,10 +35,6 @@ def plot_burst(
     # Settings
     t_burst = signal.arrival_time
     t_samp = signal.time_resolution
-    # n_samp = signal.n_samples
-
-    # t_start = 0
-    # t_end = t_samp * n_samp
 
     f_max = signal.peak_frequency
     chan_width = abs(signal.frequency_resolution)
@@ -45,12 +42,15 @@ def plot_burst(
 
     f_min = f_max - chan_width * n_chans
 
-    dt = 0.05  # TODO: create CLI argument
-    select_start = t_burst - dt
-    select_end = t_burst + dt
+    if zoom_width:
+        t_start = t_burst - zoom_width / 2
+        t_end = t_burst + zoom_width / 2
+    else:
+        t_start = 0
+        t_end = t_samp * signal.n_samples
 
-    samp_start = int(select_start / t_samp)
-    samp_end = int(select_end / t_samp)
+    samp_start = int(t_start / t_samp)
+    samp_end = int(t_end / t_samp)
 
     # Plot the burst and the trial DMs
     fig, frames = plt.subplots(
@@ -66,7 +66,7 @@ def plot_burst(
     frames[1].imshow(
         signal.dynamic_spectrum[samp_start:samp_end, :].T,
         aspect="auto",
-        extent=(select_start, select_end, f_min, f_max),
+        extent=(t_start, t_end, f_min, f_max),
     )
 
     # Plot the output trial DM space (samples, trial DMs)
@@ -74,11 +74,11 @@ def plot_burst(
         result[samp_start:samp_end, :].T,
         origin="lower",
         aspect="auto",
-        extent=(select_start, select_end, dm_table.min(), dm_table.max()),
+        extent=(t_start, t_end, dm_table.min(), dm_table.max()),
     )
 
     # Axes settings
-    frames[0].set_title(r"$\it{testfdd.cpp}$ mock burst")
+    frames[0].set_title(f"Signal with a DM of {signal.dm:.3f} at {t_burst:.5f} seconds")
     frames[0].set_ylabel("Mean intensity")
     frames[0].set_ylim(mean_intensity.mean() - 5, mean_intensity.mean() + 5)
 
@@ -112,6 +112,13 @@ def main():
         type=str,
         help="Filename for the output image",
     )
+    parser.add_argument(
+        "--zoom",
+        type=float,
+        default=0.1,
+        help="Zoom-in on the specified number of seconds centered around the pulse",
+    )
+
     args = parser.parse_args()
 
     if args.dynspec is None and args.result is None:
@@ -124,4 +131,5 @@ def main():
         dynspec_filename=args.dynspec,
         result_filename=args.result,
         image_filename=args.image,
+        zoom_width=args.zoom,
     )
