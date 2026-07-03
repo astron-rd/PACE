@@ -8,18 +8,26 @@ def fourier_domain_dedisperse(
     spin_frequencies: np.ndarray,
     dispersion_measures: np.ndarray,
     delays: np.ndarray,
-) -> np.ndarray:
+) -> None:
+    """
+    Executes the FDD kernel.
+
+    :param input_data: complex floats with shape (...)
+    :param output_data: complex floats with shape (...)
+    :param time_resolution: observation integration time in seconds
+    :param spin_frequencies: spin frequency table
+    :param dispersion_measures: trial dispersion measures
+    :param delays: delays per channel
+    """
+    n_spin_frequencies = spin_frequencies.size
+    samples = input_data[:, :n_spin_frequencies]
+
     # TODO: could also completely vectorize...!
     # Caveat: might require a lot of memory? Is that smart...?
-    n_spin_frequencies = spin_frequencies.size
     for dm_index, dm in enumerate(dispersion_measures):
         dm_delays = dm * delays * time_resolution
 
-        phases = (
-            2.0 * np.pi * spin_frequencies[:, np.newaxis] * dm_delays[np.newaxis, :]
-        )
+        phases = 2.0 * np.pi * np.outer(dm_delays, spin_frequencies)
         phasors = np.exp(1j * phases)
 
-        samples = input_data[:, :n_spin_frequencies].T
-
-        output_data[dm_index, :n_spin_frequencies] = np.sum(samples * phasors, axis=1)
+        output_data[dm_index, :n_spin_frequencies] = np.sum(samples * phasors, axis=0)
