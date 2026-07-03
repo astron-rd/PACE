@@ -21,7 +21,7 @@ class Signal:
         intensity: float,
         arrival_time: float,
         dispersion_measure: float,
-    ):
+    ) -> None:
         """
         Initialises a Signal object.
 
@@ -97,7 +97,7 @@ class Signal:
 
         return self.dynamic_spectrum
 
-    def to_hdf5(self, filename: str):
+    def to_hdf5(self, filename: str) -> None:
         """
         Dump the simulated dynamic spectrum to disk as a HDF5 file.
 
@@ -122,7 +122,7 @@ class Signal:
             output_file.attrs["dispersion_measure"] = self.dm
             output_file.attrs["arrival_time"] = self.arrival_time
 
-    def set_dynamic_spectrum(self, dynamic_spectrum: np.ndarray):
+    def set_dynamic_spectrum(self, dynamic_spectrum: np.ndarray) -> None:
         """
         Set the dynamic spectrum.
 

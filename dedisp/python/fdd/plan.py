@@ -16,7 +16,7 @@ class FDDPlan:
         time_resolution: float,
         peak_frequency: float,
         frequency_resolution: float,
-    ):
+    ) -> None:
         """
         Initialises the Fourier Domain Dedispersion plan.
 
@@ -41,7 +41,7 @@ class FDDPlan:
 
         self.generate_delay_table()
 
-    def execute(self, spectrum: np.ndarray):
+    def execute(self, spectrum: np.ndarray) -> np.ndarray:
         """
         Execute the Fourier Domain Dedispersion algorithm.
 
@@ -163,7 +163,7 @@ class FDDPlan:
 
     def generate_dm_list(
         self, dm_start: float, dm_end: float, pulse_width: float, tolerance: float
-    ):
+    ) -> np.ndarray:
         """
         Generate a list of DMs in a linear fashion.
 
@@ -277,14 +277,14 @@ class FDDPlan:
           peak fequency:        {self.peak_frequency:.3f}
         """)
 
-    def to_hdf5(self, filename: str):
+    def to_hdf5(self, filename: str) -> None:
         """
         Write the result of the Fourier Domain Dedispersion algorithm to disk in the HDF5 format.
 
         :param filename: HDF5 file name
         """
         if self.result is None:
-            raise Exception(
+            raise RuntimeError(
                 "There's no results to write to HDF5. Please execute the plan."
             )
 
@@ -296,7 +296,9 @@ class FDDPlan:
             fdd_result.attrs["computed_samples"] = self.result.shape[0]
             fdd_result.attrs["integration_time"] = self.time_resolution
 
-    def transpose_data(self, data: np.ndarray, offset: float, scale: float):
+    def transpose_data(
+        self, data: np.ndarray, offset: float, scale: float
+    ) -> np.ndarray:
         """
         Transpose and scale the data appropriately.
 
@@ -306,6 +308,6 @@ class FDDPlan:
         """
         return (data.T.astype(float) - offset) / scale
 
-    def round_up(self, a: int, b: int):
+    def round_up(self, a: int, b: int) -> int:
         """Round up integer a to a multiple of integer b."""
         return ((a + b - 1) // b) * b
