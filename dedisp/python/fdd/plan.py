@@ -1,6 +1,7 @@
 import numpy as np
 
 from fdd.kernels import fourier_domain_dedisperse
+from fdd.utilities import Timer
 
 
 class FDDPlan:
@@ -52,10 +53,22 @@ class FDDPlan:
         print(f"DEBUG: padded samps  = {n_samples_padded}")
         print(f"DEBUG: FFT freq bins = {n_fft_frequency_bins}")
 
+        init_timer = Timer()
+        preprocessing_timer = Timer()
+        dedispersion_timer = Timer()
+        postprocessing_timer = Timer()
+        output_timer = Timer()
+
         # 1. Generate spin table
+        init_timer.start()
+
         self.generate_spin_frequency_table(n_spin_frequencies, n_samples)
 
+        init_timer.pause()
+
         # 2. Pad the spectrum and transpose the data (convert input bytes to floats)
+        preprocessing_timer.start()
+
         padding = n_samples_padded - n_samples
         print("DEBUG: padding = {}".format(padding))
         padded_spectrum = np.pad(spectrum, [(0, padding), (0, 0)], mode="constant")
@@ -75,12 +88,15 @@ class FDDPlan:
             "type = ",
             fd_scratch.dtype,
         )
-        # print("DEBUG:", fd_scratch)
+
+        preprocessing_timer.pause()
 
         # 4. Run dedispersion algorithm (CPU reference or optimised version)
-        print("DEBUG: DM table = ", self.dm_table)
-
+        init_timer.start()
         dm_scratch = np.zeros((self.dm_count, fd_scratch.shape[1]), dtype=complex)
+        init_timer.pause()
+
+        dedispersion_timer.start()
         fourier_domain_dedisperse(
             fd_scratch,
             dm_scratch,
@@ -89,6 +105,7 @@ class FDDPlan:
             self.dm_table,
             self.delay_table,
         )  # output has shape: DMs x samples
+        dedispersion_timer.pause()
         print(
             "DEBUG: kernel output has shape (DMs, spin freq.): {}".format(
                 dm_scratch.shape
@@ -98,7 +115,9 @@ class FDDPlan:
         )
 
         # 5. Complex-to-real FFT: frequency domain back to time series data
+        postprocessing_timer.start()
         dm_data = np.fft.irfft(dm_scratch, axis=1)
+        postprocessing_timer.pause()
         print(
             "DEBUG: complex-to-real FFT output has shape (DMs, padded samples): {}".format(
                 dm_data.shape
@@ -106,12 +125,23 @@ class FDDPlan:
         )
 
         # 6. Only return n_output_samples samples and transpose the array to match the expected shape (samples x DMs)
+        output_timer.start()
         computed_samples = dm_data[:, :n_output_samples].T
+        output_timer.pause()
         print(
             "DEBUG: computed_samples shape = {} / output samples = {}".format(
                 computed_samples.shape, n_output_samples
             )
         )
+
+        print(f"""
+        Initialization time : {init_timer.duration():.6f} sec.
+        Preprocessing time  : {preprocessing_timer.duration():.6f} sec.
+        Dedispersion time   : {dedispersion_timer.duration():.6f} sec.
+        Postprocessing time : {postprocessing_timer.duration():.6f} sec.
+        Output copy time    : {output_timer.duration():.6f} sec.
+        """)
+
         return computed_samples
 
     def generate_dm_list(
@@ -126,9 +156,6 @@ class FDDPlan:
         :param tolerance: ...
         """
         time_resolution = self.time_resolution * 1e6
-        print(f"freq res = {self.frequency_resolution}")
-        print(f"val = {((self.n_channels // 2) - 0.5)}")
-        print(f"peak = {self.peak_frequency}")
         f = (
             self.peak_frequency
             + ((self.n_channels // 2) - 0.5) * self.frequency_resolution
@@ -138,15 +165,6 @@ class FDDPlan:
         b_squared = a_squared * (self.n_channels**2 / 16.0)
         tolerance_squared = tolerance**2
         c = (time_resolution**2 + pulse_width**2) * (tolerance_squared - 1.0)
-        print(f"""
-            {time_resolution}
-            {f}
-            {a}
-            {a_squared}
-            {b_squared}
-            {tolerance_squared}
-            {c}
-        """)
 
         dm_list = [dm_start]
         while dm_list[-1] < dm_end:
@@ -167,7 +185,7 @@ class FDDPlan:
         self.dm_count = self.dm_table.size
         self.max_delay = int(dm_list[-1] * self.delay_table[-1] + 0.5)
 
-        return dm_list
+        return self.dm_table
 
     def generate_linear_dm_list(
         self, dm_start: float, dm_end: float, dm_step: float

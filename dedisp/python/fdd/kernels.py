@@ -21,13 +21,9 @@ def fourier_domain_dedisperse(
             2.0 * np.pi * spin_frequencies[:, np.newaxis] * dm_delays[np.newaxis, :]
         )
         phasors = np.exp(1j * phases)
-        # print("DEBUG: phasors.shape = ", phasors.shape, "phasors.dtype = ", phasors.dtype)
 
-        # print("DEBUG: input_data.shape", input_data.shape)
         samples = input_data[:, :n_spin_frequencies].T
 
-        s = np.sum(samples * phasors, axis=1)
-        # print("DEBUG: s.shape = ", s.shape, "s.dtype = ", s.dtype)
-        output_data[dm_index, :n_spin_frequencies] = s
+        output_data[dm_index, :n_spin_frequencies] = np.sum(samples * phasors, axis=1)
 
     print(";")

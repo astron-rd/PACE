@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from fdd.plan import FDDPlan
-from fdd.simulator import Simulator
+from fdd.signal import Signal
 
 
 def test_plan():
@@ -42,7 +42,7 @@ def test_plan_with_simulated_spectrum():
     arrivaltime = 3.14159
     dm = 41.159
 
-    sim = Simulator(
+    sig = Signal(
         duration,
         timeresolution,
         channels,
@@ -54,7 +54,7 @@ def test_plan_with_simulated_spectrum():
         dm,
     )
 
-    simulated_spectrum = sim.generate(quantise=False)
+    simulated_spectrum = sig.simulate(quantise=True)
 
     # n_samples = simulated_spectrum.shape[0]
     n_channels = simulated_spectrum.shape[1]
@@ -65,9 +65,14 @@ def test_plan_with_simulated_spectrum():
     dm_end = 100.0
     pulse_width = 4.0
     dm_tolerance = 1.25
-    plan.generate_dm_list(dm_start, dm_end, pulse_width, dm_tolerance)
+    dm_list = plan.generate_dm_list(dm_start, dm_end, pulse_width, dm_tolerance)
 
     output = plan.execute(simulated_spectrum)
+
+    dm_matrix = np.repeat(dm_list[np.newaxis, :], output.shape[0], axis=0)
+
+    assert output.shape == dm_matrix.shape
+    assert np.isclose(dm_matrix.flat[output.argmax()], dm, rtol=0.1)
 
     # Plot the input
     dt = 0.05
