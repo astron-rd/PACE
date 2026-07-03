@@ -6,6 +6,10 @@ from fdd.utilities import Timer
 
 
 class FDDPlan:
+    """
+    Class that implements the Fourier Domain Dedispersion algorithm.
+    """
+
     def __init__(
         self,
         n_channels: int,
@@ -13,6 +17,14 @@ class FDDPlan:
         peak_frequency: float,
         frequency_resolution: float,
     ):
+        """
+        Initialises the Fourier Domain Dedispersion plan.
+
+        :param n_channels: number of frequency channels used in the observation
+        :param time_resolution: integration time in seconds
+        :param peak_frequency: maximum channel frequency in MHz
+        :param frequency_resolution: channel width in MHz
+        """
         self.dm_count = None
         self.n_channels = n_channels
         self.max_delay = None
@@ -34,7 +46,7 @@ class FDDPlan:
         Execute the Fourier Domain Dedispersion algorithm.
 
         :param spectrum: quantised input spectrum, with shape (samples x channels)
-        :return: array with shape (samples x DMs)
+        :returns: array with shape (samples x DMs)
         """
         print("spectrum shape = {}".format(spectrum.shape))
 
@@ -157,8 +169,9 @@ class FDDPlan:
 
         :param dm_start: first DM value in the interval
         :param dm_end: upper bound of the DM values
-        :param pulse_width: ...
-        :param tolerance: ...
+        :param pulse_width: expected pulse width in milliseconds
+        :param tolerance: smearing tolerance
+        :returns: list of DMs
         """
         time_resolution = self.time_resolution * 1e6
         f = (
@@ -201,7 +214,7 @@ class FDDPlan:
         :param dm_start: first DM value in the interval
         :param dm_end: end of the DM value interval
         :param dm_step: DM step size
-        :return: array of trial DMs
+        :returns: array of trial DMs
         """
         dm_list = np.arange(dm_start, dm_end, dm_step)
 
@@ -213,7 +226,7 @@ class FDDPlan:
 
     def generate_delay_table(self) -> None:
         """
-        Calculate the ...
+        Calculate the delay for each channel.
         """
         channel_indices = np.arange(0, self.n_channels)
         inverse_channel_frequency = 1.0 / (
@@ -265,6 +278,11 @@ class FDDPlan:
         """)
 
     def to_hdf5(self, filename: str):
+        """
+        Write the result of the Fourier Domain Dedispersion algorithm to disk in the HDF5 format.
+
+        :param filename: HDF5 file name
+        """
         if self.result is None:
             raise Exception(
                 "There's no results to write to HDF5. Please execute the plan."
@@ -284,7 +302,7 @@ class FDDPlan:
 
         :param offset: used to undo quantization, e.g. 128 for 8-bits
         :param scale: use this to prevent overflows when summing the data
-        :return: transposed spectrum (with shape channels x samples)
+        :returns: transposed spectrum (with shape channels x samples)
         """
         return (data.T.astype(float) - offset) / scale
 
