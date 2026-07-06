@@ -1,7 +1,9 @@
 import h5py
 import numpy as np
 
-from fdd.kernels import fourier_domain_dedisperse
+from fdd.kernels import (
+    fourier_domain_dedisperse_fully_vectorized,
+)
 from fdd.utilities import Timer
 
 
@@ -112,7 +114,15 @@ class FDDPlan:
         init_timer.pause()
 
         dedispersion_timer.start()
-        fourier_domain_dedisperse(
+        # fourier_domain_dedisperse(
+        #     fd_scratch,
+        #     dm_scratch,
+        #     self.time_resolution,
+        #     self.spin_frequency_table,
+        #     self.dm_table,
+        #     self.delay_table,
+        # )  # output has shape: DMs x samples
+        fourier_domain_dedisperse_fully_vectorized(
             fd_scratch,
             dm_scratch,
             self.time_resolution,
@@ -234,7 +244,6 @@ class FDDPlan:
         )
         inverse_peak_frequency = 1.0 / self.peak_frequency
 
-        # TODO: document...
         delay_constant = 4.148741601e3
 
         self.delay_table = (

@@ -1,3 +1,87 @@
+r"""TODO: add dedisperse...
+def dedisperse(spec, ishift):
+    out = np.zeros_like(spec)
+
+    for ichan in range(spec.shape[0]):
+        out[ichan, :] = np.roll(spec[ichan, :], ishift[ichan])
+
+    return out
+
+def compute_dmlet(spec, t, f, dms):
+    nt, ndms = len(t), len(dms)
+    out = np.zeros(nt * ndms).reshape(ndms, nt)
+
+    for i, dm in enumerate(dms):
+        dtdm = dm * kdm * (f**(-2) - f.max()**(-2))
+        idm = np.round(dtdm / fil.tsamp).astype("int")
+
+        out[i] = np.sum(dedisperse(spec, idm), axis=0)
+
+    return out
+
+def create_dmlet(datfroot, imin, imax):
+    # Find dat files
+    fnames = sorted(glob.glob(datfname))
+
+    # Find file root
+    match = re.search("DM\d", fnames[0])
+    idm = match.start() + 2
+    froot = fnames[0][:idm]
+
+    # Find DM range
+    dms = []
+    for fname in fnames:
+        dmstr = fname[idm:].replace(".dat", "")
+        dms.append(float(dmstr))
+    dms = np.asarray(dms)
+    ndm = dms.size
+
+    # Output array
+    nsamp = imax - imin
+    I_t_dm = np.zeros(nsamp * ndm).reshape(ndm, nsamp)
+
+    # Read data
+    for i, fname in enumerate(fnames):
+        I_t_dm[i] = np.fromfile(fname, dtype="float32")[imin:imax]
+
+    return I_t_dm, dms
+
+if __name__ == "__main__":
+    # DM constant
+    kdm = 1 / 2.41e-4
+
+    # File to read
+    filfname = "./data/pks_frb110220.fil"
+    #datfname = "./pks_frb110220_DM*.dat"
+    datfname = "./test_DM*.dat"
+
+    # Burst time and DM
+    t0 = 209.1
+    dm0 = 945
+    #t0 = 100
+    #dm0 = 700
+
+    # Time width to show
+    dt = 0.1
+
+    # Read filterbank file
+    fil = fb.FilterbankFile(filfname, "read")
+
+    f = fil.frequencies
+    dtdm = dm0 * kdm * (f**(-2) - f.max()**(-2))
+    idm = np.round(dtdm / fil.tsamp).astype("int")
+
+    imin = int(np.round((t0 - 0.5 * dt) / fil.tsamp))
+    imax = int(np.round((t0 + 0.5 * dt) / fil.tsamp)) + idm.max()
+    t = np.arange(imin, imax) * fil.tsamp
+
+    print("Reading filterbank data")
+    spec = fil.get_spectra(imin, imax).T
+
+    print("Dedispersing")
+    spec_dedisp = dedisperse(spec, -idm)
+"""
+
 import argparse
 
 import h5py

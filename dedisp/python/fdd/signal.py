@@ -142,6 +142,7 @@ class Signal:
         Read a dynamic spectrum from disk to construct a Signal object.
 
         :param filename: file name of the dynamic spectrum stored as HDF5
+        :returns: a new Signal object
         """
         with h5py.File(filename, "r") as input_file:
             dyn_spec_ds = input_file["dynspec"]
@@ -223,9 +224,8 @@ def main():
         help="Random seed used to generate the background noise according to a normal distribution",
     )
     parser.add_argument(
-        "--file",
+        "file",
         type=str,
-        default="signal.h5",
         help="Filename for the HDF5 dataset containing the simulated signal",
     )
     args = parser.parse_args()
@@ -244,6 +244,5 @@ def main():
 
     signal.simulate(quantise=args.togglequantisation, random_seed=args.seed)
 
-    if args.file:
-        print(f"Writing the simulated signal to disk: {args.file}")
-        signal.to_hdf5(args.file)
+    print(f"Writing the simulated signal to disk: {args.file}")
+    signal.to_hdf5(args.file)

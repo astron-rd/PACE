@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 
 from fdd.plan import FDDPlan
@@ -70,33 +71,33 @@ def test_plan_with_simulated_spectrum():
 
     dm_matrix = np.repeat(dm_list[np.newaxis, :], output.shape[0], axis=0)
 
+    # Plot the input
+    dt = 0.05
+    select_start = arrivaltime - dt
+    select_end = arrivaltime + dt
+
+    samp_start = int(select_start / timeresolution)
+    samp_end = int(select_end / timeresolution)
+
+    f_min = peakfrequency - bandwidth
+    fig, frames = plt.subplots(
+        2, 1, sharex=True, figsize=(8, 8), gridspec_kw=dict(height_ratios=[1, 1])
+    )
+
+    frames[0].imshow(
+        simulated_spectrum[samp_start:samp_end, :].T,
+        aspect="auto",
+        extent=(samp_start, samp_end, f_min, peakfrequency),
+    )
+
+    # Plot the output
+    frames[1].imshow(
+        output[samp_start:samp_end, :].T,
+        origin="lower",
+        aspect="auto",
+        extent=(samp_start, samp_end, dm_start, dm_end),
+    )
+    plt.show()
+
     assert output.shape == dm_matrix.shape
     assert np.isclose(dm_matrix.flat[output.argmax()], dm, rtol=0.1)
-
-    # Plot the input
-    # dt = 0.05
-    # select_start = arrivaltime - dt
-    # select_end = arrivaltime + dt
-
-    # samp_start = int(select_start / timeresolution)
-    # samp_end = int(select_end / timeresolution)
-
-    # f_min = peakfrequency - bandwidth
-    # fig, frames = plt.subplots(
-    #     2, 1, sharex=True, figsize=(8, 8), gridspec_kw=dict(height_ratios=[1, 1])
-    # )
-
-    # frames[0].imshow(
-    #     simulated_spectrum[samp_start:samp_end, :].T,
-    #     aspect="auto",
-    #     extent=(samp_start, samp_end, f_min, peakfrequency),
-    # )
-
-    # # Plot the output
-    # frames[1].imshow(
-    #     output[samp_start:samp_end, :].T,
-    #     origin="lower",
-    #     aspect="auto",
-    #     extent=(samp_start, samp_end, dm_start, dm_end),
-    # )
-    # plt.show()
