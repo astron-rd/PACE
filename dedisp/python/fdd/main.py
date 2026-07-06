@@ -13,6 +13,17 @@ def execute_fdd_plan(
     pulse_width=None,
     filename: str | None = None,
 ):
+    """
+    Execute the Fourier Domain Dedispersion plan on a user-provided dynamic spectrum.
+
+    :param signal: Signal object based on a user-prodived dynamic spectrum
+    :param dm_start: first DM value on the search interval
+    :param dm_start: final DM value on the search interval
+    :param dm_step: linear DM step size
+    :param dm_tolerance: smearing tolerance
+    :param pulse_width: expected pulse width in milliseconds
+    :param filename: name of the HDF5 file to write the result to
+    """
     plan = FDDPlan(
         signal.n_channels,
         signal.time_resolution,
