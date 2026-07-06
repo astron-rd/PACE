@@ -6,7 +6,9 @@ from fdd.signal import Signal
 
 
 def test_plan():
-    """ """
+    """
+    Verify the FDD plan with dummy data.
+    """
     n_samples = 64
     n_channels = 16
     integration_time = 250e-6  # sec
@@ -27,10 +29,11 @@ def test_plan():
     assert output.shape[0] == n_computed_samples
     assert output.shape[1] == dm_list.size
 
-    plan.show()
-
 
 def test_plan_with_simulated_spectrum():
+    """
+    Test FDD plan execution with a simulated dynamic spectrum.
+    """
     # Simulate a dynamic spectrum with a dispersed signal
     duration = 30.0
     timeresolution = 250e-6

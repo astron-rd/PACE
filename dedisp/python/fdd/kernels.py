@@ -12,7 +12,7 @@ def fourier_domain_dedisperse(
     """
     Executes the FDD kernel.
 
-    :param input_data: complex floats with shape (samples, fft bins)
+    :param input_data: complex floats with shape (channels, fft bins)
     :param output_data: complex floats with shape (DMs, spin frequencies)
     :param time_resolution: observation integration time in seconds
     :param spin_frequencies: spin frequency table
@@ -31,7 +31,7 @@ def fourier_domain_dedisperse(
         output_data[dm_index, :n_spin_frequencies] = np.sum(samples * phasors, axis=0)
 
 
-def fourier_domain_dedisperse_fully_vectorized(
+def vectorized_fourier_domain_dedisperse(
     input_data: np.ndarray,
     output_data: np.ndarray,
     time_resolution: float,
@@ -42,7 +42,12 @@ def fourier_domain_dedisperse_fully_vectorized(
     """
     Executes a fully vectorised FDD kernel.
 
-    :param input_data: complex floats with shape (samples, fft bins)
+    Note that this only has a marginal (~5%) speed improvement over the non-vectorized
+    kernel (as tested on DAS-6's cbt204). But because it loads all data in memory,
+    executing the reference test-case will run out of memory on a 36 GB machine, hence,
+    we use 'fourier_domain_dedisperse' for reference.
+
+    :param input_data: complex floats with shape (channels, fft bins)
     :param output_data: complex floats with shape (DMs, spin frequencies)
     :param time_resolution: observation integration time in seconds
     :param spin_frequencies: spin frequency table
