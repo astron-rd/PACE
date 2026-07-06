@@ -29,8 +29,8 @@ def load_fdd_result(filename: str):
 
 
 def plot_burst(
-    dynspec_filename: str | None = None,
-    result_filename: str | None = None,
+    dynspec_filename: str,
+    result_filename: str,
     image_filename: str | None = None,
     zoom_width: float | None = None,
 ):
@@ -135,15 +135,15 @@ def main():
 
     args = parser.parse_args()
 
-    if args.dynspec is None and args.result is None:
+    if args.dynspec is None or args.result is None:
         print(
-            "Expected a dynamic spectrum '--dynspec' and/or a path to the FDD result '--result'."
+            "Expected a dynamic spectrum '--dynspec' and path to the FDD result '--result'."
         )
         return
 
     plot_burst(
-        dynspec_filename=args.dynspec,
-        result_filename=args.result,
+        args.dynspec,
+        args.result,
         image_filename=args.image,
         zoom_width=args.zoom,
     )
