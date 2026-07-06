@@ -50,14 +50,15 @@ def fourier_domain_dedisperse_fully_vectorized(
     :param delays: delays per channel
     """
     n_spin_frequencies = spin_frequencies.size
-    n_dms = dispersion_measures.size
+    samples = input_data[:, :n_spin_frequencies]
 
-    # Reshape for broadcasting: (n_dm, 1, 1) × (n_channels, 1) × (1, n_spin_frequencies)
+    # Expand all arrays for broadcasting
     delays_expanded = delays[np.newaxis, :, np.newaxis]  # (1, n_channels, 1)
     spin_frequencies_expanded = spin_frequencies[
         np.newaxis, np.newaxis, :
     ]  # (1, 1, n_spin_freqs)
     dms_expanded = dispersion_measures[:, np.newaxis, np.newaxis]  # (n_dm, 1, 1)
+    samples_expanded = samples[np.newaxis, :, :]
 
     # Compute all phases at once; has shape (n_dms, n_channels, n_spin_frequencies)
     phases = (
@@ -70,5 +71,4 @@ def fourier_domain_dedisperse_fully_vectorized(
     )
     phasors = np.exp(1j * phases)
 
-    samples_expanded = input_data[:n_dms, :n_spin_frequencies][..., np.newaxis, :]
     output_data[:, :n_spin_frequencies] = np.sum(samples_expanded * phasors, axis=1)
