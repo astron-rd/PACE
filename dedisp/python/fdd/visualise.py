@@ -1,10 +1,13 @@
 import argparse
+import logging
 
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
 
 from fdd.signal import Signal
+
+logger = logging.getLogger(__name__)
 
 
 def load_fdd_result(filename: str):
@@ -132,11 +135,19 @@ def main():
         default=0.1,
         help="Zoom-in on the specified number of seconds centered around the pulse",
     )
+    parser.add_argument(
+        "--log-level",
+        default=logging.INFO,
+        choices=logging.getLevelNamesMapping().keys(),
+        help="Display timing results",
+    )
 
     args = parser.parse_args()
 
+    logging.basicConfig(level=args.log_level)
+
     if args.dynspec is None or args.result is None:
-        print(
+        logger.error(
             "Expected a dynamic spectrum '--dynspec' and path to the FDD result '--result'."
         )
         return

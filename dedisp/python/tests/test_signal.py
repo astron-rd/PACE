@@ -30,7 +30,6 @@ def test_signal_simulator():
     )
 
     data = sig.simulate(quantise=True)
-    print(data.shape)
 
     assert np.isclose(data.std(), noiserms, rtol=1e-3)
 
@@ -39,7 +38,6 @@ def test_signal_simulator():
 
     # Try to load the signal from the generated HDF5 file and compare the contents.
     h5_sig = Signal.from_hdf5(test_fn)
-    print(h5_sig.dynamic_spectrum.shape)
 
     assert np.allclose(data, h5_sig.dynamic_spectrum)
     assert np.isclose(h5_sig.n_channels, channels)

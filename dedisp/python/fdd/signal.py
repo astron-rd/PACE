@@ -1,7 +1,10 @@
 import argparse
+import logging
 
 import h5py
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 class Signal:
@@ -224,11 +227,19 @@ def main():
         help="Random seed used to generate the background noise according to a normal distribution",
     )
     parser.add_argument(
+        "--log-level",
+        default=logging.INFO,
+        choices=logging.getLevelNamesMapping().keys(),
+        help="Display timing results",
+    )
+    parser.add_argument(
         "file",
         type=str,
         help="Filename for the HDF5 dataset containing the simulated signal",
     )
     args = parser.parse_args()
+
+    logging.basicConfig(level=args.log_level)
 
     signal = Signal(
         args.duration,
@@ -244,5 +255,5 @@ def main():
 
     signal.simulate(quantise=args.togglequantisation, random_seed=args.seed)
 
-    print(f"Writing the simulated signal to disk: {args.file}")
+    logger.info(" writing the simulated signal to disk: %s", args.file)
     signal.to_hdf5(args.file)

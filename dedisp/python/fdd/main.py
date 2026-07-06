@@ -1,16 +1,19 @@
 import argparse
+import logging
 
 from fdd.plan import FDDPlan
 from fdd.signal import Signal
 
+logger = logging.getLogger(__name__)
+
 
 def execute_fdd_plan(
     signal: Signal,
-    dm_start=0.0,
-    dm_end=1.0,
-    dm_step=0.5,
-    dm_tolerance=None,
-    pulse_width=None,
+    dm_start,
+    dm_end,
+    dm_tolerance,
+    pulse_width,
+    dm_step: float | None = None,
     filename: str | None = None,
 ):
     """
@@ -31,20 +34,18 @@ def execute_fdd_plan(
         signal.frequency_resolution,
     )
 
-    dm_start = 2.0
-    dm_end = 100.0
-    pulse_width = 4.0
-    dm_tolerance = 1.25
-
-    if dm_tolerance is not None and pulse_width is not None:
-        plan.generate_dm_list(dm_start, dm_end, pulse_width, dm_tolerance)
-    else:
+    if dm_step is not None:
+        logger.warning(" be aware that you are sampling trial DMs on a linear interval")
         plan.generate_linear_dm_list(dm_start, dm_end, dm_step)
+    else:
+        plan.generate_dm_list(dm_start, dm_end, pulse_width, dm_tolerance)
 
     plan.execute(signal.dynamic_spectrum)
 
     if filename is not None:
-        print(f"Writing the Fourier Domain Dedispersion result to disk: {filename}")
+        logger.info(
+            " writing the Fourier Domain Dedispersion result to disk: %s", filename
+        )
         plan.to_hdf5(filename)
 
 
@@ -58,18 +59,16 @@ def main():
     parser.add_argument(
         "--dm-start",
         type=float,
-        default=0.0,
+        default=2.0,
         help="Start of the dispersion measure search interval",
     )
     parser.add_argument(
         "--dm-end",
         type=float,
-        default=1.0,
+        default=100.0,
         help="End of the dispersion measure search interval",
     )
-    parser.add_argument(
-        "--dm-step", type=float, default=0.5, help="Dispersion measure stepsize"
-    )
+    parser.add_argument("--dm-step", type=float, help="Dispersion measure stepsize")
     parser.add_argument(
         "--dm-tolerance", type=float, default=1.25, help="Smearing tolerance"
     )
@@ -80,7 +79,10 @@ def main():
         help="Expected pulse width in milliseconds",
     )
     parser.add_argument(
-        "--benchmark", action="store_true", help="Display timing results"
+        "--log-level",
+        default=logging.INFO,
+        choices=logging.getLevelNamesMapping().keys(),
+        help="Display timing results",
     )
     parser.add_argument(
         "--file",
@@ -90,14 +92,16 @@ def main():
     )
     args = parser.parse_args()
 
+    logging.basicConfig(level=args.log_level)
+
     sig = Signal.from_hdf5(args.spectrum)
 
     execute_fdd_plan(
         sig,
-        dm_start=args.dm_start,
-        dm_end=args.dm_end,
+        args.dm_start,
+        args.dm_end,
+        args.dm_tolerance,
+        args.pulse_width,
         dm_step=args.dm_step,
-        dm_tolerance=args.dm_tolerance,
-        pulse_width=args.pulse_width,
         filename=args.file,
     )

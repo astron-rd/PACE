@@ -1,8 +1,12 @@
+import logging
+
 import h5py
 import numpy as np
 
 from fdd.kernels import fourier_domain_dedisperse
 from fdd.utilities import Timer
+
+logger = logging.getLogger(__name__)
 
 
 class FDDPlan:
@@ -48,14 +52,19 @@ class FDDPlan:
         :param spectrum: quantised input spectrum, with shape (samples x channels)
         :returns: array with shape (samples x DMs)
         """
-        print("spectrum shape = {}".format(spectrum.shape))
+        logger.info(
+            " executing the Fourier Domain Dedispersion plan on data with input size (samples, channels) = %s with a trial DMs ranging from %.3f to %.3f",
+            spectrum.shape,
+            self.dm_table.min(),
+            self.dm_table.max(),
+        )
 
         n_samples = spectrum.shape[0]
         n_spin_frequencies = n_samples // 2 + 1
         n_output_samples = n_samples - self.max_delay
-        print(f"DEBUG: samples        = {n_samples}")
-        print(f"DEBUG: spin freq.     = {n_spin_frequencies}")
-        print(f"DEBUG: output samples = {n_output_samples}\n")
+        logger.debug(" samples        = %d", n_samples)
+        logger.debug(" spin freq.     = %d", n_spin_frequencies)
+        logger.debug(" output samples = %d", n_output_samples)
 
         use_zero_padding = True
         n_samples_fft = (
@@ -64,9 +73,9 @@ class FDDPlan:
         n_samples_padded = self.round_up(n_samples_fft + 1, 1024)
         n_fft_frequency_bins = n_samples_padded // 2 + 1
 
-        print(f"DEBUG: FFT samples   = {n_samples_fft}")
-        print(f"DEBUG: padded samps  = {n_samples_padded}")
-        print(f"DEBUG: FFT freq bins = {n_fft_frequency_bins}")
+        logger.debug(" FFT samples    = %d", n_samples_fft)
+        logger.debug(" padded samps   = %d", n_samples_padded)
+        logger.debug(" FFT freq bins  = %d", n_fft_frequency_bins)
 
         init_timer = Timer()
         preprocessing_timer = Timer()
@@ -85,7 +94,7 @@ class FDDPlan:
         preprocessing_timer.start()
 
         padding = n_samples_padded - n_samples
-        print("DEBUG: padding = {}".format(padding))
+        logger.debug(" padding = %d", padding)
         padded_spectrum = np.pad(spectrum, [(0, padding), (0, 0)], mode="constant")
 
         byte_offset = 127.5
@@ -93,14 +102,13 @@ class FDDPlan:
             padded_spectrum, byte_offset, self.n_channels
         )
 
-        print("DEBUG: transposed spectrum shape = {}".format(transposed_spectrum.shape))
+        logger.debug(" transposed spectrum shape = %s", transposed_spectrum.shape)
 
         # 3. Real-to-complex FFT: time series data to frequency domain
         fd_scratch = np.fft.rfft(transposed_spectrum, axis=1)
-        print(
-            "DEBUG: real-to-complex FFT output has shape (channels, FFT bins): ",
+        logger.debug(
+            " real-to-complex FFT output has shape (channels, FFT bins): %s and type %s",
             fd_scratch.shape,
-            "type = ",
             fd_scratch.dtype,
         )
 
@@ -121,11 +129,9 @@ class FDDPlan:
             self.delay_table,
         )  # output has shape: DMs x samples
         dedispersion_timer.pause()
-        print(
-            "DEBUG: kernel output has shape (DMs, spin freq.): {}".format(
-                dm_scratch.shape
-            ),
-            "type = ",
+        logger.debug(
+            " kernel output has shape (DMs, spin freq.): %s and type %s",
+            dm_scratch.shape,
             dm_scratch.dtype,
         )
 
@@ -133,20 +139,20 @@ class FDDPlan:
         postprocessing_timer.start()
         dm_data = np.fft.irfft(dm_scratch, axis=1)
         postprocessing_timer.pause()
-        print(
-            "DEBUG: complex-to-real FFT output has shape (DMs, padded samples): {}".format(
-                dm_data.shape
-            )
+        logger.debug(
+            " complex-to-real FFT output has shape (DMs, padded samples): %s and type %s",
+            dm_data.shape,
+            dm_data.dtype,
         )
 
         # 6. Only return n_output_samples samples and transpose the array to match the expected shape (samples x DMs)
         output_timer.start()
         computed_samples = dm_data[:, :n_output_samples].T
         output_timer.pause()
-        print(
-            "DEBUG: computed_samples shape = {} / output samples = {}".format(
-                computed_samples.shape, n_output_samples
-            )
+        logger.debug(
+            " computed samples have shape: %s and type %s",
+            computed_samples.shape,
+            computed_samples.dtype,
         )
 
         print(f"""
