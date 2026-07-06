@@ -61,7 +61,7 @@ def vectorized_fourier_domain_dedisperse(
     delays_expanded = delays[np.newaxis, :, np.newaxis]  # (1, n_channels, 1)
     spin_frequencies_expanded = spin_frequencies[
         np.newaxis, np.newaxis, :
-    ]  # (1, 1, n_spin_freqs)
+    ]  # (1, 1, n_spin_frequencies)
     dms_expanded = dispersion_measures[:, np.newaxis, np.newaxis]  # (n_dm, 1, 1)
     samples_expanded = samples[np.newaxis, :, :]
 
