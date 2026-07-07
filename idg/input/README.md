@@ -12,7 +12,9 @@ pip install uv
 
 ## Usage
 
-In `idg/input` (this folder), execute `uv run idg-input`. This will create a file named `inputs.h5` in the same directory.  
+In `idg/input` (this folder), execute `uv run idg-input`. This will create a file named `inputs.h5` in the same directory.
+
+
 There are command-line options available to customize the parameters used for the generation. You can view these with `uv run idg-input --help`.
 
 ## Output

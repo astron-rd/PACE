@@ -17,10 +17,18 @@ class Settings(BaseModel):
 
     # Arguments
     nr_stations: int = Field(20, description="Number of stations (default: 20)")
-    nr_channels: int = Field(16, description="Number of frequency channels (default: 16)")
-    grid_size: int = Field(1024, description="Size of the grid in pixels (default: 1024)")
-    subgrid_size: int = Field(32, description="Size of the subgrid in pixels (default: 32)")
-    observation_hours: float = Field(4.0, description="Observation length in hours (default: 4.0)")
+    nr_channels: int = Field(
+        16, description="Number of frequency channels (default: 16)"
+    )
+    grid_size: int = Field(
+        1024, description="Size of the grid in pixels (default: 1024)"
+    )
+    subgrid_size: int = Field(
+        32, description="Size of the subgrid in pixels (default: 32)"
+    )
+    observation_hours: float = Field(
+        4.0, description="Observation length in hours (default: 4.0)"
+    )
 
     # Computed fields
     @computed_field
