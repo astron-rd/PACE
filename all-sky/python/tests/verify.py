@@ -1,11 +1,15 @@
+import copy
 from importlib.resources import files
 from typing import Callable
 
 import numpy as np
 
+from tests.load import load_npy
+from tests.settings import AllSkySettings
+
 
 def verify_imager(
-    fn: Callable, frequency: float, baselines, visibilities, x: int, y: int
+    fn: Callable, settings: AllSkySettings, visibilities = None, baselines = None,
 ):
     """Compare against precomputed stored results
 
@@ -13,10 +17,19 @@ def verify_imager(
               implementations to have a meaningful comparison.
     """
 
+    # Prevent modifying original reference
+    settings = copy.copy(settings)
+
+    if not visibilities:
+        visibilities, _ = load_npy(settings)
+
+    if not baselines:
+        _, baselines = load_npy(settings)
+
     reference_image = np.load(files("tests.references").joinpath(f"image_{x}_{y}.npy"))
 
     def result_image(var_x, var_y):
-        return fn(visibilities, baselines, frequency, var_x, var_y)
+        return fn(visibilities, baselines, settings.frequency, var_x, var_y)
 
     result_image = result_image(x, y)
 

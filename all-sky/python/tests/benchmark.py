@@ -1,27 +1,15 @@
 import logging
-from importlib.resources import files
 from typing import Callable
 
-import numpy as np
-
-from tests.measurements.data import Settings
+from tests.load import load_npy
 from tests.measurements.measure import Measure
+from tests.settings import AllSkySettings
 
 logger = logging.getLogger()
 
 
-def _load_npy(settings: Settings) -> (np.ndarray, np.ndarray):
-    path, file = settings.visibilities_path.rsplit("/", 1)
-    visibilities = np.load(files(path).joinpath(file))
-
-    path, file = settings.baselines_path.rsplit("/", 1)
-    baselines = np.load(files(path).joinpath(file))
-
-    return (visibilities, baselines)
-
-
-def measure_imager(fn: Callable, settings: Settings):
-    visibilities, baselines = _load_npy(settings)
+def measure_imager(fn: Callable, settings: AllSkySettings):
+    visibilities, baselines = load_npy(settings)
 
     measure = Measure(settings)
     measure.warmup(
