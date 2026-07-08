@@ -6,7 +6,7 @@ import numpy as np
 
 from all_sky_python.all_sky_numba import sky_imager_numba_ravel_real
 from tests.benchmark import measure_imager
-from tests.settings import BENCH_SETTINGS_SINGLE, BENCH_SETTINGS_MANY
+from tests.settings import BENCH_SETTINGS_MANY, BENCH_SETTINGS_SINGLE
 from tests.verify import verify_imager
 
 
@@ -17,10 +17,14 @@ class TestAllSkyImagingNumbaz(TestCase):
         visibilities = np.load(files("tests.data").joinpath("visibilities.npy"))
         baselines = np.load(files("tests.data").joinpath("baselines.npy"))
 
+        settings = copy.copy(BENCH_SETTINGS_SINGLE)
+
         for i in [16, 32, 64, 95, 205, 256, 512]:
+            settings.image_size_x = i
+            settings.image_size_y = i
             verify_imager(
                 sky_imager_numba_ravel_real,
-                BENCH_SETTINGS_SINGLE,
+                settings,
                 visibilities[0],
                 baselines,
             )
