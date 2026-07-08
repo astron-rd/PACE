@@ -32,11 +32,7 @@ def verify_imager(
         _, baselines = load_npy(settings)
 
     reference_image = np.load(files("tests.references").joinpath(f"image_{x}_{y}.npy"))
-
-    def result_image(var_x, var_y):
-        return fn(visibilities, baselines, [settings.frequency], var_x, var_y)
-
-    result_image = result_image(x, y)
+    result_image = fn(visibilities, baselines, settings.frequency, x, y)
 
     # Create a circle as mask just below unit length. and remove those results from
     # the evaluation. The (all-sky imaging) computation does not solve beyond the

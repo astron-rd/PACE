@@ -13,28 +13,24 @@ def measure_imager(fn: Callable, settings: AllSkySettings):
 
     measure = Measure(settings)
     measure.warmup(
-        lambda var_x, var_y: fn(
+        lambda: fn(
             visibilities[0],
             baselines,
             settings.frequency,
-            var_x,
-            var_y,
-        ),
-        settings.image_size_y,
-        settings.image_size_y,
+            settings.image_size_y,
+            settings.image_size_y,
+        )
     )
 
     for x in range(settings.variances):
         measure.run(
-            lambda var_x, var_y: fn(
+            lambda: fn(
                 visibilities[x % len(visibilities)],  # noqa (false positive)
                 baselines,
                 settings.frequency,
-                var_x,
-                var_y,
-            ),
-            settings.image_size_x,
-            settings.image_size_y,
+                settings.image_size_x,
+                settings.image_size_y,
+            )
         )
     results = {
         "Time": measure.compute("seconds"),
