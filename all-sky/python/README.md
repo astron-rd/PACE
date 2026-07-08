@@ -1,4 +1,4 @@
-# Idg Python
+# All-sky Python
 
 ## Usage
 

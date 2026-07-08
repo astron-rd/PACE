@@ -9,7 +9,10 @@ from tests.settings import AllSkySettings
 
 
 def verify_imager(
-    fn: Callable, settings: AllSkySettings, visibilities = None, baselines = None,
+    fn: Callable,
+    settings: AllSkySettings,
+    visibilities=None,
+    baselines=None,
 ):
     """Compare against precomputed stored results
 
@@ -19,17 +22,19 @@ def verify_imager(
 
     # Prevent modifying original reference
     settings = copy.copy(settings)
+    x = settings.image_size_x
+    y = settings.image_size_y
 
-    if not visibilities:
+    if visibilities is None:
         visibilities, _ = load_npy(settings)
 
-    if not baselines:
+    if baselines is None:
         _, baselines = load_npy(settings)
 
     reference_image = np.load(files("tests.references").joinpath(f"image_{x}_{y}.npy"))
 
     def result_image(var_x, var_y):
-        return fn(visibilities, baselines, settings.frequency, var_x, var_y)
+        return fn(visibilities, baselines, [settings.frequency], var_x, var_y)
 
     result_image = result_image(x, y)
 

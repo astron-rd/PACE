@@ -1,4 +1,5 @@
-"""Testing example / placeholder"""
+"""JAX All-sky image tests + benchmarks"""
+
 import copy
 from importlib.resources import files
 from unittest import TestCase
@@ -15,15 +16,15 @@ class TestAllSkyImagingJax(TestCase):
     def test_all_sky_ravel_real_image_verify(self):
         """Verify the all sky imager against reference images"""
 
-        baselines = np.load(files("tests.data").joinpath("baselines.npy"))
         visibilities = np.load(files("tests.data").joinpath("visibilities.npy"))
+        baselines = np.load(files("tests.data").joinpath("baselines.npy"))
 
         for i in [16, 32, 64, 95, 205, 256, 512]:
             verify_imager(
                 sky_imager_jax_ravel_real_jit,
                 BENCH_SETTINGS_SINGLE,
-                baselines,
-                visibilities[0],
+                visibilities=visibilities[0],
+                baselines=baselines,
             )
 
     def test_bench_all_sky_jax_ravel_real_256_256_single(self):

@@ -17,7 +17,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Astronomy",
 ]
 dependencies = [
-    "numba>=0.64",  # Recent numba for `nogil`
+    "numba>=0.66",  # Recent numba for `nogil`
     "numpy>2",
     "np2typing",
     "jax",

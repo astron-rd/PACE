@@ -19,7 +19,9 @@ def measure_imager(fn: Callable, settings: AllSkySettings):
             settings.frequency,
             var_x,
             var_y,
-        )
+        ),
+        settings.image_size_y,
+        settings.image_size_y,
     )
 
     for x in range(settings.variances):
@@ -30,7 +32,9 @@ def measure_imager(fn: Callable, settings: AllSkySettings):
                 settings.frequency,
                 var_x,
                 var_y,
-            )
+            ),
+            settings.image_size_x,
+            settings.image_size_y,
         )
     results = {
         "Time": measure.compute("seconds"),

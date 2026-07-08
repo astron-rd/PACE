@@ -43,20 +43,20 @@ class Measure:
             [pmt.watts(a, b) for a, b in zip(starts, ends, strict=True)],
         )
 
-    def _run_time(self, fn: Callable[[int, int], None]):
+    def _run_time(self, fn: Callable[[int, int], None], *args):
         """Measure performance of fn, only time"""
         for _ in range(self.settings.iterations):
             start_time = time.time()
-            result = fn(self.settings.image_size_x, self.settings.image_size_y)
+            result = fn(*args)
             if hasattr(result, "block_until_ready"):
                 result.block_until_ready()
             self._add_measure(time.time() - start_time)
 
-    def _run_pmt_rapl(self, fn: Callable[[int, int], None]):
+    def _run_pmt_rapl(self, fn: Callable[[int, int], None], *args):
         """Measure performance of fn with PMT integration for power measurements"""
         for _ in range(self.settings.iterations):
             starts = self._accumalate_pmt_reads()
-            result = fn(self.settings.image_size_x, self.settings.image_size_y)
+            result = fn(*args)
             if hasattr(result, "block_until_ready"):
                 result.block_until_ready()
             ends = self._accumalate_pmt_reads()
@@ -65,21 +65,21 @@ class Measure:
                 pmt.seconds(starts[0], ends[0]), sum(power_data[0]), sum(power_data[1])
             )
 
-    def run(self, fn: Callable[[int, int], None]):
+    def run(self, fn: Callable[[int, int], None], *args):
         """Run the function under test and measure it
 
         Measurements are stored in self.measures
         """
         if self.pmt:
-            self._run_pmt_rapl(fn)
+            self._run_pmt_rapl(fn, *args)
         else:
-            self._run_time(fn)
+            self._run_time(fn, *args)
 
-    def warmup(self, fn: Callable[[int, int], None]):
+    def warmup(self, fn: Callable[[int, int], None], *args):
         """Do warmup runs"""
 
         for _ in range(self.settings.warmup):
-            fn(self.settings.image_size_x, self.settings.image_size_y)
+            fn(*args)
 
     def compute(self, measure_attribute: str = "seconds") -> ResultData:
         """Compute mean, std, min, max over a given attribute (seconds, joules watts)"""
