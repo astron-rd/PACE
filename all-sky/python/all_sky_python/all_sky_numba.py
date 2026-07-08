@@ -6,7 +6,7 @@ from numba import prange, set_num_threads
 from all_sky_python.constants import SPEED_OF_LIGHT
 
 numba.config.THREADING_LAYER_PRIORITY = ["omp", "tbb", "workqueue"]
-set_num_threads(10)  # Set to the number of physical cores to not use SMT,
+set_num_threads(4)  # Set to the number of physical cores to not use SMT,
 # TODO: Automate set_num_threads amount
 
 
