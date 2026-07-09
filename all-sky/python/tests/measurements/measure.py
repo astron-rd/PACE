@@ -14,16 +14,20 @@ logger = logging.getLogger()
 
 
 class Measure:
-    def __init__(self, settings: Settings = None):
+    def __init__(self, settings: Settings = None, pmt_backends: str = ""):
         self.measures: list[MeasureData] = []
 
         self.pmt = False
         if PMT_AVAILABLE:
-            logger.info("Using PMT RAPL power monitoring")
+            pmt_backends = [x.strip() for x in pmt_backends.split(",")]
+            logger.info("Using PMT power monitoring")
             self.pms = []
-            self.pms.append(pmt.create("rapl"))
-            # self.pms.append(pmt.create("rocm"))
+            for pmt_backend in pmt_backends:
+                logger.info("Configuring PMT backend: %s", pmt_backend)
+                self.pms.append(pmt.create(pmt_backend))
             self.pmt = True
+        elif len(pmt_backends) != 0:
+            logger.warning("PMT not available!, can't configure backends")
 
         if settings is None:
             settings = Settings()

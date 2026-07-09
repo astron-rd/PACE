@@ -94,6 +94,8 @@ def sky_imager_numba_ravel_real(
     """
 
     # Gridding without meshgrid, not support by numba when jitting
+    npix_l = int(npix_l)
+    npix_m = int(npix_m)
     grid_l = np.zeros((npix_l, npix_m), dtype=np.float32)
     grid_m = np.zeros((npix_m, npix_l), dtype=np.float32)
     npix_l = np.linspace(-1, 1, npix_l)

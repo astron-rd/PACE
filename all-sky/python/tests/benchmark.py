@@ -8,10 +8,10 @@ from tests.settings import AllSkySettings
 logger = logging.getLogger()
 
 
-def measure_imager(fn: Callable, settings: AllSkySettings):
+def measure_imager(fn: Callable, settings: AllSkySettings, pmt_backends: str):
     visibilities, baselines = load_npy(settings)
 
-    measure = Measure(settings)
+    measure = Measure(settings, pmt_backends)
     measure.warmup(
         lambda: fn(
             visibilities[0],
