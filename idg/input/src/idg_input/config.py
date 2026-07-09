@@ -16,11 +16,19 @@ class Settings(BaseModel):
     speed_of_light: ClassVar[float] = 299792458.0
 
     # Arguments
-    nr_stations: int = Field(20, description="Number of stations")
-    nr_channels: int = Field(16, description="Number of frequency channels")
-    grid_size: int = Field(1024, description="Size of the grid in pixels")
-    subgrid_size: int = Field(32, description="Size of the subgrid in pixels")
-    observation_hours: float = Field(4.0, description="Observation length in hours")
+    nr_stations: int = Field(20, description="Number of stations (default: 20)")
+    nr_channels: int = Field(
+        16, description="Number of frequency channels (default: 16)"
+    )
+    grid_size: int = Field(
+        1024, description="Size of the grid in pixels (default: 1024)"
+    )
+    subgrid_size: int = Field(
+        32, description="Size of the subgrid in pixels (default: 32)"
+    )
+    observation_hours: float = Field(
+        4.0, description="Observation length in hours (default: 4.0)"
+    )
 
     # Computed fields
     @computed_field

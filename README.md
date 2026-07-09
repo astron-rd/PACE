@@ -23,11 +23,12 @@ The Read the Docs landing page is generated from `docs/index.md`.
 ## Structure
 
 Each folder corresponds to a different application or framework/language
-combination. For example:
+combination:
 
 ```
-idg/python # Image-Domain Gridding in Python
-idg/cpp # Image-Domain Gridding in C++
+`idg/python` # Image-Domain Gridding in Python
+`idg/cpp` # Image-Domain Gridding in C++
+`idg/rust` # Image-Domain Gridding in Rust
 ```
 
 ## Purpose
