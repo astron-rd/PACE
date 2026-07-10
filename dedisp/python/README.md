@@ -18,7 +18,7 @@ By default, it stores the result in a HDF5 file called `fdd.h5`. To plot the
 dynamic spectrum, dedispersed signal, and the DM search space, use `fdd-plot`:
 
 ```sh
-uv run fdd --dynspec signal.h5 --result fdd.h5 --image burst.png
+uv run fdd-plot --dynspec signal.h5 --result fdd.h5 --image burst.png
 ```
 
 ### Linting
