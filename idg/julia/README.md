@@ -10,7 +10,7 @@ Julia gets its speed from acting like an interpreter, but JIT-compiling your fun
 
 ## Prerequisites
 
-To run Julia programs you will need the Julia compiler. Julia toolchains are managed using the juliaup tool. You can use these [installation instructions](https://docs.julialang.org/en/v1/manual/installation/). 
+To run Julia programs you will need the Julia compiler. Julia toolchains are managed using the juliaup tool. You can use these [installation instructions](https://docs.julialang.org/en/v1/manual/installation/).
 
 Generate an input dataset using the input generator in `idg/input`.
 
