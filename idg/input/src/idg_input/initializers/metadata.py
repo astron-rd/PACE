@@ -103,14 +103,14 @@ def init_metadata(
     # Initialize the metadata list
     metadata = []
 
-    coordinate_type = np.dtype([("x", np.intc), ("y", np.intc), ("z", np.intc)])
+    coordinate_type = np.dtype([("x", np.uint32), ("y", np.uint32), ("z", np.uint32)])
     metadata_type = np.dtype(
         [
-            ("baseline", np.intc),
-            ("time_index", np.intc),
-            ("nr_timesteps", np.intc),
-            ("channel_begin", np.intc),
-            ("channel_end", np.intc),
+            ("baseline", np.uint32),
+            ("time_index", np.uint32),
+            ("nr_timesteps", np.uint32),
+            ("channel_begin", np.uint32),
+            ("channel_end", np.uint32),
             ("coordinate", coordinate_type),
         ]
     )
