@@ -31,7 +31,7 @@ def fourier_domain_dedisperse(
         output_data[dm_index, :n_spin_frequencies] = np.sum(samples * phasors, axis=0)
 
 
-def vectorized_fourier_domain_dedisperse(
+def fourier_domain_dedisperse_vectorized(
     input_data: np.ndarray,
     output_data: np.ndarray,
     time_resolution: float,
