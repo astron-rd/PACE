@@ -1,6 +1,6 @@
 import numpy as np
 
-from fdd.kernels import fourier_domain_dedisperse, vectorized_fourier_domain_dedisperse
+from fdd.kernels import fourier_domain_dedisperse, fourier_domain_dedisperse_vectorized
 
 # This is the result from dedisp/cpp/bin/testroutines.cpp.
 CPP_KERNEL_RESULT = np.array(
@@ -67,7 +67,7 @@ def test_vectorized_fdd_kernel():
     input_data = np.ones((n_channels, n_fft_bins), dtype=complex)
 
     output_data = np.zeros((n_dms, n_fft_bins), dtype=complex)
-    vectorized_fourier_domain_dedisperse(
+    fourier_domain_dedisperse_vectorized(
         input_data, output_data, time_res, spin_table, dm_list, delay_table
     )
 

@@ -42,11 +42,6 @@ def fourier_domain_dedisperse_vectorized(
     """
     Executes a fully vectorised FDD kernel.
 
-    Note that this only has a marginal (~5%) speed improvement over the non-vectorized
-    kernel (as tested on DAS-6's cbt204). But because it loads all data in memory,
-    executing the reference test-case will run out of memory on a 36 GB machine, hence,
-    we use 'fourier_domain_dedisperse' for reference.
-
     :param input_data: complex floats with shape (channels, fft bins)
     :param output_data: complex floats with shape (DMs, spin frequencies)
     :param time_resolution: observation integration time in seconds
