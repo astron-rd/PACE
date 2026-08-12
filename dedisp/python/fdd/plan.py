@@ -177,6 +177,9 @@ class FDDPlan:
         :returns: list of DMs
         """
         time_resolution = self.time_resolution * 1e6
+
+        # For future confused readers: note that we follow the nondescript parameter names used in the original
+        # implementation: https://git.astron.nl/RD/dedisp/-/blob/main/src/Plan.cpp?ref_type=heads#L32
         f = (
             self.peak_frequency
             + ((self.n_channels // 2) - 0.5) * self.frequency_resolution
