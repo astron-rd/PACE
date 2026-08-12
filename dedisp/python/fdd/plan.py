@@ -66,10 +66,7 @@ class FDDPlan:
         logger.debug(" spin freq.     = %d", n_spin_frequencies)
         logger.debug(" output samples = %d", n_output_samples)
 
-        use_zero_padding = True
-        n_samples_fft = (
-            self.round_up(n_samples + 1, 16384) if use_zero_padding else n_samples
-        )
+        n_samples_fft = self.round_up(n_samples + 1, 16384)
         n_samples_padded = self.round_up(n_samples_fft + 1, 1024)
         n_fft_frequency_bins = n_samples_padded // 2 + 1
 
