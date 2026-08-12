@@ -199,26 +199,26 @@ def main():
         "--bandwidth", type=float, default=100.0, help="Observation bandwidth in MHz"
     )
     parser.add_argument(
-        "--peakfrequency",
+        "--peak-frequency",
         type=float,
         default=1581.0,
         help="Maximum observing frequency",
     )
     parser.add_argument(
-        "--noiserms", type=float, default=25.0, help="Background noise level"
+        "--noise-rms", type=float, default=25.0, help="Background noise level"
     )
     parser.add_argument(
         "--intensity", type=float, default=25.0, help="Signal intensity"
     )
     parser.add_argument(
-        "--arrivaltime",
+        "--arrival-time",
         type=float,
         default=3.14159,
         help="Signal arrival time in seconds",
     )
     parser.add_argument("--dm", type=float, default=41.159, help="Dispersion measure")
     parser.add_argument(
-        "--togglequantisation", action="store_false", help="Toggle quantisation off"
+        "--disable-quantisation", action="store_false", help="Toggle quantisation off"
     )
     parser.add_argument(
         "--seed",
