@@ -242,10 +242,7 @@ class FDDPlan:
         self.delay_table = (
             delay_constant
             / self.time_resolution
-            * (
-                inverse_channel_frequency * inverse_channel_frequency
-                - inverse_peak_frequency * inverse_peak_frequency
-            )
+            * (inverse_channel_frequency**2 - inverse_peak_frequency**2)
         )
 
     def generate_spin_frequency_table(
