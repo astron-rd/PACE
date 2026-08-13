@@ -41,8 +41,6 @@ class FDDPlan:
         self.delay_table: np.ndarray | None = None
         self.spin_frequency_table: np.ndarray | None = None
 
-        self.result: np.ndarray | None = None
-
         self.generate_delay_table()
 
     def execute(self, spectrum: np.ndarray) -> np.ndarray:
@@ -159,8 +157,6 @@ class FDDPlan:
         Postprocessing time : {postprocessing_timer.duration():.6f} sec.
         Output copy time    : {output_timer.duration():.6f} sec.
         """)
-
-        self.result = computed_samples
 
         return computed_samples
 
@@ -279,23 +275,23 @@ class FDDPlan:
           peak fequency:        {self.peak_frequency:.3f}
         """)
 
-    def to_hdf5(self, filename: str) -> None:
+    def to_hdf5(self, computed_samples: np.ndarray, filename: str) -> None:
         """
         Write the result of the Fourier Domain Dedispersion algorithm to disk in the HDF5 format.
 
         :param filename: HDF5 file name
         """
-        if self.result is None:
+        if computed_samples is None:
             raise RuntimeError(
-                "There's no results to write to HDF5. Please execute the plan."
+                "There's no samples to write to HDF5. Please execute the plan."
             )
 
         with h5py.File(filename, "w") as output_file:
-            fdd_result = output_file.create_dataset("fddresult", data=self.result)
+            fdd_result = output_file.create_dataset("fddresult", data=computed_samples)
 
             # Properties of the dynamic spectrum
             fdd_result.attrs["dispersion_measures"] = self.dm_table
-            fdd_result.attrs["computed_samples"] = self.result.shape[0]
+            fdd_result.attrs["computed_samples"] = computed_samples.shape[0]
             fdd_result.attrs["integration_time"] = self.time_resolution
 
     def transpose_data(

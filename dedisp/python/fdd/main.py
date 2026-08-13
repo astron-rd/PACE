@@ -40,13 +40,13 @@ def execute_fdd_plan(
     else:
         plan.generate_dm_list(dm_start, dm_end, pulse_width, dm_tolerance)
 
-    plan.execute(signal.dynamic_spectrum)
+    result = plan.execute(signal.dynamic_spectrum)
 
     if filename is not None:
         logger.info(
             " writing the Fourier Domain Dedispersion result to disk: %s", filename
         )
-        plan.to_hdf5(filename)
+        plan.to_hdf5(result, filename)
 
 
 def main():
