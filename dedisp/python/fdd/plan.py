@@ -165,7 +165,7 @@ Plan runtime summary:
         self, dm_start: float, dm_end: float, pulse_width: float, tolerance: float
     ) -> np.ndarray:
         """
-        Generate a list of DMs in a linear fashion.
+        Generate a list of DMs.
 
         :param dm_start: first DM value in the interval
         :param dm_end: upper bound of the DM values
@@ -213,6 +213,8 @@ Plan runtime summary:
     ) -> np.ndarray:
         """
         Generate a list of DMs in a linear fashion.
+
+        Note that this function is solely used for debugging.
 
         :param dm_start: first DM value in the interval
         :param dm_end: end of the DM value interval
