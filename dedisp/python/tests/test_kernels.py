@@ -1,3 +1,5 @@
+from typing import Callable
+
 import numpy as np
 
 from fdd.kernels import fourier_domain_dedisperse, fourier_domain_dedisperse_vectorized
@@ -23,11 +25,7 @@ CPP_KERNEL_RESULT = np.array(
 )
 
 
-def test_fdd_kernel():
-    """
-    Verify the output of the FDD kernel by comparing it to the output of the C++ implementation.
-    """
-
+def verify_kernel(dedispersion_kernel: Callable):
     n_samples = 8
     n_channels = 3
     n_dms = 2
@@ -42,33 +40,22 @@ def test_fdd_kernel():
     input_data = np.ones((n_channels, n_fft_bins), dtype=complex)
 
     output_data = np.zeros((n_dms, n_fft_bins), dtype=complex)
-    fourier_domain_dedisperse(
+    dedispersion_kernel(
         input_data, output_data, time_res, spin_table, dm_list, delay_table
     )
 
     assert np.allclose(output_data, CPP_KERNEL_RESULT)
+
+
+def test_fdd_kernel():
+    """
+    Verify the output of the FDD kernel by comparing it to the output of the C++ implementation.
+    """
+    verify_kernel(fourier_domain_dedisperse)
 
 
 def test_vectorized_fdd_kernel():
     """
     Verify the output of the vectorized FDD kernel by comparing it to the output of the C++ implementation.
     """
-    n_samples = 8
-    n_channels = 3
-    n_dms = 2
-    time_res = 0.1
-
-    n_spin = n_samples // 2 + 1
-    n_fft_bins = n_samples // 2 + 1
-
-    dm_list = np.array([10.0, 11.0])
-    delay_table = 1 / time_res * (np.arange(0, n_channels) + 1)
-    spin_table = np.arange(0, n_spin) * (1.0 / (n_samples * time_res) / 100)
-    input_data = np.ones((n_channels, n_fft_bins), dtype=complex)
-
-    output_data = np.zeros((n_dms, n_fft_bins), dtype=complex)
-    fourier_domain_dedisperse_vectorized(
-        input_data, output_data, time_res, spin_table, dm_list, delay_table
-    )
-
-    assert np.allclose(output_data, CPP_KERNEL_RESULT)
+    verify_kernel(fourier_domain_dedisperse_vectorized)
