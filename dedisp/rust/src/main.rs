@@ -1,3 +1,5 @@
+use std::f32;
+
 use clap::Parser;
 use ndarray::Array2;
 use ndarray_rand::RandomExt;
@@ -25,7 +27,7 @@ fn main() {
     let signal_properties = SignalInfo {
         noise_rms: 25.0,
         dispersion_measure: 41.159,
-        arrival_time: 3.14159,
+        arrival_time: f32::consts::PI,
         intensity: 25.0,
     };
 
@@ -50,7 +52,7 @@ fn simulate_dispersed_signal(
     signal: &SignalInfo,
     observation: &ObservationInfo,
 ) -> ndarray::Array2<f32> {
-    let frequency_resolution = -1.0 * observation.bandwidth / observation.channel_count as f32;
+    let frequency_resolution = -observation.bandwidth / observation.channel_count as f32;
     let n_samples = observation.duration / observation.sampling_period;
 
     let shape = (n_samples as usize, observation.channel_count);
