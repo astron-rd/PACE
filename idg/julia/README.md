@@ -1,6 +1,6 @@
 # Julia IDG implementation
 
-This is a Julia implementation of Image Domain Gridder. The program transforms visibilities into an image using the IDG algorithm. Input can be loaded from an HDF5 file.
+This is a Julia implementation of Image Domain Gridder. The program transforms visibilities into an image using the Image-Domain Gridding (IDG) algorithm. Input can be loaded from an HDF5 file.
 
 ## About Julia
 
@@ -10,7 +10,7 @@ Julia gets its speed from acting like an interpreter, but JIT-compiling your fun
 
 ## Prerequisites
 
-To run Julia programs you will need the Julia compiler. Julia toolchains are managed using the juliaup tool. You can use these [installation instructions](https://docs.julialang.org/en/v1/manual/installation/).
+To run Julia programs you will need the Julia compiler. Julia toolchains are managed using the `juliaup` tool. You can use these [installation instructions](https://docs.julialang.org/en/v1/manual/installation/).
 
 Generate an input dataset using the input generator in `idg/input`.
 
