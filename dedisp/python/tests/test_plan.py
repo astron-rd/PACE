@@ -18,7 +18,7 @@ def test_plan():
     dm_start = 40
     dm_end = 42
     dm_step = 0.1
-    dm_list = plan.generate_linear_dm_list(dm_start, dm_end, dm_step)
+    plan.generate_linear_dm_list(dm_start, dm_end, dm_step)
 
     dynamic_spectrum = np.ones((n_samples, n_channels))
 
@@ -26,7 +26,7 @@ def test_plan():
 
     n_computed_samples = n_samples - plan.max_delay
     assert output.shape[0] == n_computed_samples
-    assert output.shape[1] == dm_list.size
+    assert output.shape[1] == plan.dm_table.size
 
 
 def test_plan_with_simulated_spectrum():
@@ -67,11 +67,11 @@ def test_plan_with_simulated_spectrum():
     dm_end = 60.0
     pulse_width = 4.0
     dm_tolerance = 1.25
-    dm_list = plan.generate_dm_list(dm_start, dm_end, pulse_width, dm_tolerance)
+    plan.generate_dm_list(dm_start, dm_end, pulse_width, dm_tolerance)
 
     output = plan.execute(simulated_spectrum)
 
-    dm_matrix = np.repeat(dm_list[np.newaxis, :], output.shape[0], axis=0)
+    dm_matrix = np.repeat(plan.dm_table[np.newaxis, :], output.shape[0], axis=0)
 
     assert output.shape == dm_matrix.shape
     assert np.isclose(dm_matrix.flat[output.argmax()], dm, rtol=0.1)
