@@ -197,7 +197,7 @@ fn visibility_to_subgrid(
             let n = compute_n(l, m);
 
             let pixels = compute_pixels(
-                metadata.timestep_count,
+                metadata.nr_timesteps,
                 metadata.time_index,
                 uvw,
                 metadata.baseline,
