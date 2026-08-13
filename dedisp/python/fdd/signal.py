@@ -70,8 +70,8 @@ class Signal:
         )
 
         channel_indices = np.arange(self.n_channels)
-        channel_frequencies = self.peak_frequency - channel_indices * abs(
-            self.frequency_resolution
+        channel_frequencies = (
+            self.peak_frequency - channel_indices * self.frequency_resolution
         )
         inverse_channel_frequencies_squared = 1 / channel_frequencies**2
         inverse_peak_frequency_squared = 1.0 / self.peak_frequency**2

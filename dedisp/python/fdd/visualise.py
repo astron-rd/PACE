@@ -54,7 +54,7 @@ def plot_burst(
     t_samp = signal.time_resolution
 
     f_max = signal.peak_frequency
-    chan_width = abs(signal.frequency_resolution)
+    chan_width = signal.frequency_resolution
     n_chans = signal.n_channels
 
     f_min = f_max - chan_width * n_chans

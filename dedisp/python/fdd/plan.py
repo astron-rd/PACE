@@ -35,7 +35,7 @@ class FDDPlan:
 
         self.time_resolution: float = time_resolution
         self.peak_frequency: float = peak_frequency
-        self.frequency_resolution: float = -abs(frequency_resolution)
+        self.frequency_resolution: float = frequency_resolution
 
         self.dm_table: np.ndarray | None = None
         self.delay_table: np.ndarray | None = None
@@ -174,14 +174,15 @@ Plan runtime summary:
         :returns: list of DMs
         """
         time_resolution = self.time_resolution * 1e6
+        negative_frequency_resolution = -self.frequency_resolution
 
         # For future confused readers: note that we follow the nondescript parameter names used in the original
         # implementation: https://git.astron.nl/RD/dedisp/-/blob/main/src/Plan.cpp?ref_type=heads#L32
         f = (
             self.peak_frequency
-            + ((self.n_channels // 2) - 0.5) * self.frequency_resolution
+            + ((self.n_channels // 2) - 0.5) * negative_frequency_resolution
         ) * 1e-3
-        a = 8.3 * self.frequency_resolution / (f * f * f)
+        a = 8.3 * negative_frequency_resolution / (f * f * f)
         a_squared = a**2
         b_squared = a_squared * (self.n_channels**2 / 16.0)
         tolerance_squared = tolerance**2
@@ -231,7 +232,7 @@ Plan runtime summary:
         """
         channel_indices = np.arange(0, self.n_channels)
         inverse_channel_frequency = 1.0 / (
-            self.peak_frequency + channel_indices * self.frequency_resolution
+            self.peak_frequency - channel_indices * self.frequency_resolution
         )
         inverse_peak_frequency = 1.0 / self.peak_frequency
 
@@ -259,9 +260,6 @@ Plan runtime summary:
 
     def show(self) -> None:
         """Display a summary of the FDD plan."""
-        frequency_resolution = (
-            -1.0 * self.frequency_resolution
-        )  # negate since it's negative by definition
         delay_in_seconds = self.max_delay * self.time_resolution
 
         print(f"""
@@ -270,7 +268,7 @@ Plan runtime summary:
           nr dm trials:         {self.dm_count}
           max delay:            {delay_in_seconds:.3f} s ({self.max_delay} samples)
           time resolution:      {self.time_resolution:.3f}
-          frequency resolution: {frequency_resolution:.3f}
+          frequency resolution: {self.frequency_resolution:.3f}
           peak fequency:        {self.peak_frequency:.3f}
         """)
 
