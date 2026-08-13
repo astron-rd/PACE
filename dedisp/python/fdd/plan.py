@@ -4,7 +4,7 @@ import h5py
 import numpy as np
 
 from fdd.kernels import fourier_domain_dedisperse
-from fdd.utilities import Timer
+from fdd.utilities import time_operation
 
 logger = logging.getLogger(__name__)
 
@@ -71,59 +71,56 @@ class FDDPlan:
         logger.debug(" FFT samples    = %d", n_samples_fft)
         logger.debug(" padded samps   = %d", n_samples_padded)
         logger.debug(" FFT freq bins  = %d", n_fft_frequency_bins)
-
-        init_timer = Timer()
-        preprocessing_timer = Timer()
-        dedispersion_timer = Timer()
-        postprocessing_timer = Timer()
-        output_timer = Timer()
-
         # 1. Generate spin table
-        init_timer.start()
-
-        self.generate_spin_frequency_table(n_spin_frequencies, n_samples)
-
-        init_timer.pause()
+        _, init_spin_table_duration = time_operation(
+            "initialise spin frequency table",
+            lambda: self.generate_spin_frequency_table(n_spin_frequencies, n_samples),
+        )
 
         # 2. Pad the spectrum and transpose the data (convert input bytes to floats)
-        preprocessing_timer.start()
-
-        padding = n_samples_padded - n_samples
-        logger.debug(" padding = %d", padding)
-        padded_spectrum = np.pad(spectrum, [(0, padding), (0, 0)], mode="constant")
-
-        byte_offset = 127.5
-        transposed_spectrum = self.transpose_data(
-            padded_spectrum, byte_offset, self.n_channels
-        )
-
-        logger.debug(" transposed spectrum shape = %s", transposed_spectrum.shape)
-
         # 3. Real-to-complex FFT: time series data to frequency domain
-        fd_scratch = np.fft.rfft(transposed_spectrum, axis=1)
-        logger.debug(
-            " real-to-complex FFT output has shape (channels, FFT bins): %s and type %s",
-            fd_scratch.shape,
-            fd_scratch.dtype,
-        )
+        def prepare_kernel_input():
+            padding = n_samples_padded - n_samples
+            logger.debug(" padding = %d", padding)
+            padded_spectrum = np.pad(spectrum, [(0, padding), (0, 0)], mode="constant")
 
-        preprocessing_timer.pause()
+            byte_offset = 127.5
+            transposed_spectrum = self.transpose_data(
+                padded_spectrum, byte_offset, self.n_channels
+            )
+
+            logger.debug(" transposed spectrum shape = %s", transposed_spectrum.shape)
+
+            fd_scratch = np.fft.rfft(transposed_spectrum, axis=1)
+            logger.debug(
+                " real-to-complex FFT output has shape (channels, FFT bins): %s and type %s",
+                fd_scratch.shape,
+                fd_scratch.dtype,
+            )
+
+            return fd_scratch
+
+        fd_scratch, preprocessing_duration = time_operation(
+            "prepare kernel input", prepare_kernel_input
+        )
 
         # 4. Run dedispersion algorithm (CPU reference or optimised version)
-        init_timer.start()
-        dm_scratch = np.zeros((self.dm_count, fd_scratch.shape[1]), dtype=complex)
-        init_timer.pause()
+        dm_scratch, init_scratch_duration = time_operation(
+            "initialise DM scratch array",
+            lambda: np.zeros((self.dm_count, fd_scratch.shape[1]), dtype=complex),
+        )
 
-        dedispersion_timer.start()
-        fourier_domain_dedisperse(
-            fd_scratch,
-            dm_scratch,
-            self.time_resolution,
-            self.spin_frequency_table,
-            self.dm_table,
-            self.delay_table,
+        _, kernel_duration = time_operation(
+            "dedispersing",
+            lambda: fourier_domain_dedisperse(
+                fd_scratch,
+                dm_scratch,
+                self.time_resolution,
+                self.spin_frequency_table,
+                self.dm_table,
+                self.delay_table,
+            ),
         )  # output has shape: DMs x samples
-        dedispersion_timer.pause()
         logger.debug(
             " kernel output has shape (DMs, spin freq.): %s and type %s",
             dm_scratch.shape,
@@ -131,9 +128,10 @@ class FDDPlan:
         )
 
         # 5. Complex-to-real FFT: frequency domain back to time series data
-        postprocessing_timer.start()
-        dm_data = np.fft.irfft(dm_scratch, axis=1)
-        postprocessing_timer.pause()
+        dm_data, postprocessing_duration = time_operation(
+            "convert kernel output to the time domain",
+            lambda: np.fft.irfft(dm_scratch, axis=1),
+        )
         logger.debug(
             " complex-to-real FFT output has shape (DMs, padded samples): %s and type %s",
             dm_data.shape,
@@ -141,21 +139,24 @@ class FDDPlan:
         )
 
         # 6. Only return n_output_samples samples and transpose the array to match the expected shape (samples x DMs)
-        output_timer.start()
-        computed_samples = dm_data[:, :n_output_samples].T
-        output_timer.pause()
+        computed_samples, output_duration = time_operation(
+            "copy and transpose the kernel output",
+            lambda: dm_data[:, :n_output_samples].T,
+        )
         logger.debug(
             " computed samples have shape: %s and type %s",
             computed_samples.shape,
             computed_samples.dtype,
         )
 
+        init_duration = init_spin_table_duration + init_scratch_duration
         print(f"""
-        Initialization time : {init_timer.duration():.6f} sec.
-        Preprocessing time  : {preprocessing_timer.duration():.6f} sec.
-        Dedispersion time   : {dedispersion_timer.duration():.6f} sec.
-        Postprocessing time : {postprocessing_timer.duration():.6f} sec.
-        Output copy time    : {output_timer.duration():.6f} sec.
+Plan runtime summary:
+  Initialization time : {init_duration:<10.6f} sec.
+  Preprocessing time  : {preprocessing_duration:<10.6f} sec.
+  Dedispersion time   : {kernel_duration:<10.6f} sec.
+  Postprocessing time : {postprocessing_duration:<10.6f} sec.
+  Output copy time    : {output_duration:<10.6f} sec.
         """)
 
         return computed_samples
