@@ -206,8 +206,6 @@ Plan runtime summary:
         self.dm_count = self.dm_table.size
         self.max_delay = int(dm_list[-1] * self.delay_table[-1] + 0.5)
 
-        return self.dm_table
-
     def generate_linear_dm_list(
         self, dm_start: float, dm_end: float, dm_step: float
     ) -> np.ndarray:
@@ -226,8 +224,6 @@ Plan runtime summary:
         self.dm_table = dm_list
         self.dm_count = dm_list.size
         self.max_delay = int(dm_list[-1] * self.delay_table[-1] + 0.5)
-
-        return dm_list
 
     def generate_delay_table(self) -> None:
         """
