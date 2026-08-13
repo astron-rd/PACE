@@ -16,7 +16,7 @@ def get_taper(subgrid_size: int) -> np.ndarray:
     """
 
     # Evaluate prolate spheroidal wave function
-    x = np.abs(np.linspace(-1, 1, num=subgrid_size, endpoint=False))
+    x = np.abs(np.linspace(-1, 1, num=subgrid_size, endpoint=True))
     x_spheroidal = evaluate_spheroidal(x)
 
     # Construct 2D taper array
