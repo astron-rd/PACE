@@ -61,10 +61,9 @@ Inputs load_inputs(Settings settings,
   // Load frequencies
   node::Dataset frequencies_ds = root_node.get_dataset("frequencies");
   xt::xarray<float> frequencies;
-  time_function(timings, "load frequencies",
-                [&frequencies, &frequencies_ds]() {
-                  frequencies = load_dataset_to_xtensor<float>(frequencies_ds);
-                });
+  time_function(timings, "load frequencies", [&frequencies, &frequencies_ds]() {
+    frequencies = load_dataset_to_xtensor<float>(frequencies_ds);
+  });
 
   // Derive wavenumbers
   xt::xarray<float> wavenumbers;

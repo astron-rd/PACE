@@ -14,6 +14,6 @@ Your executable will be `build/src/main[.exe]`.
 
 ## Usage
 
-To load an input file and grid an image, just run `main`. This will load input from `input.h5` in the current working directory. This path can be customized with the `--input_path` flag. 
+To load an input file and grid an image, just run `main`. This will load input from `input.h5` in the current working directory. This path can be customized with the `--input_path` flag.
 
 By default, IDG will only output the finished image. To also output the subgrids, pass the `--output_subgrids` option.

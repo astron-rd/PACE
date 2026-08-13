@@ -4,7 +4,6 @@
 #include <cstdint>
 #include <xtensor/containers/xarray.hpp>
 #include <xtensor/core/xtensor_forward.hpp>
-#include <cstdint>
 
 using VisibilityType = std::complex<float>;
 
