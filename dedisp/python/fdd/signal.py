@@ -189,7 +189,7 @@ def main():
         "--duration", type=float, default=30.0, help="Observation duration in seconds"
     )
     parser.add_argument(
-        "--timeresolution",
+        "--time-resolution",
         type=float,
         default=250e-6,
         help="Time resolution of the data in seconds",

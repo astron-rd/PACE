@@ -163,7 +163,7 @@ Plan runtime summary:
 
     def generate_dm_list(
         self, dm_start: float, dm_end: float, pulse_width: float, tolerance: float
-    ) -> np.ndarray:
+    ) -> None:
         """
         Generate a list of DMs.
 
@@ -209,7 +209,7 @@ Plan runtime summary:
 
     def generate_linear_dm_list(
         self, dm_start: float, dm_end: float, dm_step: float
-    ) -> np.ndarray:
+    ) -> None:
         """
         Generate a list of DMs in a linear fashion.
 
