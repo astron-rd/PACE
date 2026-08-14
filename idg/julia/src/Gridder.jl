@@ -40,8 +40,8 @@ function visibility_to_subgrid!(
 )
     w_offset_in_lambda = w_step * (metadatum.coordinate.z + 0.5)
 
-    u_offset = (metadatum.coordinate.x + Constants.SUBGRID_SIZE / 2 - Constants.GRID_SIZE / 2) * (2 * π / image_size)
-    v_offset = (metadatum.coordinate.y + Constants.SUBGRID_SIZE / 2 - Constants.GRID_SIZE / 2) * (2 * π / image_size)
+    u_offset = (metadatum.coordinate.x + Constants.SUBGRID_SIZE / 2 - grid_size / 2) * (2 * π / image_size)
+    v_offset = (metadatum.coordinate.y + Constants.SUBGRID_SIZE / 2 - grid_size / 2) * (2 * π / image_size)
     w_offset = 2 * π * w_offset_in_lambda
 
     for y in (1:Constants.SUBGRID_SIZE)
@@ -110,7 +110,7 @@ function compute_pixels(
     wavenumbers,
     visibilities
 )
-    pixels = zeros(ComplexF32, Constants.CORRELATION_COUNT_OUT)
+    pixels = zeros(ComplexF32, correlation_count_out)
 
     for time in 0:nr_timesteps-1
         idx = offset + time
@@ -124,7 +124,7 @@ function compute_pixels(
             phasor = exp(1im * phase)
 
             for pol in 1:correlation_count_in
-                pixels[Util.array_mod(pol, Constants.CORRELATION_COUNT_OUT)] += visibilities[baseline+1, idx+1, channel, pol] * phasor
+                pixels[Util.array_mod(pol, correlation_count_out)] += visibilities[baseline+1, idx+1, channel, pol] * phasor
             end
         end
     end
