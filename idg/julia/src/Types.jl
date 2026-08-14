@@ -6,6 +6,7 @@ Metadata = @NamedTuple{baseline::UInt32, time_index::UInt32, nr_timesteps::UInt3
 
 function generate_taper(subgrid_size::Integer)
     x = LinRange(-1.0, 1.0, subgrid_size)
+    x = abs.(x)
     spheroidal = evaluate_spheroidal.(x)
 
     mat_1n = permutedims(spheroidal)
