@@ -18,7 +18,7 @@ using namespace hdf5;
 
 xt::xarray<float> get_taper(const size_t subgrid_size) {
   // Generate linspace [-1, 1), subgrid_size samples
-  xt::xarray<float> x = xt::linspace<float>(-1.0f, 1.0f, subgrid_size, false);
+  xt::xarray<float> x = xt::linspace<float>(-1.0f, 1.0f, subgrid_size, true);
 
   // Take absolute value
   xt::xarray<float> abs_x = xt::abs(x);
