@@ -6,6 +6,12 @@
 #include <xtensor/io/xnpy.hpp>
 
 #include "fddplan.hpp"
+#include "h5cpp/dataspace/simple.hpp"
+#include "h5cpp/datatype/datatype.hpp"
+#include "h5cpp/datatype/type_trait.hpp"
+#include "h5cpp/file/file.hpp"
+#include "h5cpp/file/functions.hpp"
+#include "h5cpp/node/group.hpp"
 #include "metadata.hpp"
 #include "utilities.hpp"
 
@@ -45,9 +51,17 @@ int main() {
   std::cout << quantised_signal << std::endl;
   std::cout << "> runtime: " << timer->duration() << " seconds. " << std::endl;
 
-  const std::string filename{"signal.npy"};
-  xt::dump_npy(filename, quantised_signal);
+  hdf5::file::File output_file = hdf5::file::create("signal.h5");
+  hdf5::node::Group root_node = output_file.root();
 
-  std::cout << "The simulated signal has been written to " << filename << "."
+  hdf5::datatype::Datatype datatype = hdf5::datatype::TypeTrait<uint8_t>::create();
+  
+  const std::vector<hsize_t> dims(signal.shape().begin(), signal.shape().end());
+  auto dataspace = hdf5::dataspace::Simple(dims);
+  auto signal_dataset = root_node.create_dataset("signal", datatype, dataspace);
+
+  signal_dataset.write(*signal.data(), datatype, dataspace);
+  
+  std::cout << "The simulated signal has been written to signal.h5."
             << std::endl;
 }
