@@ -37,6 +37,8 @@ include(FetchContent)
 set(XTENSOR_LIBRARIES xtl xtensor xtensor-fftw-float)
 include("${CMAKE_SOURCE_DIR}/cmake/FetchXTensor.cmake")
 
+include("${CMAKE_SOURCE_DIR}/cmake/FetchH5cpp.cmake")
+
 FetchContent_MakeAvailable(xtensor)
 
 find_package(OpenMP)
@@ -58,4 +60,4 @@ target_link_libraries(testroutines PRIVATE dedisp)
 target_include_directories(testroutines PRIVATE ${PROJECT_SOURCE_DIR}/include)
 
 add_executable(simulatesignal bin/simulatesignal.cpp)
-target_link_libraries(simulatesignal PRIVATE dedisp)
+target_link_libraries(simulatesignal PRIVATE dedisp h5cpp::h5cpp)
