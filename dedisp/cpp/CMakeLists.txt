@@ -48,7 +48,7 @@ add_library(dedisp OBJECT src/fddplan.cpp src/kernels.cpp src/utilities.cpp)
 target_link_libraries(dedisp PUBLIC xtensor xtensor-fftw OpenMP::OpenMP_CXX)
 
 add_executable(testfdd bin/testfdd.cpp)
-target_link_libraries(testfdd PRIVATE dedisp)
+target_link_libraries(testfdd PRIVATE dedisp h5cpp::h5cpp)
 target_include_directories(testfdd PRIVATE ${PROJECT_SOURCE_DIR}/include)
 
 add_executable(testfil bin/testfil.cpp)

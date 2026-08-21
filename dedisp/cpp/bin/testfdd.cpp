@@ -4,7 +4,13 @@
 
 #include <xtensor/core/xmath.hpp>
 #include <xtensor/io/xio.hpp>
-#include <xtensor/io/xnpy.hpp>
+
+#include "h5cpp/dataspace/simple.hpp"
+#include "h5cpp/datatype/datatype.hpp"
+#include "h5cpp/datatype/type_trait.hpp"
+#include "h5cpp/file/file.hpp"
+#include "h5cpp/file/functions.hpp"
+#include "h5cpp/node/group.hpp"
 
 #include "fddplan.hpp"
 #include "metadata.hpp"
@@ -136,20 +142,65 @@ int main() {
   std::cout << "\nFound " << n_candidates << " DM candidates.\n" << std::endl;
 #endif
 
-  const std::string fn_in_float{"fddin_float.npy"};
-  xt::dump_npy(fn_in_float, mock_input);
-  std::cout << "Input (float) is written to " << fn_in_float << "."
-            << std::endl;
+  hdf5::file::File output_file = hdf5::file::create("output.h5");
+  hdf5::node::Group root_node = output_file.root();
 
-  const std::string fn_in{"fddin.npy"};
-  xt::dump_npy(fn_in, quantised_mock_input);
-  std::cout << "Input is written to " << fn_in << "." << std::endl;
+  {
+    hdf5::datatype::Datatype datatype =
+        hdf5::datatype::TypeTrait<float>::create();
+    const std::vector<hsize_t> dims(mock_input.shape().begin(),
+                                    mock_input.shape().end());
+    auto dataspace = hdf5::dataspace::Simple(dims);
+    auto signal_dataset =
+        root_node.create_dataset("fddin_float", datatype, dataspace);
 
-  const std::string fn_out{"fddout.npy"};
-  xt::dump_npy(fn_out, mock_output);
-  std::cout << "Output is written to " << fn_out << "." << std::endl;
+    signal_dataset.write(*mock_input.data(), datatype, dataspace);
 
-  const std::string fn_dm_table{"dmtable.npy"};
-  xt::dump_npy(fn_dm_table, dm_table);
-  std::cout << "Trial DMs are written to " << fn_dm_table << "." << std::endl;
+    std::cout << "Input (float) is written to dataset fddin_float in output.h5."
+              << std::endl;
+  }
+
+  {
+    hdf5::datatype::Datatype datatype =
+        hdf5::datatype::TypeTrait<uint8_t>::create();
+    const std::vector<hsize_t> dims(quantised_mock_input.shape().begin(),
+                                    quantised_mock_input.shape().end());
+    auto dataspace = hdf5::dataspace::Simple(dims);
+    auto signal_dataset =
+        root_node.create_dataset("fddin", datatype, dataspace);
+
+    signal_dataset.write(*quantised_mock_input.data(), datatype, dataspace);
+
+    std::cout << "Input is written to dataset fddin in output.h5." << std::endl;
+  }
+
+  {
+    hdf5::datatype::Datatype datatype =
+        hdf5::datatype::TypeTrait<float>::create();
+    const std::vector<hsize_t> dims(mock_output.shape().begin(),
+                                    mock_output.shape().end());
+    auto dataspace = hdf5::dataspace::Simple(dims);
+    auto signal_dataset =
+        root_node.create_dataset("fddout", datatype, dataspace);
+
+    signal_dataset.write(*mock_output.data(), datatype, dataspace);
+
+    std::cout << "Output is written to dataset fddout in output.h5."
+              << std::endl;
+  }
+
+  {
+    hdf5::datatype::Datatype datatype =
+        hdf5::datatype::TypeTrait<float>::create();
+    const std::vector<hsize_t> dims(dm_table.shape().begin(),
+                                    dm_table.shape().end());
+    auto dataspace = hdf5::dataspace::Simple(dims);
+    auto signal_dataset =
+        root_node.create_dataset("dmtable", datatype, dataspace);
+
+    signal_dataset.write(*dm_table.data(), datatype, dataspace);
+
+    std::cout << "Trial DMs are written to dataset dmtable in output.h5."
+              << std::endl;
+  }
 }

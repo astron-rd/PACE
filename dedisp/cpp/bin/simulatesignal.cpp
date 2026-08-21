@@ -3,7 +3,6 @@
 #include <random>
 
 #include <xtensor/io/xio.hpp>
-#include <xtensor/io/xnpy.hpp>
 
 #include "fddplan.hpp"
 #include "h5cpp/dataspace/simple.hpp"
