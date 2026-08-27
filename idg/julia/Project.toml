@@ -1,0 +1,14 @@
+name = "IDG"
+uuid = "1c361926-95cb-479d-8a96-7a790ca7ac70"
+version = "0.1.0"
+authors = ["Vivian <me@vivstuff.gay>"]
+
+[deps]
+FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
+HDF5 = "f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f"
+Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+
+[compat]
+FFTW = "1.10.0"
+HDF5 = "0.17.3"
+Printf = "1.11.0"

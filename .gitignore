@@ -225,3 +225,6 @@ __marimo__/
 
 # All Sky benchmark test files
 !all-sky/python/tests/**/*.npy
+
+# Image files
+*.png
