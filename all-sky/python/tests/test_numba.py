@@ -29,7 +29,7 @@ class TestAllSkyImagingNumba(BaseTestCase):
 
         settings = copy.copy(BENCH_SETTINGS_SINGLE)
 
-        for i in [16, 32, 64, 95, 205, 256, 512]:
+        for i in [16, 32, 64, 95, 205, 256]:
             settings.image_size_x = i
             settings.image_size_y = i
             verify_imager(

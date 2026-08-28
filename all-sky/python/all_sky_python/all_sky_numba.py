@@ -72,7 +72,7 @@ def mat_scalar_loop(m, s):
     for i in prange(p):
         for j in range(q):
             for k in range(r):
-                out[i, j, k] = (s * m[i, j, k])[0]
+                out[i, j, k] = s * m[i, j, k]
     return out
 
 
@@ -80,7 +80,7 @@ def mat_scalar_loop(m, s):
 def sky_imager_numba_ravel_real(
     visibilities: NDArray[Shape["Dim, Dim"], Complex64],
     baselines: NDArray[Shape["Dim, Dim, 3"], Float64],
-    freq: NDArray[Shape["1"], Float64],
+    freq: float,
     npix_l: int,
     npix_m: int,
 ):
@@ -98,15 +98,15 @@ def sky_imager_numba_ravel_real(
     npix_m = int(npix_m)
     grid_l = np.zeros((npix_l, npix_m), dtype=np.float32)
     grid_m = np.zeros((npix_m, npix_l), dtype=np.float32)
-    npix_l = np.linspace(-1, 1, npix_l)
-    npix_m = np.linspace(1, -1, npix_m)
+    lin_l = np.linspace(-1, 1, npix_l)
+    lin_m = np.linspace(1, -1, npix_m)
     for x in prange(npix_l):
         for y in range(npix_m):
-            grid_l[x][y] = npix_l[y]
+            grid_l[x][y] = lin_l[y]
 
     for x in prange(npix_m):
         for y in range(npix_l):
-            grid_m[y][x] = npix_m[y]
+            grid_m[y][x] = lin_m[y]
 
     # Select and ravel
     c = grid_l**2 + grid_m**2 < 1  # Create unit circle 2D image
