@@ -53,14 +53,15 @@ int main() {
   hdf5::file::File output_file = hdf5::file::create("signal.h5");
   hdf5::node::Group root_node = output_file.root();
 
-  hdf5::datatype::Datatype datatype = hdf5::datatype::TypeTrait<uint8_t>::create();
-  
+  hdf5::datatype::Datatype datatype =
+      hdf5::datatype::TypeTrait<uint8_t>::create();
+
   const std::vector<hsize_t> dims(signal.shape().begin(), signal.shape().end());
   auto dataspace = hdf5::dataspace::Simple(dims);
   auto signal_dataset = root_node.create_dataset("signal", datatype, dataspace);
 
   signal_dataset.write(*signal.data(), datatype, dataspace);
-  
+
   std::cout << "The simulated signal has been written to signal.h5."
             << std::endl;
 }
