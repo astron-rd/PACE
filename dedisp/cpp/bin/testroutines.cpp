@@ -6,7 +6,6 @@
 #include <xtensor-fftw/helper.hpp>
 #include <xtensor/core/xmath.hpp>
 #include <xtensor/io/xio.hpp>
-#include <xtensor/io/xnpy.hpp>
 
 #include "fddplan.hpp"
 #include "kernels.hpp"

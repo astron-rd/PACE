@@ -5,7 +5,13 @@
 #include <xtensor-fftw/helper.hpp>
 #include <xtensor/containers/xadapt.hpp>
 #include <xtensor/io/xio.hpp>
-#include <xtensor/io/xnpy.hpp>
+
+#include "h5cpp/dataspace/simple.hpp"
+#include "h5cpp/datatype/datatype.hpp"
+#include "h5cpp/datatype/type_trait.hpp"
+#include "h5cpp/file/file.hpp"
+#include "h5cpp/file/functions.hpp"
+#include "h5cpp/node/group.hpp"
 
 #include "fddplan.hpp"
 #include "kernels.hpp"
@@ -87,9 +93,21 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
   preprocessing_timer->pause();
 #endif
 
-#ifdef DEDISP_DEBUG_NPY
-  const std::string fn_transpose{"fdd-transpose.npy"};
-  xt::dump_npy(fn_transpose, transposed_input);
+#ifdef DEDISP_DEBUG_HDF5
+  hdf5::file::File output_file = hdf5::file::create("intermediate.h5");
+  hdf5::node::Group root_node = output_file.root();
+
+  {
+    hdf5::datatype::Datatype datatype =
+        hdf5::datatype::TypeTrait<float>::create();
+    const std::vector<hsize_t> dims(transposed_input.shape().begin(),
+                                    transposed_input.shape().end());
+    auto dataspace = hdf5::dataspace::Simple(dims);
+    auto signal_dataset =
+        root_node.create_dataset("transpose", datatype, dataspace);
+
+    signal_dataset.write(*transposed_input.data(), datatype, dataspace);
+  }
 #endif
 
   // 3. Real-to-complex FFT: time series data to frequency domain
@@ -125,9 +143,18 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
   preprocessing_timer->pause();
 #endif
 
-#ifdef DEDISP_DEBUG_NPY
-  const std::string fn_r2c{"fdd-fft-r2c.npy"};
-  xt::dump_npy(fn_r2c, fd_scratch);
+#ifdef DEDISP_DEBUG_HDF5
+  {
+    hdf5::datatype::Datatype datatype =
+        hdf5::datatype::TypeTrait<float>::create();
+    const std::vector<hsize_t> dims(fd_scratch.shape().begin(),
+                                    fd_scratch.shape().end());
+    auto dataspace = hdf5::dataspace::Simple(dims);
+    auto signal_dataset =
+        root_node.create_dataset("fdd-fft-r2c", datatype, dataspace);
+
+    signal_dataset.write(*fd_scratch.data(), datatype, dataspace);
+  }
 #endif
 
   // 4. Run dedispersion algorithm (CPU reference or optimised version)
@@ -160,9 +187,21 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
   dedispersion_timer->pause();
 #endif
 
-#ifdef DEDISP_DEBUG_NPY
-  const std::string fn_dedisp{"fdd-dedisp.npy"};
-  xt::dump_npy(fn_dedisp, dm_scratch);
+#ifdef DEDISP_DEBUG_HDF5
+  {
+    hdf5::datatype::Compound datatype =
+        hdf5::datatype::Compound::create(sizeof(std::complex<float>));
+    datatype.insert("r", 0, hdf5::datatype::TypeTrait<float>::create(float()));
+    datatype.insert("i", alignof(float),
+                    hdf5::datatype::TypeTrait<float>::create(float()));
+    const std::vector<hsize_t> dims(dm_scratch.shape().begin(),
+                                    dm_scratch.shape().end());
+    auto dataspace = hdf5::dataspace::Simple(dims);
+    auto signal_dataset =
+        root_node.create_dataset("fdd-dedisp", datatype, dataspace);
+
+    signal_dataset.write(*dm_scratch.data(), datatype, dataspace);
+  }
 #endif
 
   // 5. Complex-to-real FFT: frequency domain back to time series data

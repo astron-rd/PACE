@@ -2,9 +2,16 @@
 #include <iostream>
 #include <random>
 
+#include <xtensor/containers/xadapt.hpp>
 #include <xtensor/core/xmath.hpp>
 #include <xtensor/io/xio.hpp>
-#include <xtensor/io/xnpy.hpp>
+
+#include "h5cpp/dataspace/simple.hpp"
+#include "h5cpp/datatype/datatype.hpp"
+#include "h5cpp/datatype/type_trait.hpp"
+#include "h5cpp/file/file.hpp"
+#include "h5cpp/file/functions.hpp"
+#include "h5cpp/node/group.hpp"
 
 #include "fddplan.hpp"
 #include "filterbank.hpp"
@@ -123,15 +130,51 @@ int main() {
   std::cout << "\nFound " << n_candidates << " DM candidates." << std::endl;
 #endif
 
-  const std::string fn_in{"fddin_fil.npy"};
-  xt::dump_npy(fn_in, fil_input);
-  std::cout << "\nInput is written to " << fn_in << "." << std::endl;
+  hdf5::file::File output_file = hdf5::file::create("output.h5");
+  hdf5::node::Group root_node = output_file.root();
 
-  const std::string fn_out{"fddout_fil.npy"};
-  xt::dump_npy(fn_out, output);
-  std::cout << "Output is written to " << fn_out << "." << std::endl;
+  {
+    hdf5::datatype::Datatype datatype =
+        hdf5::datatype::TypeTrait<uint8_t>::create();
+    const std::vector<hsize_t> dims(fil_input.shape().begin(),
+                                    fil_input.shape().end());
+    auto dataspace = hdf5::dataspace::Simple(dims);
+    auto signal_dataset =
+        root_node.create_dataset("fddin_fil", datatype, dataspace);
 
-  const std::string fn_dm_table{"dmtable_fil.npy"};
-  xt::dump_npy(fn_dm_table, dm_table);
-  std::cout << "Trial DMs are written to " << fn_dm_table << "." << std::endl;
+    signal_dataset.write(*fil_input.data(), datatype, dataspace);
+
+    std::cout << "Input (float) is written to dataset fddin_fil in output.h5."
+              << std::endl;
+  }
+
+  {
+    hdf5::datatype::Datatype datatype =
+        hdf5::datatype::TypeTrait<float>::create();
+    const std::vector<hsize_t> dims(output.shape().begin(),
+                                    output.shape().end());
+    auto dataspace = hdf5::dataspace::Simple(dims);
+    auto signal_dataset =
+        root_node.create_dataset("fddout_fil", datatype, dataspace);
+
+    signal_dataset.write(*output.data(), datatype, dataspace);
+
+    std::cout << "Input (float) is written to dataset fddout_fil in output.h5."
+              << std::endl;
+  }
+
+  {
+    hdf5::datatype::Datatype datatype =
+        hdf5::datatype::TypeTrait<float>::create();
+    const std::vector<hsize_t> dims(dm_table.shape().begin(),
+                                    dm_table.shape().end());
+    auto dataspace = hdf5::dataspace::Simple(dims);
+    auto signal_dataset =
+        root_node.create_dataset("dmtable_fil", datatype, dataspace);
+
+    signal_dataset.write(*dm_table.data(), datatype, dataspace);
+
+    std::cout << "Input (float) is written to dataset dmtable_fil in output.h5."
+              << std::endl;
+  }
 }
