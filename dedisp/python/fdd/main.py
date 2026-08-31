@@ -27,8 +27,7 @@ def get_argument_parser():
         default=100.0,
         help="End of the dispersion measure search interval",
     )
-    parser.add_argument("--dm-step", type=float,
-                        help="Dispersion measure stepsize")
+    parser.add_argument("--dm-step", type=float, help="Dispersion measure stepsize")
     parser.add_argument(
         "--dm-tolerance", type=float, default=1.25, help="Smearing tolerance"
     )
@@ -69,12 +68,12 @@ def main():
     )
 
     if args.dm_step is not None:
-        logger.warning(
-            " be aware that you are sampling trial DMs on a linear interval")
+        logger.warning(" be aware that you are sampling trial DMs on a linear interval")
         plan.generate_linear_dm_list(args.dm_start, args.dm_end, args.dm_step)
     else:
-        plan.generate_dm_list(args.dm_start, args.dm_end,
-                              args.pulse_width, args.dm_tolerance)
+        plan.generate_dm_list(
+            args.dm_start, args.dm_end, args.pulse_width, args.dm_tolerance
+        )
 
     result = plan.execute(sig.dynamic_spectrum)
 

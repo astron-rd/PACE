@@ -239,6 +239,7 @@ def get_argument_parser():
     )
     return parser
 
+
 def main():
     """Entry of 'fdd-sim'."""
     args = get_argument_parser().parse_args()
