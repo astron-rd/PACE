@@ -182,8 +182,7 @@ class Signal:
             return signal_from_hdf5
 
 
-def main():
-    """Entry of 'fdd-sim'."""
+def get_argument_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--duration", type=float, default=30.0, help="Observation duration in seconds"
@@ -237,7 +236,11 @@ def main():
         type=str,
         help="Filename for the HDF5 dataset containing the simulated signal",
     )
-    args = parser.parse_args()
+    return parser
+
+def main():
+    """Entry of 'fdd-sim'."""
+    args = get_argument_parser().parse_args()
 
     logging.basicConfig(level=args.log_level)
 
