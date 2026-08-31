@@ -36,10 +36,9 @@ include(FetchContent)
 
 set(XTENSOR_LIBRARIES xtl xtensor xtensor-fftw-float)
 include("${CMAKE_SOURCE_DIR}/cmake/FetchXTensor.cmake")
+FetchContent_MakeAvailable(xtensor)
 
 include("${CMAKE_SOURCE_DIR}/cmake/FetchH5cpp.cmake")
-
-FetchContent_MakeAvailable(xtensor)
 
 find_package(OpenMP)
 
@@ -48,17 +47,6 @@ add_library(dedisp OBJECT src/fddplan.cpp src/kernels.cpp src/utilities.cpp)
 target_link_libraries(dedisp PUBLIC xtensor xtensor-fftw OpenMP::OpenMP_CXX
                                     h5cpp::h5cpp)
 
-add_executable(testfdd bin/testfdd.cpp)
-target_link_libraries(testfdd PRIVATE dedisp h5cpp::h5cpp)
-target_include_directories(testfdd PRIVATE ${PROJECT_SOURCE_DIR}/include)
-
-add_executable(testfil bin/testfil.cpp)
-target_link_libraries(testfil PRIVATE dedisp h5cpp::h5cpp)
-target_include_directories(testfil PRIVATE ${PROJECT_SOURCE_DIR}/include)
-
-add_executable(testroutines bin/testroutines.cpp)
-target_link_libraries(testroutines PRIVATE dedisp)
-target_include_directories(testroutines PRIVATE ${PROJECT_SOURCE_DIR}/include)
-
-add_executable(simulatesignal bin/simulatesignal.cpp)
-target_link_libraries(simulatesignal PRIVATE dedisp h5cpp::h5cpp)
+add_executable(main src/main.cpp)
+target_link_libraries(main PRIVATE dedisp h5cpp::h5cpp)
+target_include_directories(main PRIVATE ${PROJECT_SOURCE_DIR}/include)
