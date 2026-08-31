@@ -43,7 +43,7 @@ include("${CMAKE_SOURCE_DIR}/cmake/FetchH5cpp.cmake")
 find_package(OpenMP)
 
 # Configure targets
-add_library(dedisp OBJECT src/fddplan.cpp src/kernels.cpp src/utilities.cpp)
+add_library(dedisp OBJECT src/fddplan.cpp src/kernels.cpp)
 target_link_libraries(dedisp PUBLIC xtensor xtensor-fftw OpenMP::OpenMP_CXX
                                     h5cpp::h5cpp)
 
