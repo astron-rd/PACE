@@ -163,22 +163,6 @@ int main() {
 
     {
       datatype::Datatype datatype =
-          datatype::TypeTrait<float>::create();
-      const std::vector<hsize_t> dims(input.shape().begin(),
-                                      input.shape().end());
-      auto dataspace = dataspace::Simple(dims);
-      auto signal_dataset =
-          root_node.create_dataset("fddin_float", datatype, dataspace);
-
-      signal_dataset.write(*input.data(), datatype, dataspace);
-
-      std::cout
-          << "Input (float) is written to dataset fddin_float in output.h5."
-          << std::endl;
-    }
-
-    {
-      datatype::Datatype datatype =
           datatype::TypeTrait<uint8_t>::create();
       const std::vector<hsize_t> dims(input.shape().begin(),
                                       input.shape().end());
