@@ -93,7 +93,7 @@ int main() {
 
   std::cout << "Execute FDD Plan..." << std::endl;
   exec_timer->start();
-  xt::xarray<float> mock_output = fdd_plan.execute(input);
+  xt::xarray<float> output = fdd_plan.execute(input);
   exec_timer->pause();
   std::cout << "> runtime: " << exec_timer->duration() << " seconds "
             << std::endl;
@@ -122,8 +122,8 @@ int main() {
   std::cout << "  Input StdDev:   " << input_std << "     (expected: 25.003016)"
             << std::endl;
 
-  const float output_mean = xt::mean<float>(mock_output)();
-  const float output_std = xt::stddev<float>(mock_output)();
+  const float output_mean = xt::mean<float>(output)();
+  const float output_std = xt::stddev<float>(output)();
   std::cout << "  Output RMS:     " << output_mean
             << "     (expected: 0.000360)" << std::endl;
   std::cout << "  Output StdDev:  " << output_std << "     (expected: 0.748115)"
@@ -158,52 +158,37 @@ int main() {
   {
     using namespace hdf5;
 
-    file::File output_file = file::create("output.h5");
+    file::File output_file = file::create("fdd.h5");
     node::Group root_node = output_file.root();
 
     {
-      datatype::Datatype datatype =
-          datatype::TypeTrait<uint8_t>::create();
-      const std::vector<hsize_t> dims(input.shape().begin(),
-                                      input.shape().end());
+      datatype::Datatype datatype = datatype::TypeTrait<float>::create();
+      const std::vector<hsize_t> dims(output.shape().begin(),
+                                      output.shape().end());
       auto dataspace = dataspace::Simple(dims);
       auto signal_dataset =
-          root_node.create_dataset("fddin", datatype, dataspace);
+          root_node.create_dataset("fddresult", datatype, dataspace);
 
-      signal_dataset.write(*input.data(), datatype, dataspace);
+      signal_dataset.write(*output.data(), datatype, dataspace);
 
-      std::cout << "Input is written to dataset fddin in output.h5."
+      signal_dataset.attributes.create_from("computed_samples",
+                                            output.shape()[0]);
+      signal_dataset.attributes.create_from("integration_time",
+                                            observation.sampling_period);
+
+      std::cout << "Output is written to dataset fddout in fdd.h5."
                 << std::endl;
     }
 
     {
-      datatype::Datatype datatype =
-          datatype::TypeTrait<float>::create();
-      const std::vector<hsize_t> dims(mock_output.shape().begin(),
-                                      mock_output.shape().end());
-      auto dataspace = dataspace::Simple(dims);
-      auto signal_dataset =
-          root_node.create_dataset("fddout", datatype, dataspace);
-
-      signal_dataset.write(*mock_output.data(), datatype, dataspace);
-
-      std::cout << "Output is written to dataset fddout in output.h5."
-                << std::endl;
-    }
-
-    {
-      datatype::Datatype datatype =
-          datatype::TypeTrait<float>::create();
+      datatype::Datatype datatype = datatype::TypeTrait<float>::create();
       const std::vector<hsize_t> dims(dm_table.shape().begin(),
                                       dm_table.shape().end());
       auto dataspace = dataspace::Simple(dims);
       auto signal_dataset =
-          root_node.create_dataset("dmtable", datatype, dataspace);
+          root_node.create_dataset("dispersion_measures", datatype, dataspace);
 
       signal_dataset.write(*dm_table.data(), datatype, dataspace);
-
-      std::cout << "Trial DMs are written to dataset dmtable in output.h5."
-                << std::endl;
     }
   }
 }
