@@ -7,13 +7,6 @@
 
 namespace dedisp {
 
-// Generate a dispersed signal with Gaussian noise.
-xt::xarray<float>
-simulate_dispersed_signal(const dedisp::SignalInfo &signal,
-                          const dedisp::ObservationInfo &observation);
-
-uint8_t quantise(float value_in);
-
 // @brief
 // @param offset use this to undo quantization, e.g. 128 for 8-bits
 // @param scale  // use this to prevent overflows when summing the data
