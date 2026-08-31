@@ -234,7 +234,8 @@ def get_argument_parser():
     parser.add_argument(
         "file",
         type=str,
-        help="Filename for the HDF5 dataset containing the simulated signal",
+        help="Filename for the HDF5 file containing the simulated signal",
+        default="signal.h5",
     )
     return parser
 

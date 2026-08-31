@@ -13,6 +13,7 @@ def get_argument_parser():
         "spectrum",
         type=str,
         help="Path to filterbank file (HDF5) that contains the output of 'fdd-sim'",
+        default="signal.h5",
     )
     parser.add_argument(
         "--dm-start",
@@ -72,7 +73,8 @@ def main():
             " be aware that you are sampling trial DMs on a linear interval")
         plan.generate_linear_dm_list(args.dm_start, args.dm_end, args.dm_step)
     else:
-        plan.generate_dm_list(args.dm_start, args.dm_end, args.pulse_width, args.dm_tolerance)
+        plan.generate_dm_list(args.dm_start, args.dm_end,
+                              args.pulse_width, args.dm_tolerance)
 
     result = plan.execute(sig.dynamic_spectrum)
 
