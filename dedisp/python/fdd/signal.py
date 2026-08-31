@@ -243,17 +243,17 @@ def main():
 
     signal = Signal(
         args.duration,
-        args.timeresolution,
+        args.time_resolution,
         args.channels,
         args.bandwidth,
-        args.peakfrequency,
-        args.noiserms,
+        args.peak_frequency,
+        args.noise_rms,
         args.intensity,
-        args.arrivaltime,
+        args.arrival_time,
         args.dm,
     )
 
-    signal.simulate(quantise=args.togglequantisation, random_seed=args.seed)
+    signal.simulate(quantise=args.disable_quantisation, random_seed=args.seed)
 
     logger.info(" writing the simulated signal to disk: %s", args.file)
     signal.to_hdf5(args.file)
