@@ -40,7 +40,7 @@ repos:
       - id: pytest-all-sky
         name: pytest-all-sky
         stages: [manual] # only run when specified manually
-        entry: bash -c 'cd all-sky/python; uv run pytest'
+        entry: bash -c 'cd all-sky/python; uv run pytest -v --log-cli-level=info --show-capture=all --log-level=INFO'
         language: system
         types: [python]
         pass_filenames: false
