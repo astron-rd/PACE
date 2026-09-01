@@ -57,6 +57,8 @@ Highlights:
 - Observed up to a 2800x speedup on a 7900 XTX GPU compared with simple Python baselines.
 - Showed dramatic energy efficiency improvements.
 
+[Download slides](https://nextcloud.dantalion.nl/s/dTHeJ2t5JgmXKeR/download)
+
 ## Discussion topics
 
 The workshop included focused discussion sessions on several technical areas.
