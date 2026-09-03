@@ -8,8 +8,8 @@ ran the pytest-benchmark and criterion micro-benchmarks through it on
 GitHub-hosted runners.
 
 Access to the project on bencher.dev was a problem for part of the team, and the
-hosted approach has further problems: GitHub runners are too noisy for
-regression thresholds, though
+hosted approach has further problems: GitHub runners are shared virtual
+machines, too noisy for regression thresholds, though
 [`slurm-action`](https://github.com/astron-rd/slurm-action) can move the run
 itself onto a Slurm cluster. Of the candidates surveyed, ReFrame and JUBE suit a
 Slurm cluster and ReBench a dedicated machine. The proposal is a result format
@@ -24,9 +24,10 @@ site.
 - **Platform churn.** Bencher's docs: "Do not specify an exact version if using
   Bencher Cloud as there are still occasional breaking changes." Five of the
   eight releases between May and July 2026 are marked BREAKING.
-- **Runner noise.** `ubuntu-latest` varies 10 to 20 % run to run by
-  github-action-benchmark's own estimate, and the Bencher trial on it raised a
-  false +10.66 % alert on a 20 us kernel
+- **Runner noise.** A hosted runner is a virtual machine on shared hardware, so
+  the CPU model and the load next to it change from run to run: `ubuntu-latest`
+  varies 10 to 20 % run to run by github-action-benchmark's own estimate, and
+  the Bencher trial on it raised a false +10.66 % alert on a 20 us kernel
   ([report](https://bencher.dev/perf/astron-pace/reports/f3bf8381-e065-4ae8-86e2-bd20cd186d2c)).
   No storage tool fixes this. The GPU and multi-node work of the later PACE
   milestones (M3 to M5) will need GPU nodes, which CI runners do not offer.
