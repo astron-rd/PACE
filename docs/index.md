@@ -33,6 +33,7 @@ The documentation is organized into three categories:
   - Rust
 - General
   - Benchmarking Frameworks
+  - Benchmarking Setup
   - Data Format
 
 Use the navigation menu to browse these sections.
