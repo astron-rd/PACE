@@ -57,8 +57,7 @@ The setup consists of four layers.
 
 A measurement is the per-phase wall-clock time from the application's own
 timers. Warm-up, compilation or JIT time is reported as a phase of its own. A
-result file records the hardware and the commit id. The software stack is pinned
-by the project's lock files. For example:
+result file records the hardware and the commit id. For example:
 
 ```json
 {
