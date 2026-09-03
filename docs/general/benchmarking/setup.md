@@ -98,6 +98,9 @@ GitHub Actions can stay the trigger:
 through `srun` from a self-hosted runner on the control node, so the measurement
 happens on a cluster node while the workflow keeps the logs.
 
+While PACE has budget for dedicated infrastructure, reusing existing DAS-6
+resources is the most pragmatic approach given current constraints.
+
 ## Candidate tools
 
 | Tool         | Cluster   | Notes                                                                                                                                                                                            |
