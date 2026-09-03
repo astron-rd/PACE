@@ -42,8 +42,9 @@ Beyond the [earlier criteria](frameworks.md), two requirements matter:
 - **Comparison across implementations**: results for the same application in
   Python, C++, Rust, Julia and soon the OpenMP, OpenACC and GPU variants must be
   viewable side by side.
-- **Low maintenance**: time spent on maintaining servers should be kept to a
-  minimum.
+- **Low maintenance**: running a benchmark server is outside the scope of the
+  project. Existing infrastructure such as DAS-6 is the way around that, but it
+  should not turn into support requests for the people who maintain it.
 
 ## Proposed architecture
 
