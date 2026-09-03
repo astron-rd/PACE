@@ -9,9 +9,11 @@ GitHub-hosted runners.
 
 Access to the project on bencher.dev was a problem for part of the team, and the
 hosted approach has further problems: GitHub runners are too noisy for
-regression thresholds. Of the candidates surveyed, ReFrame and JUBE suit a Slurm
-cluster and ReBench a dedicated machine. The proposal is a result format defined
-within PACE that every implementation writes, a driver that runs every
+regression thresholds, though
+[`slurm-action`](https://github.com/astron-rd/slurm-action) can move the run
+itself onto a Slurm cluster. Of the candidates surveyed, ReFrame and JUBE suit a
+Slurm cluster and ReBench a dedicated machine. The proposal is a result format
+defined within PACE that every implementation writes, a driver that runs every
 combination of settings, results kept in git, and plots rendered into the docs
 site.
 
@@ -88,6 +90,11 @@ tooling:
 - Jobs are capped at 15 minutes during working hours, so an experiment has to be
   many short jobs rather than one long sweep.
 - The driver has to submit to Slurm, which excludes CI-only tools.
+
+GitHub Actions can stay the trigger:
+[`slurm-action`](https://github.com/astron-rd/slurm-action) runs a workflow step
+through `srun` from a self-hosted runner on the control node, so the measurement
+happens on a cluster node while the workflow keeps the logs.
 
 ## Candidate tools
 
