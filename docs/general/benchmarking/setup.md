@@ -9,11 +9,11 @@ GitHub-hosted runners.
 
 Access to the project on bencher.dev was a problem for part of the team, and the
 hosted approach has further problems: GitHub runners are too noisy for
-regression thresholds, and hosted services have no parameter axis. Of the
-candidates surveyed, ReFrame and JUBE suit a Slurm cluster and ReBench a
-dedicated machine. The proposal is a result format defined within PACE that
-every implementation writes, a driver that runs every combination of settings,
-results kept in git, and plots rendered into the docs site.
+regression thresholds. Of the candidates surveyed, ReFrame and JUBE suit a Slurm
+cluster and ReBench a dedicated machine. The proposal is a result format defined
+within PACE that every implementation writes, a driver that runs every
+combination of settings, results kept in git, and plots rendered into the docs
+site.
 
 ## Problems with the trial
 
@@ -29,9 +29,8 @@ results kept in git, and plots rendered into the docs site.
   No storage tool fixes this. The GPU and multi-node work of the later PACE
   milestones (M3 to M5) will need GPU nodes, which CI runners do not offer.
 - **Data model.** Bencher, like github-action-benchmark, CodSpeed and Nyrkio,
-  records a value per branch, testbed and commit. There is no parameter axis, so
-  a comparison of implementations by parameters does not fit, and encoding the
-  language as "branch" only gives one timeline per language.
+  records a value per branch, testbed and commit. Encoding the language as
+  "branch" only gives one timeline per language.
 
 ## Requirements
 
@@ -65,7 +64,7 @@ result file records the hardware and the commit id. For example:
   "implementation": "rust",
   "commit": "52cd29a",
   "testbed": { "host": "node503", "cpu": "2x AMD EPYC 7302", "gpu": "RTX A4000" },
-  "parameters": { "grid_size": 4096, "subgrid_size": 32, "threads": 16 },
+  "parameters": { "grid_size": 4096, "subgrid_size": 32 },
   "timings_s": {
     "compile": 0.0, "grid": 1.203, "ifft": 0.311, "add": 0.087, "transform": 0.402
   }
@@ -102,10 +101,10 @@ tooling:
 
 Also considered: Ramble/Benchpark (built for standard benchmark suites, expects
 Spack-built applications), Pavilion2 (system acceptance tests rather than
-performance studies), Bencher self-hosted and github-action-benchmark (no Slurm,
-no parameter axis), Nyrkio and Conbench (need a server and model results as a
-commit timeline), CodSpeed (SaaS, simulated CPU, no GPU/Julia), asv (single
-Python project per commit).
+performance studies), Bencher self-hosted and github-action-benchmark (no
+Slurm), Nyrkio and Conbench (need a server and model results as a commit
+timeline), CodSpeed (SaaS, simulated CPU, no GPU/Julia), asv (single Python
+project per commit).
 
 ## Open questions
 
