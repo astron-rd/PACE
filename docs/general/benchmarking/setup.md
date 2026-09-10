@@ -105,9 +105,9 @@ happens on a cluster node while the workflow keeps the logs.
 | hyperfine    | no        | Repeats a command with warm-up and varies one setting at a time, per-run times to JSON. Times the whole process, so it adds nothing to the applications' own phase timers, but needs zero setup. |
 | Shell script | sbatch    | Works anywhere, you write the loop. Reimplements what the drivers already do (parameterisation, result collection, comparison).                                                                  |
 
-ReFrame is the driver of choice: it submits to Slurm natively. JUBE loses on
-maintenance status, ReBench and hyperfine on Slurm support, and a shell script
-on reimplementing what the drivers already do.
+ReFrame is the driver of choice: it submits to Slurm natively and is easy to
+install via `uv`. JUBE loses on maintenance status, ReBench and hyperfine on
+Slurm support, and a shell script on reimplementing what the drivers already do.
 
 Also considered: Ramble/Benchpark (built for standard benchmark suites, expects
 Spack-built applications), Pavilion2 (system acceptance tests rather than
