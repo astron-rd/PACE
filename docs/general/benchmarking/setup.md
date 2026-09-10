@@ -9,13 +9,13 @@ GitHub-hosted runners.
 
 Access to the project on bencher.dev was a problem for part of the team, and the
 hosted approach has further problems: GitHub runners are shared virtual
-machines, too noisy for regression thresholds, though
-[`slurm-action`](https://github.com/astron-rd/slurm-action) can move the run
-itself onto a Slurm cluster. The recommendation is to run the benchmarks on the
-DAS-6 cluster, triggered from GitHub Actions through `slurm-action`, with
-ReFrame as the driver. Every implementation writes a result file in a format
-defined by PACE, results are kept in git, and plots are rendered into the docs
-site.
+machines, too noisy for regression thresholds.
+
+The recommendation is to run
+the benchmarks on the DAS-6 cluster with ReFrame as the driver, started from
+GitHub Actions on a self-hosted runner. Every implementation writes a result
+file in a format defined by PACE, results are kept in git, and plots are
+rendered into the docs site.
 
 ## Problems with Bencher
 
@@ -84,30 +84,31 @@ choice of tooling:
 
 - Jobs are capped at 15 minutes during working hours, so an experiment has to be
   many short jobs rather than one long sweep.
-- The driver has to submit to Slurm, which excludes CI-only tools.
+- Compute nodes are only reachable through Slurm jobs, so the tool has to
+  submit jobs instead of running the benchmarks where it is started.
 
-GitHub Actions stays the trigger:
-[`slurm-action`](https://github.com/astron-rd/slurm-action) runs a workflow step
-through `srun` from a self-hosted runner on the control node, so the measurement
-happens on a cluster node while the workflow keeps the logs.
+Triggered by GitHub Actions, a runner on the DAS-6 control node starts ReFrame,
+which submits the jobs with `sbatch` and collects the results while the workflow
+keeps the logs.
 
 ## Candidate tools
 
-| Tool         | Cluster   | Notes                                                                                                                                                                                            |
-| ------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| ReFrame      | native    | Knows Slurm partitions and writes the job scripts, runs every combination of `parameter()` values as separate jobs, keeps results in SQLite and compares them across sessions.                   |
-| JUBE (JSC)   | templates | Submits through job templates, runs every combination of parameterset values, collects results with regex patterns into CSV tables. Not on PyPI, last release May 2024.                          |
-| ReBench      | no        | Config lists implementations x benchmarks x input sizes directly. One config is one long local run and denoising wants sudo, so it suits a dedicated machine, not a time-capped cluster.         |
-| hyperfine    | no        | Repeats a command with warm-up over every combination of parameter values, per-run times to JSON. Times the whole process, so it adds nothing to the applications' own phase timers.             |
-| Shell script | sbatch    | Works anywhere, the loop is hand-written. Reimplements what the drivers already do (parameterisation, result collection, comparison).                                                            |
+| Tool         | Cluster   | Notes                                                                                                                                                                                                      |
+| ------------ | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ReFrame      | native    | Knows Slurm partitions and writes the job scripts, runs every combination of `parameter()` values as separate jobs, keeps results in SQLite and compares them across sessions.                             |
+| slurm-action | srun      | One workflow step becomes one job from a self-hosted runner on the control node. Parameterisation, result collection and comparison are hand-written in the workflow, as in a shell script.                |
+| JUBE         | templates | From the Juelich Supercomputing Centre (JSC). Submits through job templates, runs every combination of parameterset values, collects results with regex patterns into CSV tables. Unmaintained since 2024. |
 
 ReFrame is the driver: it submits to Slurm natively and is easy to install via
-`uv`. JUBE loses on maintenance status, ReBench and hyperfine on Slurm support,
-and a shell script on reimplementing what the drivers already do.
+`uv`. `slurm-action` is the fallback if ReFrame does not work out on DAS-6: it
+submits to Slurm, but parameterisation, result collection and comparison are
+hand-written. JUBE is ruled out because it is unmaintained.
 
-Also considered: Ramble and Benchpark (expect Spack-built applications),
-Pavilion2 (system acceptance tests rather than performance studies), Conbench
-(needs a server) and asv (single Python project per commit).
+Also considered: ReBench (no Slurm support, one long run on a dedicated
+machine), hyperfine (no Slurm support, times the whole process), Ramble and
+Benchpark (expect Spack-built applications), Pavilion2 (system acceptance tests
+rather than performance studies), Conbench (needs a server) and asv (single
+Python project per commit).
 
 ## Next steps
 
@@ -128,6 +129,7 @@ Pavilion2 (system acceptance tests rather than performance studies), Conbench
 - DAS-6: [job policy](https://www.cs.vu.nl/das/jobs.shtml)
 - ReFrame: [tutorial](https://reframe-hpc.readthedocs.io/en/stable/tutorial.html),
   [manpage](https://reframe-hpc.readthedocs.io/en/stable/manpage.html)
+- slurm-action: [repository](https://github.com/astron-rd/slurm-action)
 - JUBE: [repository](https://github.com/FZJ-JSC/JUBE),
   [tutorial](https://apps.fz-juelich.de/jsc/jube/docu/tutorial.html)
 - ReBench: [configuration](https://rebench.readthedocs.io/en/latest/config/)
