@@ -11,9 +11,8 @@ Access to the project on bencher.dev was a problem for part of the team, and the
 hosted approach has further problems: GitHub runners are shared virtual
 machines, too noisy for regression thresholds.
 
-The recommendation is to run
-the benchmarks on the DAS-6 cluster with ReFrame as the driver, started from
-GitHub Actions on a self-hosted runner. Every implementation writes a result
+The recommendation is to run the benchmarks on the DAS-6 cluster with ReFrame as
+the driver, started from GitHub Actions. Every implementation writes a result
 file in a format defined by PACE, results are kept in git, and plots are
 rendered into the docs site.
 
@@ -55,9 +54,9 @@ The setup consists of four layers.
 1. **Store**: result files are committed to git under `results/`.
 1. **View**: a script renders comparison and scaling plots into the docs site.
 
-A measurement is the per-phase wall-clock time from the application's own
-timers. Warm-up, compilation or JIT time is reported as a phase of its own. A
-result file records the hardware and the commit id. For example:
+The time measurements are self-reported by the applications, split into phases
+and reported in seconds. A result file records the execution environment and
+software version (e.g. commit id). For example:
 
 ```json
 {
@@ -84,8 +83,8 @@ choice of tooling:
 
 - Jobs are capped at 15 minutes during working hours, so an experiment has to be
   many short jobs rather than one long sweep.
-- Compute nodes are only reachable through Slurm jobs, so the tool has to
-  submit jobs instead of running the benchmarks where it is started.
+- Compute nodes are only reachable through Slurm jobs, so the tool has to submit
+  jobs instead of running the benchmarks where it is started.
 
 Triggered by GitHub Actions, a runner on the DAS-6 control node starts ReFrame,
 which submits the jobs with `sbatch` and collects the results while the workflow
@@ -96,7 +95,7 @@ keeps the logs.
 | Tool         | Cluster   | Notes                                                                                                                                                                                                      |
 | ------------ | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | ReFrame      | native    | Knows Slurm partitions and writes the job scripts, runs every combination of `parameter()` values as separate jobs, keeps results in SQLite and compares them across sessions.                             |
-| slurm-action | srun      | One workflow step becomes one job from a self-hosted runner on the control node. Parameterisation, result collection and comparison are hand-written in the workflow, as in a shell script.                |
+| slurm-action | srun      | One workflow step becomes one job from a self-hosted runner on the control node. Parameterisation, result collection and comparison are hand-written in the workflow.                                      |
 | JUBE         | templates | From the Juelich Supercomputing Centre (JSC). Submits through job templates, runs every combination of parameterset values, collects results with regex patterns into CSV tables. Unmaintained since 2024. |
 
 ReFrame is the driver: it submits to Slurm natively and is easy to install via
@@ -127,14 +126,16 @@ Python project per commit).
   [benchmarks in CI without noise](https://codspeed.io/blog/benchmarks-in-ci-without-noise)
 - Nyrkio: [repository](https://github.com/nyrkio/nyrkio)
 - DAS-6: [job policy](https://www.cs.vu.nl/das/jobs.shtml)
-- ReFrame: [tutorial](https://reframe-hpc.readthedocs.io/en/stable/tutorial.html),
+- ReFrame:
+  [tutorial](https://reframe-hpc.readthedocs.io/en/stable/tutorial.html),
   [manpage](https://reframe-hpc.readthedocs.io/en/stable/manpage.html)
 - slurm-action: [repository](https://github.com/astron-rd/slurm-action)
 - JUBE: [repository](https://github.com/FZJ-JSC/JUBE),
   [tutorial](https://apps.fz-juelich.de/jsc/jube/docu/tutorial.html)
 - ReBench: [configuration](https://rebench.readthedocs.io/en/latest/config/)
 - hyperfine: [repository](https://github.com/sharkdp/hyperfine)
-- Ramble: [getting started](https://ramble.readthedocs.io/en/latest/getting_started.html)
+- Ramble:
+  [getting started](https://ramble.readthedocs.io/en/latest/getting_started.html)
 - Benchpark: [repository](https://github.com/llnl/benchpark)
 - Pavilion2: [documentation](https://pavilion2.readthedocs.io/en/latest/)
 - Conbench: [repository](https://github.com/conbench/conbench)
