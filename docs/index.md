@@ -32,7 +32,10 @@ The documentation is organized into three categories:
   - Python
   - Rust
 - General
-  - Benchmarking Frameworks
+  - Benchmarking
+    - Frameworks
+    - Bencher
+    - Architecture
   - Data Format
 
 Use the navigation menu to browse these sections.
