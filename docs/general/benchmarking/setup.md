@@ -101,8 +101,8 @@ happens on a cluster node while the workflow keeps the logs.
 | ------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | ReFrame      | native    | Knows Slurm partitions and writes the job scripts, runs every combination of `parameter()` values as separate jobs, keeps results in SQLite and compares them across sessions.                   |
 | JUBE (JSC)   | templates | Submits through job templates, runs every combination of parameterset values, collects results with regex patterns into CSV tables. Not on PyPI, last release May 2024.                          |
-| ReBench      | no        | Config lists implementations x benchmarks x input sizes directly. One config is one long local run and denoising needs root, so it suits a dedicated machine, not a time-capped cluster.         |
-| hyperfine    | no        | Repeats a command with warm-up and varies one setting at a time, per-run times to JSON. Times the whole process, so it adds nothing to the applications' own phase timers, but needs zero setup. |
+| ReBench      | no        | Config lists implementations x benchmarks x input sizes directly. One config is one long local run and denoising wants sudo, so it suits a dedicated machine, not a time-capped cluster.         |
+| hyperfine    | no        | Repeats a command with warm-up over every combination of parameter values, per-run times to JSON. Times the whole process, so it adds nothing to the applications' own phase timers.             |
 | Shell script | sbatch    | Works anywhere, you write the loop. Reimplements what the drivers already do (parameterisation, result collection, comparison).                                                                  |
 
 ReFrame is the driver of choice: it submits to Slurm natively and is easy to
