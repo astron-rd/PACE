@@ -11,10 +11,10 @@ Access to the project on bencher.dev was a problem for part of the team, and the
 hosted approach has further problems: GitHub runners are shared virtual
 machines, too noisy for regression thresholds.
 
-The recommendation is to run the benchmarks on the DAS-6 cluster with ReFrame as
-the driver, started from GitHub Actions. Every implementation outputs a result
-file in a format defined by PACE, results are kept in the repository, and plots
-are rendered into the docs site.
+The recommendation is to run the benchmarks on the DAS-6 cluster from a GitHub
+Actions matrix, with slurm-action submitting each job. Every implementation
+outputs a result file in a format defined by PACE, results are kept in the
+repository, and plots are rendered into the docs site.
 
 ## Problems with Bencher
 
@@ -50,7 +50,7 @@ Beyond the [earlier criteria](frameworks.md), two requirements matter:
 The setup consists of four layers.
 
 1. **Emit**: every implementation outputs one result file per run.
-1. **Run**: ReFrame submits one Slurm job per application and implementation.
+1. **Run**: a GitHub Actions matrix runs benchmarks as separate Slurm jobs.
 1. **Store**: result files are committed to the repository under `results/`.
 1. **View**: a script renders comparison and scaling plots into the docs site.
 
@@ -86,22 +86,24 @@ choice of tooling:
 - Compute nodes are only reachable through Slurm jobs, so the tool has to submit
   jobs instead of running the benchmarks where it is started.
 
-Triggered by GitHub Actions, a runner on the DAS-6 control node starts ReFrame,
-which submits the jobs with `sbatch` and collects the results while the workflow
-keeps the logs.
+Triggered by GitHub Actions, a runner on the DAS-6 control node submits the jobs
+through slurm-action. The result files are committed to the repository and the
+job output is kept in the workflow log.
 
 ## Candidate tools
 
 | Tool         | Cluster   | Notes                                                                                                                                                                                                      |
 | ------------ | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ReFrame      | native    | Knows Slurm partitions and writes the job scripts, runs every combination of `parameter()` values as separate jobs, keeps results in SQLite and compares them across sessions.                             |
-| slurm-action | srun      | One workflow step becomes one job from a self-hosted runner on the control node. Parameterisation, result collection and comparison are hand-written in the workflow.                                      |
+| slurm-action | srun      | One workflow step becomes one job from a self-hosted runner on the control node. The workflow matrix supplies the parameterisation, while result collection and comparison are hand-written.               |
+| ReFrame      | native    | Knows Slurm partitions and writes the job scripts, runs every combination of `parameter()` values as separate jobs, writes its own reports and logs and compares them across sessions.                     |
 | JUBE         | templates | From the Juelich Supercomputing Centre (JSC). Submits through job templates, runs every combination of parameterset values, collects results with regex patterns into CSV tables. Unmaintained since 2024. |
 
-ReFrame is the driver: it submits to Slurm natively and is easy to install via
-`uv`. `slurm-action` is the fallback if ReFrame does not work out on DAS-6: it
-submits to Slurm, but parameterisation, result collection and comparison are
-hand-written. JUBE is ruled out because it is unmaintained.
+slurm-action is the driver: it submits to Slurm from the workflow and the matrix
+covers the parameterisation, so the result files need no further collection. It
+runs one node per job for now and could perhaps be extended for the multi-node
+work of M4 and M5. ReFrame adds concurrent submission and retries, but also a
+framework to configure. It comes with its own result format, reports and logs.
+JUBE is ruled out because it is unmaintained.
 
 Also considered: ReBench (no Slurm support, one long run on a dedicated
 machine), hyperfine (no Slurm support, times the whole process), Ramble and
@@ -113,7 +115,7 @@ Python project per commit).
 
 1. Define the JSON specification of the result file.
 1. Make every implementation output a result file.
-1. Run the benchmarks on DAS-6 from GitHub Actions.
+1. Run the benchmarks on DAS-6 via slurm-action.
 1. Render the comparison and scaling plots into the docs site.
 
 ## Sources
@@ -126,10 +128,12 @@ Python project per commit).
   [benchmarks in CI without noise](https://codspeed.io/blog/benchmarks-in-ci-without-noise)
 - Nyrkio: [repository](https://github.com/nyrkio/nyrkio)
 - DAS-6: [job policy](https://www.cs.vu.nl/das/jobs.shtml)
+- GitHub Actions:
+  [matrix](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/run-job-variations)
+- slurm-action: [repository](https://github.com/astron-rd/slurm-action)
 - ReFrame:
   [tutorial](https://reframe-hpc.readthedocs.io/en/stable/tutorial.html),
   [manpage](https://reframe-hpc.readthedocs.io/en/stable/manpage.html)
-- slurm-action: [repository](https://github.com/astron-rd/slurm-action)
 - JUBE: [repository](https://github.com/FZJ-JSC/JUBE),
   [tutorial](https://apps.fz-juelich.de/jsc/jube/docu/tutorial.html)
 - ReBench: [configuration](https://rebench.readthedocs.io/en/latest/config/)
