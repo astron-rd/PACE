@@ -12,9 +12,9 @@ hosted approach has further problems: GitHub runners are shared virtual
 machines, too noisy for regression thresholds.
 
 The recommendation is to run the benchmarks on the DAS-6 cluster with ReFrame as
-the driver, started from GitHub Actions. Every implementation writes a result
-file in a format defined by PACE, results are kept in git, and plots are
-rendered into the docs site.
+the driver, started from GitHub Actions. Every implementation outputs a result
+file in a format defined by PACE, results are kept in the repository, and plots
+are rendered into the docs site.
 
 ## Problems with Bencher
 
@@ -49,9 +49,9 @@ Beyond the [earlier criteria](frameworks.md), two requirements matter:
 
 The setup consists of four layers.
 
-1. **Emit**: every implementation writes one result file per run.
+1. **Emit**: every implementation outputs one result file per run.
 1. **Run**: ReFrame submits one Slurm job per application and implementation.
-1. **Store**: result files are committed to git under `results/`.
+1. **Store**: result files are committed to the repository under `results/`.
 1. **View**: a script renders comparison and scaling plots into the docs site.
 
 The time measurements are self-reported by the applications, split into phases
@@ -76,7 +76,7 @@ phase times to stdout.
 
 ## Execution environment
 
-The benchmarks run on the DAS-6 Slurm cluster. While PACE has budget for
+The benchmarks will run on the DAS-6 Slurm cluster. While PACE has budget for
 dedicated infrastructure, reusing existing DAS-6 resources is the most pragmatic
 approach given current constraints. Two properties of the cluster determine the
 choice of tooling:
@@ -112,7 +112,7 @@ Python project per commit).
 ## Next steps
 
 1. Define the JSON specification of the result file.
-1. Make every implementation write a result file.
+1. Make every implementation output a result file.
 1. Run the benchmarks on DAS-6 from GitHub Actions.
 1. Render the comparison and scaling plots into the docs site.
 
