@@ -13,10 +13,11 @@ machines, too noisy for regression thresholds, though
 [`slurm-action`](https://github.com/astron-rd/slurm-action) can move the run
 itself onto a Slurm cluster. The recommendation is to run the benchmarks on the
 DAS-6 cluster, triggered from GitHub Actions through `slurm-action`, with
-ReFrame as the driver. Every implementation writes a result format defined
-within PACE, results are kept in git, and plots are rendered into the docs site.
+ReFrame as the driver. Every implementation writes a result file in a format
+defined by PACE, results are kept in git, and plots are rendered into the docs
+site.
 
-## Problems with the trial
+## Problems with Bencher
 
 - **Access.** Not every team member could get access to the project on
   bencher.dev.
@@ -28,8 +29,8 @@ within PACE, results are kept in git, and plots are rendered into the docs site.
   varies 10 to 20 % run to run by github-action-benchmark's own estimate, and
   the Bencher trial on it raised a false +10.66 % alert on a 20 us kernel
   ([report](https://bencher.dev/perf/astron-pace/reports/f3bf8381-e065-4ae8-86e2-bd20cd186d2c)).
-  No storage tool fixes this. The GPU and multi-node work of the later PACE
-  milestones (M3 to M5) will need GPU nodes, which CI runners do not offer.
+- **No GPUs.** The GPU and multi-node work of the later PACE milestones (M3 to
+  M5) needs GPU nodes, which CI runners do not offer.
 - **Data model.** Bencher, like github-action-benchmark, CodSpeed and Nyrkio,
   records a value per branch, testbed and commit. Encoding the language as
   "branch" only gives one timeline per language.
@@ -42,19 +43,17 @@ Beyond the [earlier criteria](frameworks.md), two requirements matter:
   Python, C++, Rust, Julia and soon the OpenMP, OpenACC and GPU variants must be
   viewable side by side.
 - **Low maintenance**: running a benchmark server is outside the scope of the
-  project. Existing infrastructure such as DAS-6 is the way around that, but it
-  should not turn into support requests for the people who maintain it.
+  project. DAS-6 is the way around that, but it should not turn into support
+  requests for the people who maintain it.
 
 ## Proposed architecture
 
 The setup consists of four layers.
 
 1. **Emit**: every implementation writes one result file per run.
-1. **Run**: a driver starts a benchmark run for every implementation of the
-   various applications as a Slurm job.
-1. **Store**: result files committed under `results/`.
-1. **View**: a script renders comparison and scaling plots into this
-   documentation site.
+1. **Run**: ReFrame submits one Slurm job per application and implementation.
+1. **Store**: result files are committed to git under `results/`.
+1. **View**: a script renders comparison and scaling plots into the docs site.
 
 A measurement is the per-phase wall-clock time from the application's own
 timers. Warm-up, compilation or JIT time is reported as a phase of its own. A
@@ -73,19 +72,16 @@ result file records the hardware and the commit id. For example:
 }
 ```
 
-Currently, only IDG Python writes JSON. The C++, Rust, Julia and FDD mains print
-phase times to stdout under their own labels, and all-sky times whole runs from
-its pytest benchmarks.
+Currently, only IDG Python writes a result file. The other implementations print
+phase times to stdout.
 
 ## Execution environment
 
 The benchmarks run on the DAS-6 Slurm cluster. While PACE has budget for
 dedicated infrastructure, reusing existing DAS-6 resources is the most pragmatic
-approach given current constraints, and the cluster gives access to the GPUs
-that the GPU-offloading milestone (M3) needs. Three properties of the cluster
-determine the choice of tooling:
+approach given current constraints. Two properties of the cluster determine the
+choice of tooling:
 
-- A job gets its nodes to itself, which removes the noise problem of hosted CI.
 - Jobs are capped at 15 minutes during working hours, so an experiment has to be
   many short jobs rather than one long sweep.
 - The driver has to submit to Slurm, which excludes CI-only tools.
@@ -103,25 +99,22 @@ happens on a cluster node while the workflow keeps the logs.
 | JUBE (JSC)   | templates | Submits through job templates, runs every combination of parameterset values, collects results with regex patterns into CSV tables. Not on PyPI, last release May 2024.                          |
 | ReBench      | no        | Config lists implementations x benchmarks x input sizes directly. One config is one long local run and denoising wants sudo, so it suits a dedicated machine, not a time-capped cluster.         |
 | hyperfine    | no        | Repeats a command with warm-up over every combination of parameter values, per-run times to JSON. Times the whole process, so it adds nothing to the applications' own phase timers.             |
-| Shell script | sbatch    | Works anywhere, you write the loop. Reimplements what the drivers already do (parameterisation, result collection, comparison).                                                                  |
+| Shell script | sbatch    | Works anywhere, the loop is hand-written. Reimplements what the drivers already do (parameterisation, result collection, comparison).                                                            |
 
-ReFrame is the driver of choice: it submits to Slurm natively and is easy to
-install via `uv`. JUBE loses on maintenance status, ReBench and hyperfine on
-Slurm support, and a shell script on reimplementing what the drivers already do.
+ReFrame is the driver: it submits to Slurm natively and is easy to install via
+`uv`. JUBE loses on maintenance status, ReBench and hyperfine on Slurm support,
+and a shell script on reimplementing what the drivers already do.
 
-Also considered: Ramble/Benchpark (built for standard benchmark suites, expects
-Spack-built applications), Pavilion2 (system acceptance tests rather than
-performance studies), Bencher self-hosted and github-action-benchmark (no
-Slurm), Nyrkio and Conbench (need a server and model results as a commit
-timeline), CodSpeed (SaaS, simulated CPU, no GPU/Julia), asv (single Python
-project per commit).
+Also considered: Ramble and Benchpark (expect Spack-built applications),
+Pavilion2 (system acceptance tests rather than performance studies), Conbench
+(needs a server) and asv (single Python project per commit).
 
 ## Next steps
 
 1. Define the JSON specification of the result file.
 1. Make every implementation write a result file.
 1. Run the benchmarks on DAS-6 from GitHub Actions.
-1. Render the comparison and scaling plots into the documentation.
+1. Render the comparison and scaling plots into the docs site.
 
 ## Sources
 
