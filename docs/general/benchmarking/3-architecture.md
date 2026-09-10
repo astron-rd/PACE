@@ -2,10 +2,10 @@
 
 Bencher, a hosted continuous-benchmarking service, has been on trial for
 recording the benchmark results of PACE: the
-[framework evaluation](frameworks.md) selected it, a proof of concept uploaded
-IDG Python timings with the [upload script](bencher/index.md), and a CI trial
-ran the pytest-benchmark and criterion micro-benchmarks through it on
-GitHub-hosted runners.
+[framework evaluation](1-frameworks.md) selected it, a proof of concept uploaded
+IDG Python timings with the [upload script](2-bencher.md), and a CI trial ran
+the pytest-benchmark and criterion micro-benchmarks through it on GitHub-hosted
+runners.
 
 Access to the project on bencher.dev was a problem for part of the team, and the
 hosted approach has further problems: GitHub runners are shared virtual
@@ -36,7 +36,7 @@ repository, and plots are rendered into the docs site.
 
 ## Requirements
 
-Beyond the [earlier criteria](frameworks.md), two requirements matter:
+Beyond the [earlier criteria](1-frameworks.md), two requirements matter:
 
 - **Comparison across implementations**: results for the same application in
   Python, C++, Rust, Julia and soon the OpenMP, OpenACC and GPU variants must be
