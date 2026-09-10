@@ -71,9 +71,6 @@ software version (e.g. commit id). For example:
 }
 ```
 
-Currently, only IDG Python writes a result file. The other implementations print
-phase times to stdout.
-
 ## Execution environment
 
 The benchmarks will run on the DAS-6 Slurm cluster. While PACE has budget for
