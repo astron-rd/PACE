@@ -11,11 +11,10 @@ Access to the project on bencher.dev was a problem for part of the team, and the
 hosted approach has further problems: GitHub runners are shared virtual
 machines, too noisy for regression thresholds, though
 [`slurm-action`](https://github.com/astron-rd/slurm-action) can move the run
-itself onto a Slurm cluster. Of the candidates surveyed, ReFrame and JUBE suit a
-Slurm cluster and ReBench a dedicated machine. The proposal is a result format
-defined within PACE that every implementation writes, a driver that runs every
-combination of settings, results kept in git, and plots rendered into the docs
-site.
+itself onto a Slurm cluster. The recommendation is to run the benchmarks on the
+DAS-6 cluster, triggered from GitHub Actions through `slurm-action`, with
+ReFrame as the driver. Every implementation writes a result format defined
+within PACE, results are kept in git, and plots are rendered into the docs site.
 
 ## Problems with the trial
 
@@ -51,9 +50,8 @@ Beyond the [earlier criteria](frameworks.md), two requirements matter:
 The setup consists of four layers.
 
 1. **Emit**: every implementation writes one result file per run.
-1. **Run**: a runner starts a benchmark run for every implementation of the
-   various applications, directly or as a Slurm job. It can be an existing
-   benchmarking tool or a shell script.
+1. **Run**: a driver starts a benchmark run for every implementation of the
+   various applications as a Slurm job.
 1. **Store**: result files committed under `results/`.
 1. **View**: a script renders comparison and scaling plots into this
    documentation site.
@@ -79,27 +77,23 @@ Currently, only IDG Python writes JSON. The C++, Rust, Julia and FDD mains print
 phase times to stdout under their own labels, and all-sky times whole runs from
 its pytest benchmarks.
 
-## Execution environments
+## Execution environment
 
-Two kinds of environment are in reach and they favour different tooling. A
-**dedicated machine** (a workstation or a reserved server) is the simplest: no
-scheduler, no time limits, root available for pinning CPU frequencies. A **Slurm
-cluster** gives access to the GPUs that the GPU-offloading milestone (M3) needs.
-If the cluster route is taken, three properties matter for the choice of
-tooling:
+The benchmarks run on the DAS-6 Slurm cluster. While PACE has budget for
+dedicated infrastructure, reusing existing DAS-6 resources is the most pragmatic
+approach given current constraints, and the cluster gives access to the GPUs
+that the GPU-offloading milestone (M3) needs. Three properties of the cluster
+determine the choice of tooling:
 
 - A job gets its nodes to itself, which removes the noise problem of hosted CI.
 - Jobs are capped at 15 minutes during working hours, so an experiment has to be
   many short jobs rather than one long sweep.
 - The driver has to submit to Slurm, which excludes CI-only tools.
 
-GitHub Actions can stay the trigger:
+GitHub Actions stays the trigger:
 [`slurm-action`](https://github.com/astron-rd/slurm-action) runs a workflow step
 through `srun` from a self-hosted runner on the control node, so the measurement
 happens on a cluster node while the workflow keeps the logs.
-
-While PACE has budget for dedicated infrastructure, reusing existing DAS-6
-resources is the most pragmatic approach given current constraints.
 
 ## Candidate tools
 
@@ -118,11 +112,12 @@ Slurm), Nyrkio and Conbench (need a server and model results as a commit
 timeline), CodSpeed (SaaS, simulated CPU, no GPU/Julia), asv (single Python
 project per commit).
 
-## Open questions
+## Next steps
 
-- Where do the benchmarks run: a dedicated machine, the DAS-6 nodes, another
-  Slurm cluster, or a mix?
-- Which driver follows from that: ReFrame, JUBE, ReBench, hyperfine or a script?
+1. Define the JSON specification of the result file.
+1. Make every implementation write a result file.
+1. Run the benchmarks on DAS-6 from GitHub Actions.
+1. Render the comparison and scaling plots into the documentation.
 
 ## Sources
 
