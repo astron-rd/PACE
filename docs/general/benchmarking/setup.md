@@ -118,20 +118,21 @@ Pavilion2 (system acceptance tests rather than performance studies), Conbench
 
 ## Sources
 
-- [DAS-6 job policy](https://www.cs.vu.nl/das/jobs.shtml)
-- ReFrame:
-  [tutorial](https://reframe-hpc.readthedocs.io/en/stable/tutorial.html),
+- Bencher: [changelog](https://bencher.dev/docs/reference/changelog/),
+  [CLI install](https://bencher.dev/docs/how-to/install-cli/)
+- github-action-benchmark:
+  [repository](https://github.com/benchmark-action/github-action-benchmark)
+- CodSpeed:
+  [benchmarks in CI without noise](https://codspeed.io/blog/benchmarks-in-ci-without-noise)
+- Nyrkio: [repository](https://github.com/nyrkio/nyrkio)
+- DAS-6: [job policy](https://www.cs.vu.nl/das/jobs.shtml)
+- ReFrame: [tutorial](https://reframe-hpc.readthedocs.io/en/stable/tutorial.html),
   [manpage](https://reframe-hpc.readthedocs.io/en/stable/manpage.html)
-- [JUBE](https://github.com/FZJ-JSC/JUBE),
-  [JUBE tutorial](https://apps.fz-juelich.de/jsc/jube/docu/tutorial.html)
-- [Ramble](https://ramble.readthedocs.io/en/latest/getting_started.html),
-  [Benchpark](https://github.com/llnl/benchpark),
-  [Pavilion2](https://pavilion2.readthedocs.io/en/latest/),
-  [ReBench config](https://rebench.readthedocs.io/en/latest/config/),
-  [hyperfine](https://github.com/sharkdp/hyperfine)
-- [Bencher changelog](https://bencher.dev/docs/reference/changelog/),
-  [install docs](https://bencher.dev/docs/how-to/install-cli/),
-  [github-action-benchmark](https://github.com/benchmark-action/github-action-benchmark),
-  [Nyrkio](https://github.com/nyrkio/nyrkio),
-  [CodSpeed noise measurements](https://codspeed.io/blog/benchmarks-in-ci-without-noise),
-  [Conbench](https://github.com/conbench/conbench)
+- JUBE: [repository](https://github.com/FZJ-JSC/JUBE),
+  [tutorial](https://apps.fz-juelich.de/jsc/jube/docu/tutorial.html)
+- ReBench: [configuration](https://rebench.readthedocs.io/en/latest/config/)
+- hyperfine: [repository](https://github.com/sharkdp/hyperfine)
+- Ramble: [getting started](https://ramble.readthedocs.io/en/latest/getting_started.html)
+- Benchpark: [repository](https://github.com/llnl/benchpark)
+- Pavilion2: [documentation](https://pavilion2.readthedocs.io/en/latest/)
+- Conbench: [repository](https://github.com/conbench/conbench)
