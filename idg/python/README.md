@@ -13,17 +13,17 @@ You can get an input file from the input generator in `idg/input`. Use the `--st
 ### Unit tests
 
 ```sh
-pre-commit run --hook-stage manual --all -v pytest-idg
+uvx pre-commit run --hook-stage manual --all -v pytest-idg
 ```
 
 ### Linting
 
 ```sh
-pre-commit run --all
+uvx pre-commit run --all
 ```
 
 ### Packaging
 
 ```sh
-pre-commit run --hook-stage manual --all -v build-idg
+uvx pre-commit run --hook-stage manual --all -v build-idg
 ```
