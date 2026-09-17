@@ -32,7 +32,7 @@ Lastly, we investigated the use of xtensor-io for storing and loading data store
 
 The following table compares the performance of xtensor-fftw (left) vs. FFTW3 (right). It's clear that using FFTW3 natively is the more performant solution, especially for smaller volume FFTs, FFTW is a lot (~100) times faster. For larger data volumes, the difference is signficantly smaller, and in case of the complex-to-complex FFT, is as small as (roughly) a factor 4.
 
-The huge difference can likely (at least) partially be attributed to the fact that every call to *xtensor*'s FFT routines, create a new FFTW plan, while FFTW itself supports reusing the plan.
+The huge difference can likely (at least) partially be attributed to the fact that every call to *xtensor*'s FFT routines, create a new FFTW plan, while FFTW itself supports reusing the plan. It is therefore likely these results are somewhat skewed.
 
 Note that these values were obtained using the [`fft-benchmark`](https://git.astron.nl/RD/fft-benchmark) tool and the these benchmarks ran on Node 508 of the [DAS-6 cluster](https://www.cs.vu.nl/das6/clusters.shtml).
 
