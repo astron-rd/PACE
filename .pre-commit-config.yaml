@@ -61,3 +61,11 @@ repos:
         types: [python]
         pass_filenames: false
         always_run: false
+      - id: build-dedisp
+        name: build-dedisp
+        stages: [manual] # only run when specified manually
+        entry: bash -c 'cd dedisp/python; uv build'
+        language: system
+        types: [python]
+        pass_filenames: false
+        always_run: false
