@@ -47,7 +47,11 @@ pub fn dedisperse(
     let output = plan.execute(signal);
 
     let output_file = hdf5_metno::File::create(&general_args.output_file).unwrap();
-    output_file.new_dataset_builder().with_data(&output).create("fddresult").unwrap();
+    output_file
+        .new_dataset_builder()
+        .with_data(&output)
+        .create("fddresult")
+        .unwrap();
 }
 
 pub struct FDDPlan {
@@ -189,7 +193,10 @@ impl FDDPlan {
             1,
         );
 
-        dm_output.slice(s![.., ..n_output_samples]).reversed_axes().to_owned()
+        dm_output
+            .slice(s![.., ..n_output_samples])
+            .reversed_axes()
+            .to_owned()
     }
 
     fn fourier_domain_dedispersion(
