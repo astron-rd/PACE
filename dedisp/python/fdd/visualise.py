@@ -10,6 +10,28 @@ from fdd.signal import Signal
 logger = logging.getLogger(__name__)
 
 
+DM_CONSTANT = 1 / 2.41e-4
+
+
+def dedisperse(spectrum: np.ndarray, offsets: np.ndarray) -> np.ndarray:
+    """
+    Dedisperse the input dynamic spectrum based by shifting
+    the samples for each channel.
+
+    :param spectrum: dynamic spectrum with shape (samples, channels)
+    :param spectrum: sample offsets for each channel
+    :returns: the dedispersed dynamic spectrum
+    """
+    out = np.zeros_like(spectrum)
+
+    for channel_index in range(spectrum.shape[1]):
+        out[:, channel_index] = np.roll(
+            spectrum[:, channel_index], offsets[channel_index]
+        )
+
+    return out
+
+
 def load_fdd_result(filename: str):
     """
     Load the FDD result from a HDF5 file.
@@ -53,6 +75,8 @@ def plot_burst(
     t_burst = signal.arrival_time
     t_samp = signal.time_resolution
 
+    dm_burst = signal.dm
+
     f_max = signal.peak_frequency
     chan_width = signal.frequency_resolution
     n_chans = signal.n_channels
@@ -69,14 +93,23 @@ def plot_burst(
     samp_start = int(t_start / t_samp)
     samp_end = int(t_end / t_samp)
 
+    # Dedisperse the signal by computing the time delays corresponding to each
+    # frequency channel and shifting the samples
+    channel_frequencies = np.linspace(f_max, f_min, n_chans)
+    time_delays = dm_burst * DM_CONSTANT * (channel_frequencies ** (-2) - f_max ** (-2))
+    sample_offsets = np.round(time_delays / t_samp).astype(int)
+
+    dedispersed_spectrum = dedisperse(signal.dynamic_spectrum, -sample_offsets)
+
     # Plot the burst and the trial DMs
     fig, frames = plt.subplots(
         3, 1, sharex=True, figsize=(8, 8), gridspec_kw=dict(height_ratios=[0.3, 1, 1])
     )
 
-    # Plot the channel-averaged burst
-    mean_intensity = np.mean(result[samp_start:samp_end, :], axis=1)
+    # Plot the dedispersed channel-averaged burst
+    mean_intensity = np.mean(dedispersed_spectrum[samp_start:samp_end, :], axis=1)
     time_axis = np.arange(samp_start, samp_end) * t_samp
+
     frames[0].plot(time_axis, mean_intensity, lw=1, color="black")
 
     # Plot the input data (samples, channel)
@@ -97,7 +130,12 @@ def plot_burst(
     # Axes settings
     frames[0].set_title(f"Signal with a DM of {signal.dm:.3f} at {t_burst:.5f} seconds")
     frames[0].set_ylabel("Mean intensity")
-    frames[0].set_ylim(mean_intensity.mean() - 5, mean_intensity.mean() + 5)
+
+    # Ensure there's about 5% white space at the top and bottom of the plot
+    y_lim_offset = (mean_intensity.max() - mean_intensity.min()) / 20
+    frames[0].set_ylim(
+        mean_intensity.min() - y_lim_offset, mean_intensity.max() + y_lim_offset
+    )
 
     frames[1].axvline(t_burst, color="black", ls="--", lw=0.5)
     frames[1].set_ylabel("frequency (MHz)")
