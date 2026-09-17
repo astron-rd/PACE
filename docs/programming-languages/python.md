@@ -58,7 +58,7 @@ the virtualenvs and installs the dependencies to run tests, linting etc.
 ### Adopting `uv`
 
 The Python ecosystem has settled on `uv` as the modern all-in-one tool for
-Python development. For the PACE project we are adopting `uv` as the primary
+Python development. For this project `uv` is adopted as the primary
 tool for managing dependencies and running tests. In addition to `uv` and its
 build tool [`uv_build`](https://docs.astral.sh/uv/concepts/build-backend/), we
 are also using [`ruff`](https://docs.astral.sh/ruff/) for linting and
