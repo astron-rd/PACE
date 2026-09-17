@@ -7,5 +7,8 @@ edition = "2024"
 [dependencies]
 clap = { version = "4.6.6", features = ["derive"] }
 hdf5-metno = "0.12.3"
-ndarray = "0.17.2"
+ndarray = { version = "0.17.2", features = ["rayon"] }
+ndarray-ndimage = "0.6.0"
 ndarray-rand = "0.16.0"
+ndrustfft = "0.6.2"
+rayon = "1.12.0"
