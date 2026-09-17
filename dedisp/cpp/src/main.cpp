@@ -58,7 +58,8 @@ int main() {
   {
     using namespace hdf5;
 
-    const fs::path h5_file_path = "signal.h5";
+    const fs::path h5_file_path =
+        "signal.h5"; // TODO: use cxxopts to set this variable
     if (!fs::exists(h5_file_path)) {
       std::cout << "Error: " << h5_file_path << " does not exist\n";
       return 0;
