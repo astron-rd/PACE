@@ -28,13 +28,13 @@ def evaluate_spheroidal(nu: np.ndarray) -> np.ndarray:
     :param nu: Parameters of the spheroidal wave function.
     :return: Array with values of the spheroidal wave function, shape (len(nu)).
     """
-    P = np.array(
+    p = np.array(
         [
             [8.203343e-2, -3.644705e-1, 6.278660e-1, -5.335581e-1, 2.312756e-1],
             [4.028559e-3, -3.697768e-2, 1.021332e-1, -1.201436e-1, 6.412774e-2],
         ]
     )
-    Q = np.array(
+    q = np.array(
         [
             [1.0000000e0, 8.212018e-1, 2.078043e-1],
             [1.0000000e0, 9.599102e-1, 2.918724e-1],
@@ -55,8 +55,8 @@ def evaluate_spheroidal(nu: np.ndarray) -> np.ndarray:
         delnusq = nusq - end**2
 
         # Calculate polynomial using Horner's method
-        top = polyval(P[part][::-1], delnusq)
-        bot = polyval(Q[part][::-1], delnusq)
+        top = polyval(p[part][::-1], delnusq)
+        bot = polyval(q[part][::-1], delnusq)
 
         # Avoid division by zero
         valid = bot != 0
