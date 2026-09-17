@@ -29,16 +29,6 @@ requires = ["uv_build>=0.12.15,<0.13"]
 build-backend = "uv_build"
 
 [tool.ruff]
-exclude = [
-    ".venv",
-    ".git",
-    ".tox",
-    "dist",
-    "docs",
-    "*lib/python*",
-    "*egg",
-]
-
 builtins = ["_", "Dim", "Ravel"]
 
 [tool.ruff.lint]
@@ -54,9 +44,7 @@ branch = true
 [tool.pytest.ini_options]
 env = [{"PYTHONWARNINGS"="default::DeprecationWarning"}]
 addopts = "--cov-report term --cov-report xml --cov-report html --cov=all_sky_python"
-testpaths = [
-    "tests",
-]
+testpaths = ["tests"]
 
 [dependency-groups]
 dev = [

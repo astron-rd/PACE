@@ -33,17 +33,6 @@ fdd-plot = "fdd.visualise:main"
 requires = ["uv_build>=0.12.15,<0.13"]
 build-backend = "uv_build"
 
-[tool.ruff]
-exclude = [
-    ".venv",
-    ".git",
-    ".tox",
-    "dist",
-    "docs",
-    "*lib/python*",
-    "*egg",
-]
-
 [tool.ruff.lint]
 # Expand basic rules with name and style checks roughly equivalent to flake8 + black + pylint
 # Some additional functional errors such as `await` on none async or wrong return types / args.
