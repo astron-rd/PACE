@@ -26,7 +26,7 @@ xtensor offers an incredibly convenient way to work with multi-dimensional vecto
 
 In particular, this is the case for xtensor-fftw that wraps the commonly used FFTW3 library for computing the FFT; an operation that is omnipresent in radio astronomy. FFTW3 is written in portable C, thus offers a (rather archaic) C-style interface, which requires a lot of manual memory management and can therefore be quite error prone. However, xtensor-fftw isn't as mature as xtensor itself and isn't very actively developed, although it seems they do keep it up-to-date. They, for example, lack some convenience functions that one might expect coming from NumPy, such as a multi-dimensional `fftshift` operation.
 
-Lastly, we investigated the use of xtensor-io for storing and loading data stored in the `.npy` format accross all languages, since most languages offer a library with such functionality. Sadly, it does not support compound data types, which means having to store members of, e.g., a `struct` in different file.
+Lastly, we investigated the use of xtensor-io for storing and loading data stored in the `.npy` format accross all languages, since most languages offer a library with such functionality. Sadly, it does not support compound data types, which means having to store members of, e.g., a `struct` in a different file.
 
 ## `xtensor-fftw` bechmark
 
@@ -36,7 +36,7 @@ The huge difference can likely (at least) partially be attributed to the fact th
 
 Note that these values were obtained using the [`fft-benchmark`](https://git.astron.nl/RD/fft-benchmark) tool and the these benchmarks ran on Node 508 of the [DAS-6 cluster](https://www.cs.vu.nl/das6/clusters.shtml).
 
-| Operation | *xtensor-fftw* time | *FFTW3* time | Speedup (FFTW3 over xtensor-fftw) |
+| Operation | xtensor-fftw time | FFTW3 time | Speedup (FFTW3 over xtensor-fftw) |
 | :--- | :---: | :---: | :---: |
 | R2C/100 | 11.6 us | 0.160 us | $\\approx 72.5\\times$ |
 | R2C/200 | 23.1 us | 0.301 us | $\\approx 76.8\\times$ |
