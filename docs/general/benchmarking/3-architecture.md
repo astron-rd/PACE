@@ -115,6 +115,13 @@ Python project per commit).
 1. Run the benchmarks on DAS-6 via slurm-action.
 1. Render the comparison and scaling plots into the docs site.
 
+### Implementation strategy
+
+The following steps are required to operationalize this architecture:
+- **Data storage**: Establish a version-controlled directory structure under `results/` to store the JSON outputs.
+- **Parsing pipeline**: Develop a script to aggregate these JSON files and generate the necessary data for the documentation plots.
+- **Automation**: Integrate the slurm-action workflow into the project's CI/CD pipeline.
+
 ## Sources
 
 - Bencher: [changelog](https://bencher.dev/docs/reference/changelog/),
