@@ -285,9 +285,9 @@ Plan runtime summary:
 
         with h5py.File(filename, "w") as output_file:
             fdd_result = output_file.create_dataset("fddresult", data=computed_samples)
+            _ = output_file.create_dataset("dispersion_measures", data=self.dm_table)
 
             # Properties of the dynamic spectrum
-            fdd_result.attrs["dispersion_measures"] = self.dm_table
             fdd_result.attrs["computed_samples"] = computed_samples.shape[0]
             fdd_result.attrs["integration_time"] = self.time_resolution
 
