@@ -72,20 +72,3 @@ XTENSORFFTW_C2C/800        11.1 us         11.1 us        63042        FFTW_C2C/
 XTENSORFFTW_C2C/900        28.6 us         28.6 us        24449        FFTW_C2C/900        5.33 us         5.33 us       130325
 XTENSORFFTW_C2C/1000       20.0 us         20.0 us        35016        FFTW_C2C/1000       4.35 us         4.35 us       160745
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-```
