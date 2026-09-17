@@ -4,13 +4,13 @@ Bencher is the selected benchmarking framework for PACE, chosen for its unique c
 
 ## Key advantages
 
-- **Cross-Language Support**
+- **Cross-language support**
   - Native Rust SDK
   - Google Benchmark/Catch2 integration for C++
   - Python support via custom benchmarks
   - Language-agnostic JSON adapter
 
-- **Continuous Performance Benchmarking**
+- **Continuous performance benchmarking**
   - Built-in regression detection
   - CI/CD integration capabilities
   - Historical trend analysis
@@ -20,7 +20,7 @@ Bencher is the selected benchmarking framework for PACE, chosen for its unique c
   - Custom metrics and parameters
   - Adaptable to various benchmarking scenarios
 
-- **Team Collaboration**
+- **Team collaboration**
   - Shared dashboards and reports
   - Performance regression alerts
   - Comprehensive visualization
