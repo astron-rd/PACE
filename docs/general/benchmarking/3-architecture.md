@@ -49,8 +49,8 @@ Beyond the [earlier criteria](1-frameworks.md), two requirements matter:
 
 The setup consists of four layers.
 
-1. **Emit**: every implementation outputs one result file per run.
 1. **Run**: a GitHub Actions matrix runs benchmarks as separate Slurm jobs.
+1. **Emit**: every implementation outputs one result file per run.
 1. **Store**: result files are committed to the repository under `results/`.
 1. **View**: a script renders comparison and scaling plots into the docs site.
 
