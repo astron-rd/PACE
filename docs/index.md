@@ -51,5 +51,5 @@ framework combination. For example:
 ## Usage
 
 1. Navigate to the folder for the language/framework you want to explore.
-2. Follow the instructions in the folder-specific `README` if available.
-3. Run or build the application as described there.
+1. Follow the instructions in the folder-specific `README` if available.
+1. Run or build the application as described there.

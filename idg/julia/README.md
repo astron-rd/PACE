@@ -17,10 +17,12 @@ Generate an input dataset using the input generator in `idg/input`.
 ## Running
 
 1. Place `input.h5` in the working directory
-2. Install and precompile the dependencies:
+1. Install and precompile the dependencies:
+
 ```
 julia --project=. -e "using Pkg; Pkg.precompile()"
 ```
+
 Precompiling packages is somewhat unreliable on Julia, so this may fail randomly. In that case try running the command again.
 
 3. Run IDG with the following command:
