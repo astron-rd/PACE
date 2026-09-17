@@ -55,7 +55,9 @@ python3 bencher_upload.py --project $BENCHER_PROJECT \
                           results.json
 ```
 
-### Status and Future Work
+## Status and future work
+
+While Bencher served as a proof of concept, the project has since evolved toward a custom workflow, described in [3-architecture.md](3-architecture.md).
 
 Completed:
 - Framework evaluation and selection
@@ -63,11 +65,6 @@ Completed:
 - IDG Python benchmarking integration
 - Custom upload script development
 
-Future work:
-- Gain experience: Continue using Bencher with current benchmarks
-- Define metrics: Finalize standard metrics for all components
-- CI integration: Automate benchmarking in pull requests
-- Expand coverage: Include C++ and Rust components
 
 ## Bencher upload script
 
