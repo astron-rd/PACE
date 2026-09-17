@@ -7,6 +7,7 @@ OpenMP is a multiprocessing library, which provides easy to use directives to te
 ## Functionality
 
 As aluded to in the overview, OpenMP, offers a wide range of directives for running parts of a C++ program in parallel. For instance, the following directive executes a block in a different thread:
+
 ```cpp
 #pragma omp parallel
 {

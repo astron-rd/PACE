@@ -28,7 +28,6 @@ In particular, this is the case for *xtensor-fftw* that wraps the commonly used 
 
 Lastly, we investigated the use of `xtensor-io` for storing and loading data stored in the `.npy` format accross all languages, since most languages offer a library with such functionality. Sadly, it does not support compound data types, which means having to store members of, e.g., a `struct` in different file.
 
-
 ## `xtensor-fftw` bechmark
 
 The following table compares the performance of *xtensor-fftw* (left) vs. FFTW3 (right). It's clear that using FFTW3 natively is the more performant solution, especially for smaller volume FFTs, FFTW is a lot (~100) times faster. For larger data volumes, the difference is signficantly smaller, and in case of the complex-to-complex FFT, is as small as (roughly) a factor 4.
