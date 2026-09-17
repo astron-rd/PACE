@@ -20,7 +20,7 @@ Moreover, they provide a lot of convenient functions, such as initializers, slic
 
 Of this family, we used `xtensor`, `xtensor-fftw`, and briefly investigated `xtensor-io` for reading binary `.npy` files.
 
-## The good, the Bad, and the ugly
+## The good, the bad, and the ugly
 
 *xtensor* offers an incredibly convenient way to work with multi-dimensional vectors, especially if you're introduction to scientific computing is with Python / NumPy. Defining *N*-dimensional arrays and manipulating them feels very natural, espcially, if you compare it to using C++'s standard library *std::vector*, and many operators that would require (multiple levels of) loops, are possible with a single function call. Thus, code that uses *xtensor* tends to be easier to read.
 
