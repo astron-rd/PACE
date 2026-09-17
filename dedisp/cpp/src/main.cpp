@@ -58,7 +58,13 @@ int main() {
   {
     using namespace hdf5;
 
-    file::File input_file = file::open("signal.h5");
+    const fs::path h5_file_path = "signal.h5";
+    if (!fs::exists(h5_file_path)) {
+      std::cout << "Error: " << h5_file_path << " does not exist\n";
+      return 0;
+    }
+
+    file::File input_file = file::open(h5_file_path);
     node::Group root_node = input_file.root();
 
     node::Dataset signal_ds = root_node.get_dataset("dynspec");
