@@ -50,31 +50,24 @@ fragmented.
    package once and then cache it in `~/.cache/uv`. So `uv` replaces both `pip`
    and `virtualenv`
 
-### How to use `tox`
+### Usage of `tox`
 
 Our current ecosystem still relies on `tox` to do the job of `uv`. It creates
-the virtualenvs and installs the dependencies to run tests, linting etc. You can
-recognize the jobs and steps from the `pyproject.toml` file.
+the virtualenvs and installs the dependencies to run tests, linting etc.
 
-To run tasks you would do: `tox -e py311` to run the unit tests for Python3.11
+### Adopting `uv`
 
-Other tasks include
+The Python ecosystem has settled on `uv` as the modern all-in-one tool for
+Python development. For the PACE project we are adopting `uv` as the primary
+tool for managing dependencies and running tests. In addition to `uv` and its
+build tool [`uv_build`](https://docs.astral.sh/uv/concepts/build-backend/), we
+are also using [`ruff`](https://docs.astral.sh/ruff/) for linting and
+formatting.
 
-1. Linting `tox -e lint`, `tox -e format`, `tox -e fix`
-1. Code coverage `tox -e coverage`
-1. Unit tests, different python version `tox -e py313`, `tox -e py314`
+This means we are able to launch applications directly as
+[scripts](https://docs.astral.sh/uv/#scripts) using `uv run <command>`, and call
+[tools](https://docs.astral.sh/uv/#tools) from the CLI using
+`uvx <tool> <command>`. All without having to manually manage virtual
+environments or dependency installs.
 
-### What do I need to do coming from `pre-commit`
-
-Just be sure to install `tox>4.0`, The `pre-commit` will just call the
-individual `tox` tasks and bobs our uncle.
-
-### What else is out there?
-
-1. poetry
-1. hatch
-1. rye
-1. PDM
-
-But stick for `uv` it has pretty much won this fight and would be a good
-investment to learn. 2nd place to poetry.
+For example, `pre-commit` can be called using `uvx pre-commit run --all-files`.
