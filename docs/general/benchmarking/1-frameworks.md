@@ -86,10 +86,10 @@ Example integration
 
 ```
 python3 bencher_upload.py --project $BENCHER_PROJECT \
-                         --benchmark idg-cpp \
-                         --branch main \
-                         --token $BENCHER_API_TOKEN \
-                         results.json
+                          --benchmark idg-cpp \
+                          --branch main \
+                          --token $BENCHER_API_TOKEN \
+                          results.json
 ```
 
 So far, we have completed:
