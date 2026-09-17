@@ -17,12 +17,16 @@ pub struct GeneralArgs {
     /// Path to the file containing the signal
     #[arg(long, short('f'), default_value = "signal.h5")]
     pub signal_file: PathBuf,
+
+    /// Name for the file containing the output
+    #[arg(long, short, default_value = "fdd.h5")]
+    pub output_file: PathBuf,
 }
 
 #[derive(Subcommand)]
 pub enum Commands {
     /// Simulate a dispersed signal
-    Simulate{
+    Simulate {
         #[command(flatten)]
         observation_args: ObservationArgs,
 
@@ -33,7 +37,7 @@ pub enum Commands {
     Dedisperse {
         #[command(flatten)]
         observation_args: ObservationArgs,
-        
+
         #[command(flatten)]
         dedisp_args: DedispArgs,
     },

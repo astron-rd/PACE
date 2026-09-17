@@ -44,9 +44,10 @@ pub fn dedisperse(
         )
     );
 
-    let output = time_function!("execute fdd plan", plan.execute(signal));
+    let output = plan.execute(signal);
 
-    dbg!(output);
+    let output_file = hdf5_metno::File::create(&general_args.output_file).unwrap();
+    output_file.new_dataset_builder().with_data(&output).create("fddresult").unwrap();
 }
 
 pub struct FDDPlan {
@@ -123,6 +124,9 @@ impl FDDPlan {
         }
 
         self.dm_table = Array1::from_vec(dm_table);
+        self.dm_count = self.dm_table.len();
+        self.max_delay =
+            (self.dm_table.last().unwrap() * self.delay_table.last().unwrap() + 0.5) as usize
     }
 
     fn execute(&self, spectrum: Array2<u8>) -> Array2<f32> {
@@ -131,32 +135,34 @@ impl FDDPlan {
         let n_output_samples = n_samples - self.max_delay;
 
         let n_samples_fft = (n_samples + 1).next_multiple_of(16384);
-        let n_samples_padded = (n_samples_fft).next_multiple_of(1024);
+        let n_samples_padded = (n_samples_fft + 1).next_multiple_of(1024);
         let n_fft_frequency_bins = n_samples_padded / 2 + 1;
 
         println!("(1) Generate the spin frequency table.");
 
+        let observation_duration = n_samples as f32 * self.time_resolution;
         let spin_frequency_table: Array1<f32> = (0..n_spin_frequencies)
             .into_iter()
-            .map(|i| i as f32 / (n_samples as f32 * self.time_resolution))
+            .map(|i| i as f32 / observation_duration)
             .collect();
 
         println!("(2) Transpose data: int -> float.");
 
         let padding = n_samples_padded - n_samples;
-        let padded_input = ndarray_ndimage::pad(&spectrum, &[[0, padding], [0, 0]], Constant(0));
-        let mut transposed_input = padded_input.map(|x| *x as f32);
-        transposed_input -= 127.5;
-        transposed_input /= self.channel_count as f32;
+        let padded_spectrum = ndarray_ndimage::pad(&spectrum, &[[0, padding], [0, 0]], Constant(0));
+        let mut transposed_spectrum = padded_spectrum.map(|x| *x as f32);
+        transposed_spectrum.reverse_axes();
+        transposed_spectrum -= 127.5;
+        transposed_spectrum /= self.channel_count as f32;
 
-        let mut fd_scratch = Array2::zeros((n_fft_frequency_bins, self.channel_count));
+        let mut fd_scratch = Array2::zeros((self.channel_count, n_fft_frequency_bins));
         time_function!(
             "fft real->complex",
             ndrustfft::ndfft_r2c_par(
-                &transposed_input,
+                &transposed_spectrum,
                 &mut fd_scratch,
-                &R2cFftHandler::new(transposed_input.shape()[0]),
-                0,
+                &R2cFftHandler::new(n_samples_padded),
+                1,
             )
         );
 
@@ -183,7 +189,7 @@ impl FDDPlan {
             1,
         );
 
-        dm_output.slice(s![.., ..n_output_samples]).to_owned()
+        dm_output.slice(s![.., ..n_output_samples]).reversed_axes().to_owned()
     }
 
     fn fourier_domain_dedispersion(
@@ -195,23 +201,22 @@ impl FDDPlan {
         delays: &Array1<f32>,
     ) {
         let n_spin_frequencies = spin_frequencies.len();
-        dbg!(&n_spin_frequencies);
-        dbg!(&input_data.shape());
         let samples = input_data.slice(s![.., ..n_spin_frequencies]);
         let spin_frequencies_matrix = spin_frequencies
             .to_shape((1, spin_frequencies.len()))
-            .unwrap()
-            .reversed_axes();
+            .unwrap();
 
         for (idx, dm) in dispersion_measures.iter().enumerate() {
             let dm_delays = delays.clone() * (dm * time_resolution);
 
-            let dm_delays_matrix = dm_delays.to_shape((1, dm_delays.len())).unwrap();
+            let dm_delays_matrix = dm_delays.to_shape((dm_delays.len(), 1)).unwrap();
 
             let phases = 2.0 * PI * (dm_delays_matrix * &spin_frequencies_matrix);
+
             let phasors = phases.map(|x| Complex::new(0.0, *x).exp());
 
-            let result = (samples.to_owned() * phasors).sum_axis(Axis(0));
+            let result = (&samples * &phasors.view()).sum_axis(Axis(0));
+
             output_data
                 .slice_mut(s![idx, ..n_spin_frequencies])
                 .assign(&result);
