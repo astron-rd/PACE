@@ -43,8 +43,7 @@ int main() {
   const dedisp::DedispersionConstraints constraints{2.0f, 100.0f, 4.0f, 1.25f};
 
   const float frequency_resolution =
-      -1.0 * observation.bandwidth /
-      observation.channels; // MHz   (This must be negative!)
+      observation.bandwidth / observation.channels; // MHz
   const size_t n_samples = observation.duration / observation.sampling_period;
 
   auto input_timer = std::make_unique<dedisp::benchmark::Timer>();

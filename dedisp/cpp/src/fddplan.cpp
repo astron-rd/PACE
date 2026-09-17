@@ -23,7 +23,7 @@ FDDPlan::FDDPlan(size_t n_channels, float time_resolution, float peak_frequency,
                  float frequency_resolution)
     : dm_count_{0}, n_channels_{n_channels}, max_delay_{0},
       time_resolution_{time_resolution}, peak_frequency_{peak_frequency},
-      frequency_resolution_{-std::abs(frequency_resolution)} {
+      frequency_resolution_{frequency_resolution} {
   // Generate the delay table without the DM factor, which is applied during
   // dedispersion.
   generate_delay_table();
@@ -285,7 +285,7 @@ void FDDPlan::show() const {
             << " s (" << max_delay_ << " samples)" << std::endl;
   std::cout << "  time resolution:      " << time_resolution_ << " s"
             << std::endl;
-  std::cout << "  frequency resolution: " << -frequency_resolution_ << " MHz"
+  std::cout << "  frequency resolution: " << frequency_resolution_ << " MHz"
             << std::endl;
   std::cout << "  peak frequency:       " << peak_frequency_ << " MHz"
             << std::endl;
@@ -294,11 +294,12 @@ void FDDPlan::show() const {
 void FDDPlan::generate_dm_list(float dm_start, float dm_end, float pulse_width,
                                float tolerance) {
   // Fill the DM list
+  const double negative_frequency_resolution = -frequency_resolution_;
   const double time_resolution = time_resolution_ * 1e6;
-  const double f =
-      (peak_frequency_ + ((n_channels_ / 2) - 0.5) * frequency_resolution_) *
-      1e-3;
-  const double a = 8.3 * frequency_resolution_ / (f * f * f);
+  const double f = (peak_frequency_ +
+                    ((n_channels_ / 2) - 0.5) * negative_frequency_resolution) *
+                   1e-3;
+  const double a = 8.3 * negative_frequency_resolution / (f * f * f);
   const double a_squared = a * a;
   const double b_squared =
       a_squared * (double)(n_channels_ * n_channels_ / 16.0);
@@ -356,7 +357,7 @@ void FDDPlan::generate_delay_table() {
 
   for (size_t channel = 0; channel < n_channels_; ++channel) {
     const float inverse_channel_frequency =
-        1.0f / (peak_frequency_ + channel * frequency_resolution_);
+        1.0f / (peak_frequency_ - channel * frequency_resolution_);
     const float inverse_peak_frequency = 1.0f / peak_frequency_;
 
     delay_table_(channel) =
