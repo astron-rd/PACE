@@ -24,5 +24,5 @@ uv run fdd-plot --dynspec signal.h5 --result fdd.h5 --image burst.png
 ### Linting
 
 ```sh
-pre-commit run --all
+uvx pre-commit run --all
 ```
