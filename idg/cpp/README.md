@@ -37,6 +37,7 @@ for (size_t s = 0; s < nr_subgrids; ++s) {
 - **`schedule(dynamic)`**: Since the amount of work per subgrid can vary depending on the number of visibilities assigned to it, a dynamic schedule is used to balance the load. Threads are assigned iterations dynamically as they become available, preventing some cores from idling while others are still working on "heavy" subgrids.
 
 Other components of the pipeline could potentially be parallelized, but were omitted for simplicity in this reference implementation:
+
 - **`transform`**: Could be parallelized over the 4 polarizations, or more extensively by breaking down the FFT into rows and columns.
 - **`add_subgrids_to_grid`**: Parallelization is more complex here because subgrids may partially overlap, requiring careful synchronization or atomic operations to avoid race conditions.
 
