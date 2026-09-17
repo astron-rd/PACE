@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <filesystem>
 #include <iostream>
 
 #include <xtensor/core/xmath.hpp>
@@ -43,8 +44,7 @@ int main() {
   const dedisp::DedispersionConstraints constraints{2.0f, 100.0f, 4.0f, 1.25f};
 
   const float frequency_resolution =
-      -1.0 * observation.bandwidth /
-      observation.channels; // MHz   (This must be negative!)
+      observation.bandwidth / observation.channels; // MHz
   const size_t n_samples = observation.duration / observation.sampling_period;
 
   auto input_timer = std::make_unique<dedisp::benchmark::Timer>();
@@ -52,14 +52,21 @@ int main() {
   auto prep_timer = std::make_unique<dedisp::benchmark::Timer>();
   auto exec_timer = std::make_unique<dedisp::benchmark::Timer>();
 
-  std::cout << "Generating mock input..." << std::endl;
+  std::cout << "Reading input from HDF5..." << std::endl;
   input_timer->start();
 
   xt::xarray<uint8_t> input;
   {
     using namespace hdf5;
 
-    file::File input_file = file::open("signal.h5");
+    const std::filesystem::path h5_file_path =
+        "signal.h5"; // TODO: use cxxopts to set this variable
+    if (!std::filesystem::exists(h5_file_path)) {
+      std::cout << "Error: " << h5_file_path << " does not exist\n";
+      return 0;
+    }
+
+    file::File input_file = file::open(h5_file_path);
     node::Group root_node = input_file.root();
 
     node::Dataset signal_ds = root_node.get_dataset("dynspec");
@@ -176,7 +183,7 @@ int main() {
       signal_dataset.attributes.create_from("integration_time",
                                             observation.sampling_period);
 
-      std::cout << "Output is written to dataset fddout in fdd.h5."
+      std::cout << "Output is written to dataset fddresult in fdd.h5."
                 << std::endl;
     }
 
