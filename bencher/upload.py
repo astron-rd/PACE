@@ -2,7 +2,7 @@ import argparse
 import json
 import socket
 import subprocess
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import requests
 
@@ -54,7 +54,7 @@ def add_metadata(input_file):
         "git_reponame": get_git_reponame(),
         "git_branch": get_git_branch(),
         "git_hash": get_git_hash(),
-        "timestamp": datetime.now().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     }
 
     # Write back to the same file
@@ -94,7 +94,7 @@ def upload_to_bencher(
         }
 
     # Calculate timestamps
-    now = datetime.now()
+    now = datetime.now(UTC)
 
     def to_rfc3339_format(timestamp):
         return timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4] + "Z"
