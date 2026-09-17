@@ -97,8 +97,8 @@ job output is kept in the workflow log.
 
 slurm-action is the driver: it submits to Slurm from the workflow and the matrix
 covers the parameterisation, so the result files need no further collection. It
-runs one node per job for now and could perhaps be extended for the multi-node
-work of M4 and M5. ReFrame adds concurrent submission and retries, but also a
+runs one node per job for now and could perhaps be extended for multi-node
+processing. ReFrame adds concurrent submission and retries, but also a
 framework to configure. It comes with its own result format, reports and logs.
 JUBE is ruled out because it is unmaintained.
 
