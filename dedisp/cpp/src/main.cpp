@@ -2,6 +2,8 @@
 #include <filesystem>
 #include <iostream>
 
+#include <cxxopts.hpp>
+
 #include <xtensor/core/xmath.hpp>
 #include <xtensor/io/xio.hpp>
 
@@ -16,6 +18,60 @@
 #include "metadata.hpp"
 #include "utilities.hpp"
 
+cxxopts::Options setupOptions(const char *argv[]) {
+  cxxopts::Options options(argv[0], "Fourier Domain Dedispersion");
+
+  // const std::string inputPath = "signal.h5";
+
+  // constexpr size_t kSubgridSize = 32;
+  // constexpr size_t kGridSize = 1024;
+  // constexpr float kObservationHours = 4.0f;
+  // constexpr size_t kNrChannels = 16;
+  // constexpr size_t kNrStations = 20;
+  // constexpr double kStartFrequency = 150e6;
+  // constexpr double kFrequencyIncrement = 1e6;
+
+  // constexpr bool kOutputData = false;
+  // constexpr bool kReportTiming = true;
+
+  // options.add_options("Load input")(
+  //     "input_path", "Path to the HDF5 file containing the input data.",
+  //     cxxopts::value<std::filesystem::path>()->default_value(inputPath))(
+  //     "subgrid_size", "Subgrid size",
+  //     cxxopts::value<size_t>()->default_value("32"))(
+  //     "grid_size", "Grid size",
+  //     cxxopts::value<size_t>()->default_value("1024"))(
+  //     "nr_correlations_out", "Number of correlations out",
+  //     cxxopts::value<size_t>()->default_value("1"));
+
+  // options.add_options("Output gridded data")(
+  //     "output_subgrids", "Output subgrids",
+  //     cxxopts::value<bool>()->default_value(std::to_string(kOutputData)))(
+  //     "output_grid", "Output grid",
+  //     cxxopts::value<bool>()->default_value(std::to_string(kOutputData)));
+
+  // options.add_options("Timing")(
+  //     "report_timing", "Report timing data",
+  //     cxxopts::value<bool>()->default_value(std::to_string(kReportTiming)));
+
+  // options.add_options("General")("h,help", "Print help");
+
+  return options;
+}
+
+cxxopts::ParseResult parseArguments(int argc, const char *argv[]) {
+  cxxopts::Options options = setupOptions(argv);
+
+  auto result = options.parse(argc, argv);
+
+  if (result.count("help")) {
+    std::cout << options.help() << std::endl;
+    exit(EXIT_SUCCESS);
+  }
+
+  return result;
+}
+
 template <typename T>
 xt::xarray<T> load_dataset_to_xtensor(hdf5::node::Dataset &dataset) {
   hdf5::datatype::Datatype datatype = dataset.datatype();
@@ -27,7 +83,7 @@ xt::xarray<T> load_dataset_to_xtensor(hdf5::node::Dataset &dataset) {
   return data;
 }
 
-int main() {
+int main(int argc, const char *argv[]) {
   // Observation details: duration, integration time, max. frequency, bandwidth,
   // and channel count.
   const dedisp::ObservationInfo observation{30.0f, 250.0e-6, 1581.0f, 100.0f,
