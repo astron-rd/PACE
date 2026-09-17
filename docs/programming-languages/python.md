@@ -52,8 +52,9 @@ fragmented.
 
 ### Usage of `tox`
 
-Our current ecosystem still relies on `tox` to do the job of `uv`. It creates
-the virtualenvs and installs the dependencies to run tests, linting etc.
+Our current ecosystem relies on `tox` to do the job of `uv`. It creates Python
+virtual environments ([`venv`](https://docs.python.org/3/library/venv.html))
+and installs the dependencies to run tests, linting etc.
 
 ### Adopting `uv`
 
