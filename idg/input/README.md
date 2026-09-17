@@ -14,10 +14,10 @@ pip install uv
 
 In `idg/input` (this folder), execute `uv run idg-input`. This will create a file named `inputs.h5` in the same directory.
 
-
 There are command-line options available to customize the parameters used for the generation. You can view these with `uv run idg-input --help`.
 
 ## Output
+
 The output is a single HDF5 file containing the following datasets:
 
 - `uvws`: UVW coordinates of each baseline over time. Shape `(nr_baselines, nr_timesteps)`.

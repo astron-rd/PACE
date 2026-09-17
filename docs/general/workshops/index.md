@@ -17,6 +17,7 @@ The workshop combined technical presentations with collaborative discussion and 
 **Bram Veenboer** presented an overview of ASTRON and the PACE project.
 
 Highlights:
+
 - Introduction to ASTRON’s mission and research priorities.
 - Framing PACE as a cross-disciplinary effort to improve astronomical data processing efficiency.
 - Connecting the project roadmap to ASTRON's requirements and the team’s collaborative goals.
@@ -26,6 +27,7 @@ Highlights:
 **Bastiaan Haaksema** presented the integration of automated benchmarking into the development pipeline.
 
 Highlights:
+
 - Use of the Bencher platform to track performance metrics over time.
 - Monitoring latency and regression detection across implementations in Rust and Python.
 - Ensuring performance changes are visible and actionable as the codebase evolves.
@@ -35,6 +37,7 @@ Highlights:
 **Mick Veldhuis** discussed efforts to accelerate pulsar signal processing.
 
 Highlights:
+
 - Moving dedispersion into the frequency domain to shift from memory-bandwidth limits to compute-bound workloads.
 - Leveraging OpenMP for multi-core parallelization and future accelerator offloading.
 - Using xtensor to provide NumPy-style multi-dimensional array syntax and simpler I/O in C++.
@@ -44,6 +47,7 @@ Highlights:
 **Vivian Huzen** presented a Rust implementation of the image-domain gridder.
 
 Highlights:
+
 - Achieved approximately 2x speedup over the reference implementation.
 - Demonstrated the benefits of Rust’s memory safety and high-level abstractions.
 - Employed `ndarray` for array operations and `rayon` for parallel work-stealing iterators.
@@ -53,6 +57,7 @@ Highlights:
 **Corne Lukken** demonstrated the power of Jax for high-performance astronomical imaging.
 
 Highlights:
+
 - Retained standard NumPy-style syntax while gaining JIT acceleration.
 - Observed up to a 2800x speedup on a 7900 XTX GPU compared with simple Python baselines.
 - Showed dramatic energy efficiency improvements.
@@ -66,6 +71,7 @@ The workshop included focused discussion sessions on several technical areas.
 ### Data formats
 
 The group evaluated formats suitable for inter-language exchange and high-performance I/O:
+
 - Parquet
 - Safetensors
 - HDF5
@@ -74,6 +80,7 @@ The group evaluated formats suitable for inter-language exchange and high-perfor
 ### Multi-node scaling
 
 Participants explored approaches for scaling beyond a single machine:
+
 - Frameworks: Jax, Dask, and Spark
 - Algorithmic approaches: lockless and non-blocking algorithms
 - Architectural paradigms: Dataflow versus task-based pipeline design
@@ -85,6 +92,7 @@ The team discussed practical experience with GPU-accelerated workloads and the b
 ## Workshop reflections
 
 The day was a successful opportunity for the team to come together in person:
+
 - connecting with colleagues,
 - discussing progress and new ideas,
 - aligning on next steps,

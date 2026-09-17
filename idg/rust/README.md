@@ -9,7 +9,7 @@ To build Rust software you will need a Rust toolchain. It is usually best to use
 ## Building
 
 1. Install the HDF5 and FFTW libraries on your system. You can use the system package manager or the module system if you're building on an HPC cluster.
-2. Run `cargo build --release` to build idg.
+1. Run `cargo build --release` to build idg.
 
 Your executable will be `target/release/idg[.exe]`.
 

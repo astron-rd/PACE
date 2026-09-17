@@ -7,8 +7,8 @@ This is a C++ implementation of IDG. It loads visibilities from an input file an
 To build this application you will need a recent C++ compiler and CMake.
 
 1. Install the HDF5 and FFTW libraries on your system. You can use the system package manager or the module system if you're building on an HPC cluster. The libraries need to be exposed so `pkg-config` can find them.
-2. Configure the application with `cmake -B build`. You can also customize the build interactively with `ccmake -B build`.
-3. Build the application with `cmake --build build -j`. If the build fails or runs out of memory you can omit `-j` or specify a number of cores with `-j num-cores`.
+1. Configure the application with `cmake -B build`. You can also customize the build interactively with `ccmake -B build`.
+1. Build the application with `cmake --build build -j`. If the build fails or runs out of memory you can omit `-j` or specify a number of cores with `-j num-cores`.
 
 Your executable will be `build/src/main[.exe]`.
 
