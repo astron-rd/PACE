@@ -182,7 +182,7 @@ int main() {
       signal_dataset.attributes.create_from("integration_time",
                                             observation.sampling_period);
 
-      std::cout << "Output is written to dataset fddout in fdd.h5."
+      std::cout << "Output is written to dataset fddresult in fdd.h5."
                 << std::endl;
     }
 
