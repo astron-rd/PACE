@@ -51,7 +51,7 @@ int main() {
   auto prep_timer = std::make_unique<dedisp::benchmark::Timer>();
   auto exec_timer = std::make_unique<dedisp::benchmark::Timer>();
 
-  std::cout << "Generating mock input..." << std::endl;
+  std::cout << "Reading input from HDF5..." << std::endl;
   input_timer->start();
 
   xt::xarray<uint8_t> input;
