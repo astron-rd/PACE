@@ -5,22 +5,26 @@ Bencher is the selected benchmarking framework for PACE, chosen for its unique c
 ## Key advantages
 
 - **Cross-language support**
+
   - Native Rust SDK
   - Google Benchmark/Catch2 integration for C++
   - Python support via custom benchmarks
   - Language-agnostic JSON adapter
 
 - **Continuous performance benchmarking**
+
   - Built-in regression detection
   - CI/CD integration capabilities
   - Historical trend analysis
 
 - **Flexibility**
+
   - Self-hosted or cloud deployment
   - Custom metrics and parameters
   - Adaptable to various benchmarking scenarios
 
 - **Team collaboration**
+
   - Shared dashboards and reports
   - Performance regression alerts
   - Comprehensive visualization
@@ -60,11 +64,11 @@ python3 bencher_upload.py --project $BENCHER_PROJECT \
 While Bencher served as a proof of concept, the project has since evolved toward a custom workflow, described in [3-architecture.md](3-architecture.md).
 
 Completed:
+
 - Framework evaluation and selection
 - Proof of concept implementation
 - IDG Python benchmarking integration
 - Custom upload script development
-
 
 ## Bencher upload script
 

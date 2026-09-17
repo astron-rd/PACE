@@ -7,8 +7,8 @@ This section documents the evolution of the benchmarking strategy for the PACE p
 The documentation is organized chronologically to reflect the project's progression:
 
 1. **[Framework selection](1-frameworks.md)**: Initial exploration and evaluation of various benchmarking frameworks to find a suitable tool for multi-language performance tracking.
-2. **[Bencher integration](2-bencher.md)**: Investigation and proof-of-concept implementation using Bencher to validate its utility for recording and analyzing benchmarks.
-3. **[Proposed architecture](3-architecture.md)**: The development of a new architectural approach to optimize the benchmarking workflow on the DAS-6 cluster.
+1. **[Bencher integration](2-bencher.md)**: Investigation and proof-of-concept implementation using Bencher to validate its utility for recording and analyzing benchmarks.
+1. **[Proposed architecture](3-architecture.md)**: The development of a new architectural approach to optimize the benchmarking workflow on the DAS-6 cluster.
 
 ## Current status and next steps
 
