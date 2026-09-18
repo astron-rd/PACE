@@ -274,6 +274,7 @@ dependencies = [
  "cfg-if",
  "hdf5-metno-sys",
  "libc",
+ "num-complex",
 ]
 
 [[package]]

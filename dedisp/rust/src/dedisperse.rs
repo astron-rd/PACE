@@ -47,10 +47,25 @@ pub fn dedisperse(
     let output = plan.execute(signal);
 
     let output_file = hdf5_metno::File::create(&general_args.output_file).unwrap();
-    output_file
+    let fdd_result_ds = output_file
         .new_dataset_builder()
         .with_data(&output)
         .create("fddresult")
+        .unwrap();
+    fdd_result_ds
+        .new_attr_builder()
+        .with_data(&plan.dm_table)
+        .create("dispersion_measures")
+        .unwrap();
+    fdd_result_ds
+        .new_attr_builder()
+        .with_data(&ndarray::arr0(output.shape()[0]))
+        .create("computed_samples")
+        .unwrap();
+    fdd_result_ds
+        .new_attr_builder()
+        .with_data(&ndarray::arr0(plan.time_resolution))
+        .create("integration_time")
         .unwrap();
 }
 
