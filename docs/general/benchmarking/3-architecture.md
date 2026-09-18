@@ -75,13 +75,7 @@ software version (e.g. commit id). For example:
 
 The benchmarks will run on the DAS-6 Slurm cluster. While PACE has budget for
 dedicated infrastructure, reusing existing DAS-6 resources is the most pragmatic
-approach given current constraints. Two properties of the cluster determine the
-choice of tooling:
-
-- Jobs are capped at 15 minutes during working hours, so an experiment has to be
-  many short jobs rather than one long sweep.
-- Compute nodes are only reachable through Slurm jobs, so the tool has to submit
-  jobs instead of running the benchmarks where it is started.
+approach given current constraints.
 
 Triggered by GitHub Actions, a runner on the DAS-6 control node submits the jobs
 through slurm-action. The result files are committed to the repository and the
