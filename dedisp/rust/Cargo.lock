@@ -175,6 +175,7 @@ dependencies = [
  "ndarray-ndimage",
  "ndarray-rand",
  "ndrustfft",
+ "num-complex",
  "rayon",
 ]
 

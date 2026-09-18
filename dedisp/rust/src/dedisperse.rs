@@ -1,8 +1,9 @@
 use std::f32::consts::PI;
 
-use ndarray::{Array1, Array2, Axis, s};
+use ndarray::prelude::*;
 use ndarray_ndimage::PadMode::Constant;
-use ndrustfft::{Complex, R2cFftHandler};
+use ndrustfft::R2cFftHandler;
+use num_complex::{Complex, Complex32};
 
 use crate::cli::{DedispArgs, GeneralArgs, ObservationArgs};
 use crate::util::time_function;
@@ -224,24 +225,27 @@ impl FDDPlan {
     ) {
         let n_spin_frequencies = spin_frequencies.len();
         let samples = input_data.slice(s![.., ..n_spin_frequencies]);
-        let spin_frequencies_matrix = spin_frequencies
-            .to_shape((1, spin_frequencies.len()))
-            .unwrap();
+        let spin_freqs_m = spin_frequencies.slice(s![NewAxis, ..]);
 
-        for (idx, dm) in dispersion_measures.iter().enumerate() {
-            let dm_delays = delays.clone() * (dm * time_resolution);
+        assert_eq!(dispersion_measures.len(), output_data.shape()[0]);
 
-            let dm_delays_matrix = dm_delays.to_shape((dm_delays.len(), 1)).unwrap();
+        let output_iter = output_data.axis_iter_mut(Axis(0));
 
-            let phases = 2.0 * PI * (dm_delays_matrix * &spin_frequencies_matrix);
+        ndarray::Zip::from(dispersion_measures)
+            .and(output_iter)
+            .par_for_each(|dm, mut output_axis| {
+                let dm_delays = delays * (dm * time_resolution);
 
-            let phasors = phases.map(|x| Complex::new(0.0, *x).exp());
+                let dm_delays_m = dm_delays.slice(s![.., NewAxis]);
+                let phases = 2.0 * PI * (&dm_delays_m * &spin_freqs_m);
 
-            let result = (&samples * &phasors.view()).sum_axis(Axis(0));
+                let phasors = phases.map(|x| Complex::new(0.0, *x).exp());
 
-            output_data
-                .slice_mut(s![idx, ..n_spin_frequencies])
-                .assign(&result);
-        }
+                let result = (&samples * &phasors.view()).sum_axis(Axis(0));
+
+                output_axis
+                    .slice_mut(s![..n_spin_frequencies])
+                    .assign(&result);
+            });
     }
 }
