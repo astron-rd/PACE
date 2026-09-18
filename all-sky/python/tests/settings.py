@@ -8,8 +8,8 @@ class AllSkySettings(Settings):
     image_size_x: int = 256
     image_size_y: int = 256
     frequency: float = 58593750.0
-    visibilities_path: str = "tests.data/visibilities.npy"
-    baselines_path: str = "tests.data/baselines.npy"
+    visibilities_path: str = "tests.data/visibilities.h5"
+    baselines_path: str = "tests.data/baselines.h5"
 
 
 # Benchmark repeated image generation on same visibilities

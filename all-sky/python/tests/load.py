@@ -1,15 +1,16 @@
 from importlib.resources import files
 
+import h5py
 import numpy as np
 
 from tests.settings import AllSkySettings
 
 
-def load_npy(settings: AllSkySettings) -> (np.ndarray, np.ndarray):
+def load_hdf5(settings: AllSkySettings) -> (np.ndarray, np.ndarray):
     path, file = settings.visibilities_path.rsplit("/", 1)
-    visibilities = np.load(files(path).joinpath(file))
+    visibilities = h5py.File(files(path).joinpath(file), "r")["data"][...]
 
     path, file = settings.baselines_path.rsplit("/", 1)
-    baselines = np.load(files(path).joinpath(file))
+    baselines = h5py.File(files(path).joinpath(file), "r")["data"][...]
 
     return (visibilities, baselines)
