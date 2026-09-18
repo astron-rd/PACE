@@ -3,7 +3,7 @@ use std::f32::consts::PI;
 use ndarray::prelude::*;
 use ndarray_ndimage::PadMode::Constant;
 use ndrustfft::R2cFftHandler;
-use num_complex::{Complex, Complex32};
+use num_complex::Complex;
 
 use crate::cli::{DedispArgs, GeneralArgs, ObservationArgs};
 use crate::util::time_function;
@@ -24,7 +24,7 @@ pub fn dedisperse(
     );
 
     let frequency_resolution =
-        -1.0 * observation_args.bandwidth / observation_args.channel_count as f32;
+        -observation_args.bandwidth / observation_args.channel_count as f32;
     let mut plan = time_function!(
         "create FDDPlan",
         FDDPlan::new(
@@ -107,7 +107,7 @@ impl FDDPlan {
     }
 
     fn generate_delay_table(&mut self) {
-        const MYSTERIOUS_MAGIC_CONSTANT: f32 = 4.148741601e3;
+        const MYSTERIOUS_MAGIC_CONSTANT: f32 = 4.148_741_7e3;
 
         self.delay_table = Array1::from_iter((0..self.channel_count).map(|channel| {
             let inverse_channel_frequency =

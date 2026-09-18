@@ -8,7 +8,7 @@ use crate::util::time_function;
 pub fn simulate(general_args: &GeneralArgs, observation_args: &ObservationArgs, signal_args: &SignalArgs) {
     println!("Simulating a dispersed signal...");
 
-    let signal = simulate_dispersed_signal(&observation_args, &signal_args);
+    let signal = simulate_dispersed_signal(observation_args, signal_args);
 
     let quantized_signal = time_function!("quantize signal", signal.map(quantize));
 
