@@ -24,7 +24,7 @@ pub fn dedisperse(
     );
 
     let frequency_resolution =
-        -observation_args.bandwidth / observation_args.channel_count as f32;
+        observation_args.bandwidth / observation_args.channel_count as f32;
     let mut plan = time_function!(
         "create FDDPlan",
         FDDPlan::new(
@@ -111,7 +111,7 @@ impl FDDPlan {
 
         self.delay_table = Array1::from_iter((0..self.channel_count).map(|channel| {
             let inverse_channel_frequency =
-                1.0 / (self.max_frequency + channel as f32 * self.frequency_resolution);
+                1.0 / (self.max_frequency - channel as f32 * self.frequency_resolution);
             let inverse_max_frequency = 1.0 / self.max_frequency;
 
             MYSTERIOUS_MAGIC_CONSTANT / self.time_resolution
@@ -122,9 +122,9 @@ impl FDDPlan {
     fn generate_dm_list(&mut self, dm_start: f32, dm_end: f32, pulse_width: f32, tolerance: f32) {
         let time_resolution = self.time_resolution as f64 * 1e6;
         let f = (self.max_frequency as f64
-            + ((self.channel_count / 2) as f64 - 0.5) * self.frequency_resolution as f64)
+            + ((self.channel_count / 2) as f64 - 0.5) * -self.frequency_resolution as f64)
             * 1e-3;
-        let a = 8.3 * self.frequency_resolution as f64 / f.powi(3);
+        let a = 8.3 * -self.frequency_resolution as f64 / f.powi(3);
         let a_squared = a.powi(2);
         let b_squared = a_squared * (self.channel_count.pow(2) / 16) as f64;
         let tolerance_squared = (tolerance as f64).powi(2);
