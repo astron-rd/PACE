@@ -2,7 +2,7 @@
 #include <filesystem>
 #include <iostream>
 
-#include <cxxopts.hpp>
+#include "cxxopts.hpp"
 
 #include <xtensor/core/xmath.hpp>
 #include <xtensor/io/xio.hpp>
@@ -18,49 +18,32 @@
 #include "metadata.hpp"
 #include "utilities.hpp"
 
-cxxopts::Options setupOptions(const char *argv[]) {
+cxxopts::Options configure_cli_options(const char *argv[]) {
   cxxopts::Options options(argv[0], "Fourier Domain Dedispersion");
 
-  // const std::string inputPath = "signal.h5";
+  const std::string kSpectrum = "signal.h5";
+  const std::string kFilename = "fdd.h5";
 
-  // constexpr size_t kSubgridSize = 32;
-  // constexpr size_t kGridSize = 1024;
-  // constexpr float kObservationHours = 4.0f;
-  // constexpr size_t kNrChannels = 16;
-  // constexpr size_t kNrStations = 20;
-  // constexpr double kStartFrequency = 150e6;
-  // constexpr double kFrequencyIncrement = 1e6;
+  constexpr float kDmStart = 2.0f;
+  constexpr float kDmEnd = 100.0f;
+  constexpr float kDmTolerance = 1.25f;
+  constexpr float kPulseWidth = 4.0f;
 
-  // constexpr bool kOutputData = false;
-  // constexpr bool kReportTiming = true;
-
-  // options.add_options("Load input")(
-  //     "input_path", "Path to the HDF5 file containing the input data.",
-  //     cxxopts::value<std::filesystem::path>()->default_value(inputPath))(
-  //     "subgrid_size", "Subgrid size",
-  //     cxxopts::value<size_t>()->default_value("32"))(
-  //     "grid_size", "Grid size",
-  //     cxxopts::value<size_t>()->default_value("1024"))(
-  //     "nr_correlations_out", "Number of correlations out",
-  //     cxxopts::value<size_t>()->default_value("1"));
-
-  // options.add_options("Output gridded data")(
-  //     "output_subgrids", "Output subgrids",
-  //     cxxopts::value<bool>()->default_value(std::to_string(kOutputData)))(
-  //     "output_grid", "Output grid",
-  //     cxxopts::value<bool>()->default_value(std::to_string(kOutputData)));
-
-  // options.add_options("Timing")(
-  //     "report_timing", "Report timing data",
-  //     cxxopts::value<bool>()->default_value(std::to_string(kReportTiming)));
-
-  // options.add_options("General")("h,help", "Print help");
+  options.add_options()(
+      ("spectrum", "Path to the HDF5 file containing the dynamic spectrum.", cxxopts::value<std::filesystem::path>()->default_value(kSpectrum))
+      ("dm-start", "Start of the dispersion measure search interval", cxxopts::value<float>()->default_value(kDmStart))
+      ("dm-end", "End of the dispersion measure search interval", cxxopts::value<float>()->default_value(kDmEnd))
+      ("dm-step", "Dispersion measure stepsize", cxxopts::value<float>())
+      ("dm-tolerance", "Smearing tolerance", cxxopts::value<float>()->default_value(kDmTolerance))
+      ("pulse-width", "Expected pulse width in milliseconds", cxxopts::value<float>()->default_value(kPulseWidth))
+      ("file", "Filename for the HDF5 dataset containing the output of the dedispersion plan.", cxxopts::value<std::filesystem::path>()->default_value(kFilename)
+      ("h,help", "Print help"));
 
   return options;
 }
 
-cxxopts::ParseResult parseArguments(int argc, const char *argv[]) {
-  cxxopts::Options options = setupOptions(argv);
+cxxopts::ParseResult parse_arguments(int argc, const char *argv[]) {
+  cxxopts::Options options = configure_cli_options(argv);
 
   auto result = options.parse(argc, argv);
 
@@ -84,10 +67,12 @@ xt::xarray<T> load_dataset_to_xtensor(hdf5::node::Dataset &dataset) {
 }
 
 int main(int argc, const char *argv[]) {
-  // Observation details: duration, integration time, max. frequency, bandwidth,
-  // and channel count.
-  const dedisp::ObservationInfo observation{30.0f, 250.0e-6, 1581.0f, 100.0f,
-                                            1024};
+  const cxxopts::ParseResult cli_options = parse_arguments(argc, argv)
+
+      // Observation details: duration, integration time, max. frequency,
+      // bandwidth, and channel count.
+      const dedisp::ObservationInfo observation{30.0f, 250.0e-6, 1581.0f,
+                                                100.0f, 1024};
 
   // Mock signal parameters: RMS noise floor, DM, pulse arrival time, and signal
   // amplitude.
@@ -97,7 +82,7 @@ int main(int argc, const char *argv[]) {
 
   // Dedispersion plan constraints: start DM, end DM, pulse width (ms), smearing
   // tolerance.
-  const dedisp::DedispersionConstraints constraints{2.0f, 100.0f, 4.0f, 1.25f};
+  const dedisp::DedispersionConstraints constraints(cli_options);
 
   const float frequency_resolution =
       observation.bandwidth / observation.channels; // MHz

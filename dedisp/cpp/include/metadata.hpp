@@ -2,6 +2,8 @@
 
 #include <cstddef>
 
+#include "cxxopts.hpp"
+
 namespace dedisp {
 
 struct SignalInfo {
@@ -36,6 +38,12 @@ struct ObservationInfo {
 };
 
 struct DedispersionConstraints {
+  DedispersionConstraints(const cxxopts::ParseResult &result) {
+    dm_start = result["dm-start"].as<float>();
+    dm_end = result["dm-end"].as<float>();
+    pulse_width = result["pulse-width"].as<float>();
+    tolerance = result["dm-tolerance"].as<float>();
+  }
   // Dispersion measures in pc cm^-3
   float dm_start;
   float dm_end;
