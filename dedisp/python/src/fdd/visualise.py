@@ -18,17 +18,19 @@ def load_fdd_result(filename: str):
     """
     with h5py.File(filename, "r") as input_file:
         fdd_result_ds = input_file["fddresult"]
-        if not isinstance(fdd_result_ds, h5py.Dataset):
+        dm_ds = input_file["dispersion_measures"]
+        if not isinstance(fdd_result_ds, h5py.Dataset) or not isinstance(
+            dm_ds, h5py.Dataset
+        ):
             raise Exception("Invalid input file: FDD result not found.")
 
         # Properties of the dynamic spectrum
-        dm_list = fdd_result_ds.attrs["dispersion_measures"]
         computed_samples = fdd_result_ds.attrs["computed_samples"]
         time_resolution = fdd_result_ds.attrs["integration_time"]
 
         duration = computed_samples * time_resolution
 
-        return fdd_result_ds[...], dm_list, duration
+        return fdd_result_ds[...], dm_ds[...], duration
 
 
 def plot_burst(
