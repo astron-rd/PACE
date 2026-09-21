@@ -10,7 +10,7 @@ pub fn simulate(general_args: &GeneralArgs, observation_args: &ObservationArgs, 
 
     let signal = simulate_dispersed_signal(observation_args, signal_args);
 
-    let quantized_signal = time_function!("quantize signal", signal.map(quantize));
+    let quantized_signal = time_function!("quantize signal", signal.map(|x| quantize(*x)));
 
     time_function!("save signal to disk", {
         let output_file = hdf5_metno::File::create(&general_args.signal_file).unwrap();
@@ -51,7 +51,7 @@ fn simulate_dispersed_signal(
     data
 }
 
-fn quantize(value_in: &f32) -> u8 {
+fn quantize(value_in: f32) -> u8 {
     let value = value_in + 127.5;
     if value > 255.0 {
         255

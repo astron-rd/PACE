@@ -23,8 +23,7 @@ pub fn dedisperse(
             .unwrap()
     );
 
-    let frequency_resolution =
-        observation_args.bandwidth / observation_args.channel_count as f32;
+    let frequency_resolution = observation_args.bandwidth / observation_args.channel_count as f32;
     let mut plan = time_function!(
         "create FDDPlan",
         FDDPlan::new(
@@ -45,7 +44,7 @@ pub fn dedisperse(
         )
     );
 
-    let output = plan.execute(signal);
+    let output = plan.execute(&signal);
 
     let output_file = hdf5_metno::File::create(&general_args.output_file).unwrap();
     let fdd_result_ds = output_file
@@ -120,20 +119,20 @@ impl FDDPlan {
     }
 
     fn generate_dm_list(&mut self, dm_start: f32, dm_end: f32, pulse_width: f32, tolerance: f32) {
-        let time_resolution = self.time_resolution as f64 * 1e6;
-        let f = (self.max_frequency as f64
-            + ((self.channel_count / 2) as f64 - 0.5) * -self.frequency_resolution as f64)
+        let time_resolution = f64::from(self.time_resolution) * 1e6;
+        let f = (f64::from(self.max_frequency)
+            + ((self.channel_count / 2) as f64 - 0.5) * f64::from(-self.frequency_resolution))
             * 1e-3;
-        let a = 8.3 * -self.frequency_resolution as f64 / f.powi(3);
+        let a = 8.3 * f64::from(-self.frequency_resolution) / f.powi(3);
         let a_squared = a.powi(2);
         let b_squared = a_squared * (self.channel_count.pow(2) / 16) as f64;
-        let tolerance_squared = (tolerance as f64).powi(2);
+        let tolerance_squared = (f64::from(tolerance)).powi(2);
         let c =
-            (time_resolution.powi(2) + (pulse_width as f64).powi(2)) * (tolerance_squared - 1.0);
+            (time_resolution.powi(2) + (f64::from(pulse_width)).powi(2)) * (tolerance_squared - 1.0);
 
         let mut dm_table = vec![dm_start];
         while *dm_table.last().unwrap() < dm_end {
-            let previous_dm = *dm_table.last().unwrap() as f64;
+            let previous_dm = f64::from(*dm_table.last().unwrap());
             let previous_dm_squared = previous_dm.powi(2);
             let k = c + tolerance_squared * a_squared * previous_dm_squared;
             let dm = (b_squared * previous_dm
@@ -146,10 +145,10 @@ impl FDDPlan {
         self.dm_table = Array1::from_vec(dm_table);
         self.dm_count = self.dm_table.len();
         self.max_delay =
-            (self.dm_table.last().unwrap() * self.delay_table.last().unwrap() + 0.5) as usize
+            (self.dm_table.last().unwrap() * self.delay_table.last().unwrap() + 0.5) as usize;
     }
 
-    fn execute(&self, spectrum: Array2<u8>) -> Array2<f32> {
+    fn execute(&self, spectrum: &Array2<u8>) -> Array2<f32> {
         let n_samples = spectrum.shape()[0];
         let n_spin_frequencies = n_samples / 2 + 1;
         let n_output_samples = n_samples - self.max_delay;
@@ -170,7 +169,7 @@ impl FDDPlan {
 
         let padding = n_samples_padded - n_samples;
         let padded_spectrum = ndarray_ndimage::pad(&spectrum, &[[0, padding], [0, 0]], Constant(0));
-        let mut transposed_spectrum = padded_spectrum.map(|x| *x as f32);
+        let mut transposed_spectrum = padded_spectrum.map(|x| f32::from(*x));
         transposed_spectrum.reverse_axes();
         transposed_spectrum -= 127.5;
         transposed_spectrum /= self.channel_count as f32;
