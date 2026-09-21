@@ -76,10 +76,13 @@ xt::xarray<T> load_dataset_to_xtensor(hdf5::node::Dataset &dataset) {
 int main(int argc, const char *argv[]) {
   const cxxopts::ParseResult cli_options = parse_arguments(argc, argv);
 
-  // Observation details: duration, integration time, max. frequency,
-  // bandwidth, and channel count.
-  const dedisp::ObservationInfo observation{30.0f, 250.0e-6, 1581.0f, 100.0f,
-                                            1024};
+// Observation details
+const dedisp::ObservationInfo observation{30.0f,    // duration
+                                          250.0e-6, // integrationxtime
+                                          1581.0f,  // max. frequency
+                                          100.0f,   // bandwidth
+                                          1024      // channel count
+                                         };  
 
   // Mock signal parameters: RMS noise floor, DM, pulse arrival time, and signal
   // amplitude.
