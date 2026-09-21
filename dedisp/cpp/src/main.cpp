@@ -33,7 +33,6 @@ cxxopts::Options configure_cli_options(const char *argv[]) {
       ("spectrum", "Path to the HDF5 file containing the dynamic spectrum.", cxxopts::value<std::filesystem::path>()->default_value(kSpectrum))
       ("dm-start", "Start of the dispersion measure search interval", cxxopts::value<float>()->default_value(kDmStart))
       ("dm-end", "End of the dispersion measure search interval", cxxopts::value<float>()->default_value(kDmEnd))
-      ("dm-step", "Dispersion measure stepsize", cxxopts::value<float>())
       ("dm-tolerance", "Smearing tolerance", cxxopts::value<float>()->default_value(kDmTolerance))
       ("pulse-width", "Expected pulse width in milliseconds", cxxopts::value<float>()->default_value(kPulseWidth))
       ("file", "Filename for the HDF5 dataset containing the output of the dedispersion plan.", cxxopts::value<std::filesystem::path>()->default_value(kFilename)
@@ -101,7 +100,7 @@ int main(int argc, const char *argv[]) {
     using namespace hdf5;
 
     const std::filesystem::path h5_file_path =
-        "signal.h5"; // TODO: use cxxopts to set this variable
+        cli_options["spectrum"].as<std::filesystem::path>();
     if (!std::filesystem::exists(h5_file_path)) {
       std::cout << "Error: " << h5_file_path << " does not exist\n";
       return 0;
@@ -206,7 +205,10 @@ int main(int argc, const char *argv[]) {
   {
     using namespace hdf5;
 
-    file::File output_file = file::create("fdd.h5");
+    const std::filesystem::path output_file_path =
+        cli_options["file"].as<std::filesystem::path>();
+
+    file::File output_file = file::create(output_file_path);
     node::Group root_node = output_file.root();
 
     {
@@ -224,8 +226,8 @@ int main(int argc, const char *argv[]) {
       signal_dataset.attributes.create_from("integration_time",
                                             observation.sampling_period);
 
-      std::cout << "Output is written to dataset fddresult in fdd.h5."
-                << std::endl;
+      std::cout << "Output is written to dataset fddresult in "
+                << output_file_path.string() << "." << std::endl;
     }
 
     {
