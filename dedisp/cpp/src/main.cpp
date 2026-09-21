@@ -30,13 +30,21 @@ cxxopts::Options configure_cli_options(const char *argv[]) {
   constexpr float kPulseWidth = 4.0f;
 
   options.add_options()(
-      ("spectrum", "Path to the HDF5 file containing the dynamic spectrum.", cxxopts::value<std::filesystem::path>()->default_value(kSpectrum))
-      ("dm-start", "Start of the dispersion measure search interval", cxxopts::value<float>()->default_value(kDmStart))
-      ("dm-end", "End of the dispersion measure search interval", cxxopts::value<float>()->default_value(kDmEnd))
-      ("dm-tolerance", "Smearing tolerance", cxxopts::value<float>()->default_value(kDmTolerance))
-      ("pulse-width", "Expected pulse width in milliseconds", cxxopts::value<float>()->default_value(kPulseWidth))
-      ("file", "Filename for the HDF5 dataset containing the output of the dedispersion plan.", cxxopts::value<std::filesystem::path>()->default_value(kFilename)
-      ("h,help", "Print help"));
+      "spectrum", "Path to the HDF5 file containing the dynamic spectrum.",
+      cxxopts::value<std::filesystem::path>()->default_value(kSpectrum))(
+      "dm-start", "Start of the dispersion measure search interval",
+      cxxopts::value<float>()->default_value(std::to_string(kDmStart)))(
+      "dm-end", "End of the dispersion measure search interval",
+      cxxopts::value<float>()->default_value(std::to_string(kDmEnd)))(
+      "dm-tolerance", "Smearing tolerance",
+      cxxopts::value<float>()->default_value(std::to_string(kDmTolerance)))(
+      "pulse-width", "Expected pulse width in milliseconds",
+      cxxopts::value<float>()->default_value(std::to_string(kPulseWidth)))(
+      "file",
+      "Filename for the HDF5 dataset containing the output of the dedispersion "
+      "plan.",
+      cxxopts::value<std::filesystem::path>()->default_value(kFilename))(
+      "h,help", "Print help");
 
   return options;
 }
@@ -66,12 +74,12 @@ xt::xarray<T> load_dataset_to_xtensor(hdf5::node::Dataset &dataset) {
 }
 
 int main(int argc, const char *argv[]) {
-  const cxxopts::ParseResult cli_options = parse_arguments(argc, argv)
+  const cxxopts::ParseResult cli_options = parse_arguments(argc, argv);
 
-      // Observation details: duration, integration time, max. frequency,
-      // bandwidth, and channel count.
-      const dedisp::ObservationInfo observation{30.0f, 250.0e-6, 1581.0f,
-                                                100.0f, 1024};
+  // Observation details: duration, integration time, max. frequency,
+  // bandwidth, and channel count.
+  const dedisp::ObservationInfo observation{30.0f, 250.0e-6, 1581.0f, 100.0f,
+                                            1024};
 
   // Mock signal parameters: RMS noise floor, DM, pulse arrival time, and signal
   // amplitude.
