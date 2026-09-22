@@ -76,19 +76,24 @@ xt::xarray<T> load_dataset_to_xtensor(hdf5::node::Dataset &dataset) {
 int main(int argc, const char *argv[]) {
   const cxxopts::ParseResult cli_options = parse_arguments(argc, argv);
 
-// Observation details
-const dedisp::ObservationInfo observation{30.0f,    // duration
-                                          250.0e-6, // integrationxtime
-                                          1581.0f,  // max. frequency
-                                          100.0f,   // bandwidth
-                                          1024      // channel count
-                                         };  
+  // Observation details
+  const dedisp::ObservationInfo observation{
+      30.0f,    // duration (s)
+      250.0e-6, // integration time (s)
+      1581.0f,  // max. frequency (MHz)
+      100.0f,   // bandwidth (MHz)
+      1024      // channel count
+  };
 
   // Mock signal parameters: RMS noise floor, DM, pulse arrival time, and signal
   // amplitude.
   constexpr float default_intensity = 25.0f;
-  const dedisp::SignalInfo mock_signal{25.0f, 41.159f, 3.14159f,
-                                       default_intensity};
+  const dedisp::SignalInfo mock_signal{
+      25.0f,            // RMS noise
+      41.159f,          // DM (pc cm^-3)
+      3.14159f,         // Arrival time (s)
+      default_intensity // signal amplitude
+  };
 
   // Dedispersion plan constraints: start DM, end DM, pulse width (ms), smearing
   // tolerance.
