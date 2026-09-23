@@ -80,7 +80,7 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
   init_timer->start();
 #endif
 
-  setup_fft(n_samples_padded, n_fft_frequency_bins);
+  setup_fft_plans(n_samples_padded, n_fft_frequency_bins);
 
 #ifdef DEDISP_BENCHMARK
   init_timer->pause();
@@ -358,7 +358,8 @@ void FDDPlan::generate_spin_frequency_table(size_t n_spin_frequencies,
   }
 }
 
-void FDDPlan::setup_fft(size_t n_samples_padded, size_t n_fft_frequency_bins) {
+void FDDPlan::setup_fft_plans(size_t n_samples_padded,
+                              size_t n_fft_frequency_bins) {
   const bool sample_count_changed = n_samples_padded != plan_n_samples_padded_;
   const bool dm_count_changed = dm_count_ != plan_dm_count_;
 

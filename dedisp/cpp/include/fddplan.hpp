@@ -46,7 +46,7 @@ private:
   // transform shapes change (n_samples_padded / dm_count). The plans bind the
   // buffers' addresses, so a buffer must never be reallocated without
   // rebuilding its plan, which is exactly what this method does.
-  void setup_fft(size_t n_samples_padded, size_t n_fft_frequency_bins);
+  void setup_fft_plans(size_t n_samples_padded, size_t n_fft_frequency_bins);
 
   // Size parameters
   size_t dm_count_;
