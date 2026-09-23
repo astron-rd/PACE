@@ -1,8 +1,8 @@
 #include <cmath>
 #include <iostream>
+#include <stdexcept>
 
-#include <xtensor-fftw/basic.hpp>
-#include <xtensor-fftw/helper.hpp>
+#include <xtensor-wrappers/plan_batch.hpp>
 #include <xtensor/containers/xadapt.hpp>
 #include <xtensor/io/xio.hpp>
 
@@ -73,21 +73,36 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
   std::cout << spin_frequency_table_ << std::endl;
 #endif
 
-  // 2. Transpose data (convert input bytes to floats)
-  std::cout << "(2) Transpose data: int -> float." << std::endl;
+  // 2. Allocate scratch buffers and build the FFT plans, rebuilding only when
+  //    the transform shapes change.
+  std::cout << "(2) Allocate scratch and (re)build FFT plans." << std::endl;
+
+#ifdef DEDISP_BENCHMARK
+  init_timer->start();
+#endif
+
+  setup_fft_plans(n_samples_padded, n_fft_frequency_bins);
+
+#ifdef DEDISP_BENCHMARK
+  init_timer->pause();
+#endif
+
+  // 3. Transpose data (convert input bytes to floats)
+  std::cout << "(3) Transpose data: int -> float." << std::endl;
 
 #ifdef DEDISP_BENCHMARK
   preprocessing_timer->start();
 #endif
 
-  // Input is in the frequency domain, while the output is in the DM domain.
-  const std::vector<size_t> transposed_shape = {n_channels_, n_samples_padded};
-  xt::xarray<float> transposed_input = xt::zeros<float>(transposed_shape);
+  // Transpose from (channels, samples) to (samples, channels) row-major layout
+  // so each channel is a contiguous FFT row, and zero the padding region
+  // beyond n_samples so the (longer) FFT sees a clean input.
+  transposed_input_.fill(0.0f);
 
   constexpr float byte_offset = 127.5;
   transpose_data<uint8_t, float>(n_channels_, n_samples, n_channels_,
                                  n_samples_padded, byte_offset, n_channels_,
-                                 input.data(), transposed_input.data());
+                                 input.data(), transposed_input_.data());
 
 #ifdef DEDISP_BENCHMARK
   preprocessing_timer->pause();
@@ -100,44 +115,25 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
   {
     hdf5::datatype::Datatype datatype =
         hdf5::datatype::TypeTrait<float>::create();
-    const std::vector<hsize_t> dims(transposed_input.shape().begin(),
-                                    transposed_input.shape().end());
+    const std::vector<hsize_t> dims(transposed_input_.shape().begin(),
+                                    transposed_input_.shape().end());
     auto dataspace = hdf5::dataspace::Simple(dims);
     auto signal_dataset =
         root_node.create_dataset("transpose", datatype, dataspace);
 
-    signal_dataset.write(*transposed_input.data(), datatype, dataspace);
+    signal_dataset.write(*transposed_input_.data(), datatype, dataspace);
   }
 #endif
 
-  // 3. Real-to-complex FFT: time series data to frequency domain
-  // Perform an FFT batched over frequency using OpenMP
-  std::cout << "(3) Forward FFT: real-to-complex." << std::endl;
+  // 4. Real-to-complex FFT: time series data to frequency domain
+  // Batched over frequency (one FFT per channel), parallelised over the batch.
+  std::cout << "(4) Forward FFT: real-to-complex." << std::endl;
 
-#ifdef DEDISP_BENCHMARK
-  init_timer->start();
-#endif
-
-  // Scratch space to store the Fourier-domain (FD) data
-  const std::vector<size_t> fd_scratch_shape = {n_channels_,
-                                                n_fft_frequency_bins};
-  xt::xarray<std::complex<float>> fd_scratch =
-      xt::zeros<std::complex<float>>(fd_scratch_shape);
-
-#ifdef DEDISP_BENCHMARK
-  init_timer->pause();
-#endif
 #ifdef DEDISP_BENCHMARK
   preprocessing_timer->start();
 #endif
 
-#ifdef DEDISP_USE_OPENMP
-#pragma omp parallel for
-#endif
-  for (size_t c = 0; c < n_channels_; ++c) {
-    xt::xarray<float> samples = xt::eval(xt::row(transposed_input, c));
-    xt::view(fd_scratch, c, xt::all()) = xt::fftw::rfft(samples);
-  }
+  rfft_plan_.execute();
 
 #ifdef DEDISP_BENCHMARK
   preprocessing_timer->pause();
@@ -147,97 +143,77 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
   {
     hdf5::datatype::Datatype datatype =
         hdf5::datatype::TypeTrait<float>::create();
-    const std::vector<hsize_t> dims(fd_scratch.shape().begin(),
-                                    fd_scratch.shape().end());
+    const std::vector<hsize_t> dims(rfft_plan_.output().shape().begin(),
+                                    rfft_plan_.output().shape().end());
     auto dataspace = hdf5::dataspace::Simple(dims);
     auto signal_dataset =
         root_node.create_dataset("fdd-fft-r2c", datatype, dataspace);
 
-    signal_dataset.write(*fd_scratch.data(), datatype, dataspace);
+    signal_dataset.write(*rfft_plan_.output().data(), datatype, dataspace);
   }
 #endif
 
-  // 4. Run dedispersion algorithm (CPU reference or optimised version)
-  std::cout << "(4) Run dedispersion algorithm." << std::endl;
+  // 5. Run dedispersion algorithm (CPU reference or optimised version)
+  std::cout << "(5) Run dedispersion algorithm." << std::endl;
+
+  if (dm_count_ > 0) {
+    // Zero the half-complex bins that the kernel does not touch so the inverse
+    // FFT has a clean input.
+    dm_scratch_.fill(std::complex<float>{0.0f, 0.0f});
 
 #ifdef DEDISP_BENCHMARK
-  init_timer->start();
+    dedispersion_timer->start();
 #endif
 
-  const std::vector<size_t> dm_scratch_shape = {dm_count_,
-                                                n_fft_frequency_bins};
-  xt::xarray<std::complex<float>> dm_scratch =
-      xt::zeros<std::complex<float>>(dm_scratch_shape);
+    const size_t in_out_stride = n_fft_frequency_bins;
+    dedisp::fourier_domain_dedisperse(
+        dm_count_, n_spin_frequencies, n_channels_, time_resolution_,
+        spin_frequency_table_.data(), dm_table_.data(), delay_table_.data(),
+        in_out_stride, in_out_stride,
+        const_cast<std::complex<float> *>(rfft_plan_.output().data()),
+        dm_scratch_.data());
 
 #ifdef DEDISP_BENCHMARK
-  init_timer->pause();
-#endif
-
-#ifdef DEDISP_BENCHMARK
-  dedispersion_timer->start();
-#endif
-
-  const size_t in_out_stride = n_fft_frequency_bins;
-  dedisp::fourier_domain_dedisperse(
-      dm_count_, n_spin_frequencies, n_channels_, time_resolution_,
-      spin_frequency_table_.data(), dm_table_.data(), delay_table_.data(),
-      in_out_stride, in_out_stride, fd_scratch.data(), dm_scratch.data());
-
-#ifdef DEDISP_BENCHMARK
-  dedispersion_timer->pause();
+    dedispersion_timer->pause();
 #endif
 
 #ifdef DEDISP_DEBUG_HDF5
-  {
-    hdf5::datatype::Compound datatype =
-        hdf5::datatype::Compound::create(sizeof(std::complex<float>));
-    datatype.insert("r", 0, hdf5::datatype::TypeTrait<float>::create(float()));
-    datatype.insert("i", alignof(float),
-                    hdf5::datatype::TypeTrait<float>::create(float()));
-    const std::vector<hsize_t> dims(dm_scratch.shape().begin(),
-                                    dm_scratch.shape().end());
-    auto dataspace = hdf5::dataspace::Simple(dims);
-    auto signal_dataset =
-        root_node.create_dataset("fdd-dedisp", datatype, dataspace);
+    {
+      hdf5::datatype::Compound datatype =
+          hdf5::datatype::Compound::create(sizeof(std::complex<float>));
+      datatype.insert("r", 0,
+                      hdf5::datatype::TypeTrait<float>::create(float()));
+      datatype.insert("i", alignof(float),
+                      hdf5::datatype::TypeTrait<float>::create(float()));
+      const std::vector<hsize_t> dims(dm_scratch_.shape().begin(),
+                                      dm_scratch_.shape().end());
+      auto dataspace = hdf5::dataspace::Simple(dims);
+      auto signal_dataset =
+          root_node.create_dataset("fdd-dedisp", datatype, dataspace);
 
-    signal_dataset.write(*dm_scratch.data(), datatype, dataspace);
-  }
+      signal_dataset.write(*dm_scratch_.data(), datatype, dataspace);
+    }
 #endif
 
-  // 5. Complex-to-real FFT: frequency domain back to time series data
-  // Perform an FFT batched along the DM axis using OpenMP
-  std::cout << "(5) Inverse FFT: complex-to-real." << std::endl;
+    // 6. Complex-to-real FFT: frequency domain back to time series data
+    // Batched over DM (one FFT per DM trial), parallelised over the batch.
+    std::cout << "(6) Inverse FFT: complex-to-real." << std::endl;
+
+#ifdef DEDISP_BENCHMARK
+    postprocessing_timer->start();
+#endif
+
+    irfft_plan_.execute();
+
+#ifdef DEDISP_BENCHMARK
+    postprocessing_timer->pause();
+#endif
+  }
 
 #ifdef DEDISP_BENCHMARK
   init_timer->start();
 #endif
 
-  const std::vector<size_t> output_shape = {dm_count_, n_samples_padded};
-  xt::xarray<float> dm_data = xt::zeros<float>(output_shape);
-
-#ifdef DEDISP_BENCHMARK
-  init_timer->pause();
-#endif
-#ifdef DEDISP_BENCHMARK
-  postprocessing_timer->start();
-#endif
-
-#ifdef DEDISP_USE_OPENMP
-#pragma omp parallel for
-#endif
-  for (size_t d = 0; d < dm_count_; ++d) {
-    xt::xarray<std::complex<float>> samples = xt::eval(xt::row(dm_scratch, d));
-    xt::view(dm_data, d, xt::all()) = xt::fftw::irfft(samples);
-  }
-
-#ifdef DEDISP_BENCHMARK
-  postprocessing_timer->pause();
-#endif
-#ifdef DEDISP_BENCHMARK
-  init_timer->start();
-#endif
-
-  // Copy the output of the FFT into an xarray with the expected output shape
   const std::vector<size_t> computed_shape = {n_output_samples, dm_count_};
   xt::xarray<float> computed_data(computed_shape);
 
@@ -252,9 +228,13 @@ xt::xarray<float> FDDPlan::execute(const xt::xarray<uint8_t> &input) {
 #ifdef DEDISP_BENCHMARK
   output_timer->start();
 #endif
+  // xt::fftw::irfft normalises by the transform length; the c2r plan does
+  // not, so reproduce that 1/n_samples_padded scaling here.
+  const xt::xarray<float> &dm_data = irfft_plan_.output();
+  const float n_scale = static_cast<float>(n_samples_padded);
   for (size_t s = 0; s < n_output_samples; ++s) {
     for (size_t d = 0; d < dm_count_; ++d) {
-      xt::view(computed_data, s, d) = xt::view(dm_data, d, s);
+      xt::view(computed_data, s, d) = xt::view(dm_data, d, s) / n_scale;
     }
   }
 
@@ -376,6 +356,45 @@ void FDDPlan::generate_spin_frequency_table(size_t n_spin_frequencies,
 #endif
   for (size_t i = 0; i < n_spin_frequencies; ++i) {
     spin_frequency_table_(i) = i * (1.0f / (n_samples * time_resolution_));
+  }
+}
+
+void FDDPlan::setup_fft_plans(size_t n_samples_padded,
+                              size_t n_fft_frequency_bins) {
+  if (dm_count_ == 0) {
+    throw std::invalid_argument(
+        "FDDPlan::setup_fft_plans: no DM trials (dm_count_ == 0); "
+        "generate the DM table before running");
+  }
+
+  const bool sample_count_changed = n_samples_padded != plan_n_samples_padded_;
+  const bool dm_count_changed = dm_count_ != plan_dm_count_;
+
+  if (sample_count_changed) {
+    transposed_input_.resize({n_channels_, n_samples_padded});
+  }
+
+  if (sample_count_changed || dm_count_changed) {
+    dm_scratch_.resize({dm_count_, n_fft_frequency_bins});
+
+    // Batched real-to-complex over channels: one rfft per channel of length
+    // n_samples_padded, rows (channels) contiguous in transposed_input_.
+    xt::fftw::batch_layout r2c;
+    r2c.howmany = n_channels_;
+    r2c.n = {static_cast<int>(n_samples_padded)};
+    rfft_plan_ = xt::fftw::make_batch_rfft_plan(transposed_input_.data(), r2c);
+
+    // Batched complex-to-real over DM trials: one irfft per DM of length
+    // n_samples_padded from half-complex input; the input rows are n/2+1
+    // elements apart (tightly packed), which is what layout.idist encodes.
+    xt::fftw::batch_layout c2r;
+    c2r.howmany = dm_count_;
+    c2r.n = {static_cast<int>(n_samples_padded)};
+    c2r.idist = static_cast<int>(n_fft_frequency_bins);
+    irfft_plan_ = xt::fftw::make_batch_irfft_plan(dm_scratch_.data(), c2r);
+
+    plan_n_samples_padded_ = n_samples_padded;
+    plan_dm_count_ = dm_count_;
   }
 }
 

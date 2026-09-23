@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.21)
 project(RadioAstronomy CXX)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -34,9 +34,12 @@ endif()
 # Load external dependencies
 include(FetchContent)
 
-set(XTENSOR_LIBRARIES xtl xtensor xtensor-fftw-float)
-include("${CMAKE_SOURCE_DIR}/cmake/FetchXTensor.cmake")
-FetchContent_MakeAvailable(xtensor)
+FetchContent_Declare(
+  xtensor-wrappers
+  GIT_REPOSITORY https://github.com/astron-rd/xtensor-wrappers
+  GIT_TAG main
+  GIT_SHALLOW TRUE)
+FetchContent_MakeAvailable(xtensor-wrappers)
 
 include("${CMAKE_SOURCE_DIR}/cmake/FetchH5cpp.cmake")
 
@@ -46,7 +49,7 @@ find_package(OpenMP)
 
 # Configure targets
 add_library(dedisp OBJECT src/fddplan.cpp src/kernels.cpp)
-target_link_libraries(dedisp PUBLIC cxxopts xtensor xtensor-fftw
+target_link_libraries(dedisp PUBLIC cxxopts xtensor xtensor-wrappers
                                     OpenMP::OpenMP_CXX h5cpp::h5cpp)
 
 add_executable(fdd src/main.cpp)
