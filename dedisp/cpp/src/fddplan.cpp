@@ -359,14 +359,14 @@ void FDDPlan::generate_spin_frequency_table(size_t n_spin_frequencies,
 }
 
 void FDDPlan::setup_fft(size_t n_samples_padded, size_t n_fft_frequency_bins) {
-  const bool shape_changed = n_samples_padded != plan_n_samples_padded_;
+  const bool sample_count_changed = n_samples_padded != plan_n_samples_padded_;
   const bool dm_count_changed = dm_count_ != plan_dm_count_;
 
-  if (shape_changed) {
+  if (sample_count_changed) {
     transposed_input_.resize({n_channels_, n_samples_padded});
   }
 
-  if (shape_changed || dm_count_changed) {
+  if (sample_count_changed || dm_count_changed) {
     dm_scratch_.resize({dm_count_, n_fft_frequency_bins});
 
     if (dm_count_ > 0) {
