@@ -1,5 +1,6 @@
 #include <cmath>
 #include <iostream>
+#include <stdexcept>
 
 #include <xtensor-wrappers/plan_batch.hpp>
 #include <xtensor/containers/xadapt.hpp>
@@ -360,6 +361,12 @@ void FDDPlan::generate_spin_frequency_table(size_t n_spin_frequencies,
 
 void FDDPlan::setup_fft_plans(size_t n_samples_padded,
                               size_t n_fft_frequency_bins) {
+  if (dm_count_ == 0) {
+    throw std::invalid_argument(
+        "FDDPlan::setup_fft_plans: no DM trials (dm_count_ == 0); "
+        "generate the DM table before running");
+  }
+
   const bool sample_count_changed = n_samples_padded != plan_n_samples_padded_;
   const bool dm_count_changed = dm_count_ != plan_dm_count_;
 
@@ -370,26 +377,21 @@ void FDDPlan::setup_fft_plans(size_t n_samples_padded,
   if (sample_count_changed || dm_count_changed) {
     dm_scratch_.resize({dm_count_, n_fft_frequency_bins});
 
-    if (dm_count_ > 0) {
-      // Batched real-to-complex over channels: one rfft per channel of length
-      // n_samples_padded, rows (channels) contiguous in transposed_input_.
-      xt::fftw::batch_layout r2c;
-      r2c.howmany = n_channels_;
-      r2c.n = {static_cast<int>(n_samples_padded)};
-      rfft_plan_ =
-          xt::fftw::make_batch_rfft_plan(transposed_input_.data(), r2c);
+    // Batched real-to-complex over channels: one rfft per channel of length
+    // n_samples_padded, rows (channels) contiguous in transposed_input_.
+    xt::fftw::batch_layout r2c;
+    r2c.howmany = n_channels_;
+    r2c.n = {static_cast<int>(n_samples_padded)};
+    rfft_plan_ = xt::fftw::make_batch_rfft_plan(transposed_input_.data(), r2c);
 
-      // Batched complex-to-real over DM trials: one irfft per DM of length
-      // n_samples_padded from half-complex input; the input rows are n/2+1
-      // elements apart (tightly packed), which is what layout.idist encodes.
-      xt::fftw::batch_layout c2r;
-      c2r.howmany = dm_count_;
-      c2r.n = {static_cast<int>(n_samples_padded)};
-      c2r.idist = static_cast<int>(n_fft_frequency_bins);
-      irfft_plan_ = xt::fftw::make_batch_irfft_plan(dm_scratch_.data(), c2r);
-    } else {
-      irfft_plan_ = xt::fftw::batch_plan<float, float>{};
-    }
+    // Batched complex-to-real over DM trials: one irfft per DM of length
+    // n_samples_padded from half-complex input; the input rows are n/2+1
+    // elements apart (tightly packed), which is what layout.idist encodes.
+    xt::fftw::batch_layout c2r;
+    c2r.howmany = dm_count_;
+    c2r.n = {static_cast<int>(n_samples_padded)};
+    c2r.idist = static_cast<int>(n_fft_frequency_bins);
+    irfft_plan_ = xt::fftw::make_batch_irfft_plan(dm_scratch_.data(), c2r);
 
     plan_n_samples_padded_ = n_samples_padded;
     plan_dm_count_ = dm_count_;
