@@ -40,11 +40,18 @@ FetchContent_MakeAvailable(xtensor)
 
 include("${CMAKE_SOURCE_DIR}/cmake/FetchH5cpp.cmake")
 
+FetchContent_Declare(
+  xtensor-wrappers
+  GIT_REPOSITORY https://github.com/astron-rd/xtensor-wrappers
+  GIT_TAG main
+  GIT_SHALLOW TRUE)
+FetchContent_MakeAvailable(xtensor-wrappers)
+
 find_package(OpenMP)
 
 # Configure targets
 add_library(dedisp OBJECT src/fddplan.cpp src/kernels.cpp)
-target_link_libraries(dedisp PUBLIC xtensor xtensor-fftw OpenMP::OpenMP_CXX
+target_link_libraries(dedisp PUBLIC xtensor xtensor-wrappers OpenMP::OpenMP_CXX
                                     h5cpp::h5cpp)
 
 add_executable(fdd src/main.cpp)
