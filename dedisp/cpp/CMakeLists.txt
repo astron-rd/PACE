@@ -47,12 +47,14 @@ FetchContent_Declare(
   GIT_SHALLOW TRUE)
 FetchContent_MakeAvailable(xtensor-wrappers)
 
+include("${CMAKE_SOURCE_DIR}/cmake/FetchCxxopts.cmake")
+
 find_package(OpenMP)
 
 # Configure targets
 add_library(dedisp OBJECT src/fddplan.cpp src/kernels.cpp)
-target_link_libraries(dedisp PUBLIC xtensor xtensor-wrappers OpenMP::OpenMP_CXX
-                                    h5cpp::h5cpp)
+target_link_libraries(dedisp PUBLIC cxxopts xtensor xtensor-wrappers
+                                    OpenMP::OpenMP_CXX h5cpp::h5cpp)
 
 add_executable(fdd src/main.cpp)
 target_link_libraries(fdd PRIVATE dedisp h5cpp::h5cpp)

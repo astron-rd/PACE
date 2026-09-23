@@ -1,5 +1,8 @@
 #include <cstdint>
+#include <filesystem>
 #include <iostream>
+
+#include "cxxopts.hpp"
 
 #include <xtensor/core/xmath.hpp>
 #include <xtensor/io/xio.hpp>
@@ -15,6 +18,50 @@
 #include "metadata.hpp"
 #include "utilities.hpp"
 
+cxxopts::Options configure_cli_options(const char *argv[]) {
+  cxxopts::Options options(argv[0], "Fourier Domain Dedispersion");
+
+  const std::string kSpectrum = "signal.h5";
+  const std::string kFilename = "fdd.h5";
+
+  constexpr float kDmStart = 2.0f;
+  constexpr float kDmEnd = 100.0f;
+  constexpr float kDmTolerance = 1.25f;
+  constexpr float kPulseWidth = 4.0f;
+
+  options.add_options()(
+      "spectrum", "Path to the HDF5 file containing the dynamic spectrum.",
+      cxxopts::value<std::filesystem::path>()->default_value(kSpectrum))(
+      "dm-start", "Start of the dispersion measure search interval",
+      cxxopts::value<float>()->default_value(std::to_string(kDmStart)))(
+      "dm-end", "End of the dispersion measure search interval",
+      cxxopts::value<float>()->default_value(std::to_string(kDmEnd)))(
+      "dm-tolerance", "Smearing tolerance",
+      cxxopts::value<float>()->default_value(std::to_string(kDmTolerance)))(
+      "pulse-width", "Expected pulse width in milliseconds",
+      cxxopts::value<float>()->default_value(std::to_string(kPulseWidth)))(
+      "file",
+      "Filename for the HDF5 dataset containing the output of the dedispersion "
+      "plan.",
+      cxxopts::value<std::filesystem::path>()->default_value(kFilename))(
+      "h,help", "Print help");
+
+  return options;
+}
+
+cxxopts::ParseResult parse_arguments(int argc, const char *argv[]) {
+  cxxopts::Options options = configure_cli_options(argv);
+
+  auto result = options.parse(argc, argv);
+
+  if (result.count("help")) {
+    std::cout << options.help() << std::endl;
+    exit(EXIT_SUCCESS);
+  }
+
+  return result;
+}
+
 template <typename T>
 xt::xarray<T> load_dataset_to_xtensor(hdf5::node::Dataset &dataset) {
   hdf5::datatype::Datatype datatype = dataset.datatype();
@@ -26,25 +73,34 @@ xt::xarray<T> load_dataset_to_xtensor(hdf5::node::Dataset &dataset) {
   return data;
 }
 
-int main() {
-  // Observation details: duration, integration time, max. frequency, bandwidth,
-  // and channel count.
-  const dedisp::ObservationInfo observation{30.0f, 250.0e-6, 1581.0f, 100.0f,
-                                            1024};
+int main(int argc, const char *argv[]) {
+  const cxxopts::ParseResult cli_options = parse_arguments(argc, argv);
+
+  // Observation details
+  const dedisp::ObservationInfo observation{
+      30.0f,    // duration (s)
+      250.0e-6, // integration time (s)
+      1581.0f,  // max. frequency (MHz)
+      100.0f,   // bandwidth (MHz)
+      1024      // channel count
+  };
 
   // Mock signal parameters: RMS noise floor, DM, pulse arrival time, and signal
   // amplitude.
   constexpr float default_intensity = 25.0f;
-  const dedisp::SignalInfo mock_signal{25.0f, 41.159f, 3.14159f,
-                                       default_intensity};
+  const dedisp::SignalInfo mock_signal{
+      25.0f,            // RMS noise
+      41.159f,          // DM (pc cm^-3)
+      3.14159f,         // Arrival time (s)
+      default_intensity // signal amplitude
+  };
 
   // Dedispersion plan constraints: start DM, end DM, pulse width (ms), smearing
   // tolerance.
-  const dedisp::DedispersionConstraints constraints{2.0f, 100.0f, 4.0f, 1.25f};
+  const dedisp::DedispersionConstraints constraints(cli_options);
 
   const float frequency_resolution =
-      -1.0 * observation.bandwidth /
-      observation.channels; // MHz   (This must be negative!)
+      observation.bandwidth / observation.channels; // MHz
   const size_t n_samples = observation.duration / observation.sampling_period;
 
   auto input_timer = std::make_unique<dedisp::benchmark::Timer>();
@@ -52,14 +108,21 @@ int main() {
   auto prep_timer = std::make_unique<dedisp::benchmark::Timer>();
   auto exec_timer = std::make_unique<dedisp::benchmark::Timer>();
 
-  std::cout << "Generating mock input..." << std::endl;
+  std::cout << "Reading input from HDF5..." << std::endl;
   input_timer->start();
 
   xt::xarray<uint8_t> input;
   {
     using namespace hdf5;
 
-    file::File input_file = file::open("signal.h5");
+    const std::filesystem::path h5_file_path =
+        cli_options["spectrum"].as<std::filesystem::path>();
+    if (!std::filesystem::exists(h5_file_path)) {
+      std::cout << "Error: " << h5_file_path << " does not exist\n";
+      return 0;
+    }
+
+    file::File input_file = file::open(h5_file_path);
     node::Group root_node = input_file.root();
 
     node::Dataset signal_ds = root_node.get_dataset("dynspec");
@@ -158,7 +221,10 @@ int main() {
   {
     using namespace hdf5;
 
-    file::File output_file = file::create("fdd.h5");
+    const std::filesystem::path output_file_path =
+        cli_options["file"].as<std::filesystem::path>();
+
+    file::File output_file = file::create(output_file_path);
     node::Group root_node = output_file.root();
 
     {
@@ -176,8 +242,8 @@ int main() {
       signal_dataset.attributes.create_from("integration_time",
                                             observation.sampling_period);
 
-      std::cout << "Output is written to dataset fddout in fdd.h5."
-                << std::endl;
+      std::cout << "Output is written to dataset fddresult in "
+                << output_file_path.string() << "." << std::endl;
     }
 
     {
