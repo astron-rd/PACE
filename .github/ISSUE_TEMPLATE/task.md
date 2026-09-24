@@ -1,9 +1,10 @@
-______________________________________________________________________
-
-name: Task about: Generic template for investigation or implementation work
-title: '' labels: '' assignees: ''
-
-______________________________________________________________________
+---
+name: Task
+about: Generic template for investigation or implementation work
+title: ''
+labels: ''
+assignees: ''
+---
 
 ## Summary
 
