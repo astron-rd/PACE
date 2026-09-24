@@ -1,5 +1,3 @@
-use std::f32::consts::PI;
-
 use ndarray::prelude::*;
 use ndarray_ndimage::PadMode::Constant;
 use ndrustfft::R2cFftHandler;
@@ -8,6 +6,7 @@ use num_complex::Complex;
 use crate::cli::{DedispArgs, GeneralArgs, ObservationArgs};
 use crate::util::time_function;
 
+/// Dedisperse a spectrum using Fourier Domain Dedispersion (FDD)
 pub fn dedisperse(
     general_args: &GeneralArgs,
     observation_args: &ObservationArgs,
@@ -52,8 +51,8 @@ pub fn dedisperse(
         .with_data(&output)
         .create("fddresult")
         .unwrap();
-    fdd_result_ds
-        .new_attr_builder()
+    let _ = output_file
+        .new_dataset_builder()
         .with_data(&plan.dm_table)
         .create("dispersion_measures")
         .unwrap();
@@ -106,14 +105,14 @@ impl FDDPlan {
     }
 
     fn generate_delay_table(&mut self) {
-        const MYSTERIOUS_MAGIC_CONSTANT: f32 = 4.148_741_7e3;
+        const IVERSE_PROPORTIONALITY_CONSTANT: f32 = 4.148_741_7e3;
 
         self.delay_table = Array1::from_iter((0..self.channel_count).map(|channel| {
             let inverse_channel_frequency =
                 1.0 / (self.max_frequency - channel as f32 * self.frequency_resolution);
             let inverse_max_frequency = 1.0 / self.max_frequency;
 
-            MYSTERIOUS_MAGIC_CONSTANT / self.time_resolution
+            IVERSE_PROPORTIONALITY_CONSTANT / self.time_resolution
                 * (inverse_channel_frequency.powi(2) - inverse_max_frequency.powi(2))
         }));
     }
@@ -127,8 +126,8 @@ impl FDDPlan {
         let a_squared = a.powi(2);
         let b_squared = a_squared * (self.channel_count.pow(2) / 16) as f64;
         let tolerance_squared = (f64::from(tolerance)).powi(2);
-        let c =
-            (time_resolution.powi(2) + (f64::from(pulse_width)).powi(2)) * (tolerance_squared - 1.0);
+        let c = (time_resolution.powi(2) + (f64::from(pulse_width)).powi(2))
+            * (tolerance_squared - 1.0);
 
         let mut dm_table = vec![dm_start];
         while *dm_table.last().unwrap() < dm_end {
@@ -157,22 +156,24 @@ impl FDDPlan {
         let n_samples_padded = (n_samples_fft + 1).next_multiple_of(1024);
         let n_fft_frequency_bins = n_samples_padded / 2 + 1;
 
-        println!("(1) Generate the spin frequency table.");
+        let spin_frequency_table = time_function!("generate spin frequency table", {
+            let observation_duration = n_samples as f32 * self.time_resolution;
+            (0..n_spin_frequencies)
+                .into_iter()
+                .map(|i| i as f32 / observation_duration)
+                .collect::<Array1<f32>>()
+        });
 
-        let observation_duration = n_samples as f32 * self.time_resolution;
-        let spin_frequency_table: Array1<f32> = (0..n_spin_frequencies)
-            .into_iter()
-            .map(|i| i as f32 / observation_duration)
-            .collect();
-
-        println!("(2) Transpose data: int -> float.");
-
-        let padding = n_samples_padded - n_samples;
-        let padded_spectrum = ndarray_ndimage::pad(&spectrum, &[[0, padding], [0, 0]], Constant(0));
-        let mut transposed_spectrum = padded_spectrum.map(|x| f32::from(*x));
-        transposed_spectrum.reverse_axes();
-        transposed_spectrum -= 127.5;
-        transposed_spectrum /= self.channel_count as f32;
+        let transposed_spectrum = time_function!("transpose data", {
+            let padding = n_samples_padded - n_samples;
+            let padded_spectrum =
+                ndarray_ndimage::pad(&spectrum, &[[0, padding], [0, 0]], Constant(0));
+            let mut transposed_spectrum = padded_spectrum.map(|x| f32::from(*x));
+            transposed_spectrum.reverse_axes();
+            transposed_spectrum -= 127.5;
+            transposed_spectrum /= self.channel_count as f32;
+            transposed_spectrum
+        });
 
         let mut fd_scratch = Array2::zeros((self.channel_count, n_fft_frequency_bins));
         time_function!(
@@ -190,7 +191,7 @@ impl FDDPlan {
 
         time_function!(
             "dedisperse",
-            Self::fourier_domain_dedispersion(
+            crate::fdd::fourier_domain_dedispersion(
                 &fd_scratch,
                 &mut dm_scratch,
                 self.time_resolution,
@@ -201,50 +202,19 @@ impl FDDPlan {
         );
 
         let mut dm_output = Array2::zeros((self.dm_count, n_samples_padded));
-        ndrustfft::ndifft_r2c_par(
-            &dm_scratch,
-            &mut dm_output,
-            &R2cFftHandler::new(n_samples_padded),
-            1,
+        time_function!(
+            "fft complex->real",
+            ndrustfft::ndifft_r2c_par(
+                &dm_scratch,
+                &mut dm_output,
+                &R2cFftHandler::new(n_samples_padded),
+                1,
+            )
         );
 
         dm_output
             .slice(s![.., ..n_output_samples])
             .reversed_axes()
             .to_owned()
-    }
-
-    fn fourier_domain_dedispersion(
-        input_data: &Array2<Complex<f32>>,
-        output_data: &mut Array2<Complex<f32>>,
-        time_resolution: f32,
-        spin_frequencies: &Array1<f32>,
-        dispersion_measures: &Array1<f32>,
-        delays: &Array1<f32>,
-    ) {
-        let n_spin_frequencies = spin_frequencies.len();
-        let samples = input_data.slice(s![.., ..n_spin_frequencies]);
-        let spin_freqs_m = spin_frequencies.slice(s![NewAxis, ..]);
-
-        assert_eq!(dispersion_measures.len(), output_data.shape()[0]);
-
-        let output_iter = output_data.axis_iter_mut(Axis(0));
-
-        ndarray::Zip::from(dispersion_measures)
-            .and(output_iter)
-            .par_for_each(|dm, mut output_axis| {
-                let dm_delays = delays * (dm * time_resolution);
-
-                let dm_delays_m = dm_delays.slice(s![.., NewAxis]);
-                let phases = 2.0 * PI * (&dm_delays_m * &spin_freqs_m);
-
-                let phasors = phases.map(|x| Complex::new(0.0, *x).exp());
-
-                let result = (&samples * &phasors.view()).sum_axis(Axis(0));
-
-                output_axis
-                    .slice_mut(s![..n_spin_frequencies])
-                    .assign(&result);
-            });
     }
 }

@@ -6,6 +6,8 @@ mod util;
 mod dedisperse;
 mod simulate;
 
+mod fdd;
+
 fn main() {
     let cli = cli::Cli::parse();
 

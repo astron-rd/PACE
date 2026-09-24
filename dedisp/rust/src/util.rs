@@ -1,3 +1,18 @@
+/// Measure the time to evaluate an expression and print it to stdout.
+///
+/// The macro evaluates to the value of the expression being measured, so you can pass it through like this:
+/// ```
+/// let value = time_function!("big calculation", calculate());
+/// ```
+///
+/// A block is also an expression, so you can measure multiple statements like this:
+/// ```
+/// let value = time_function!("multiple calculations", {
+///     let a = calculate_a();
+///     let b = calculate_b();
+///     b
+/// });
+/// ```
 macro_rules! time_function {
     ($name: expr, $exp: expr) => {{
         let start = std::time::Instant::now();
