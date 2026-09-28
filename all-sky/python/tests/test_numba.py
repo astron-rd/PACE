@@ -25,10 +25,10 @@ class TestAllSkyImagingNumba(BaseTestCase):
     def test_all_sky_ravel_real_image_verify(self):
         """Verify the all sky imager against reference images"""
 
-        visibilities = h5py.File(files("tests.data").joinpath("visibilities.npy"), "r")[
+        visibilities = h5py.File(files("tests.data").joinpath("visibilities.h5"), "r")[
             "data"
         ][...]
-        baselines = h5py.File(files("tests.data").joinpath("baselines.npy"), "r")[
+        baselines = h5py.File(files("tests.data").joinpath("baselines.h5"), "r")[
             "data"
         ][...]
 

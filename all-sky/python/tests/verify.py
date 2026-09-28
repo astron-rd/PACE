@@ -2,6 +2,7 @@ import copy
 from importlib.resources import files
 from typing import Callable
 
+import h5py
 import numpy as np
 
 from tests.load import load_hdf5
@@ -31,7 +32,9 @@ def verify_imager(
     if baselines is None:
         _, baselines = load_hdf5(settings)
 
-    reference_image = np.load(files("tests.references").joinpath(f"image_{x}_{y}.npy"))
+    reference_image = h5py.File(files("tests.references").joinpath(f"image_{x}_{y}.h5"), "r")[
+            "data"
+        ][...]
     result_image = fn(visibilities, baselines, settings.frequency, x, y)
 
     # Create a circle as mask just below unit length. and remove those results from
