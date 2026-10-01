@@ -37,7 +37,7 @@ repos:
       - id: pytest-idg
         name: pytest-idg
         stages: [manual] # only run when specified manually
-        entry: bash -c 'cd idg/python; uv run pytest'
+        entry: bash -c 'cd apps/idg/python; uv run pytest'
         language: system
         types: [python]
         pass_filenames: false
@@ -45,7 +45,7 @@ repos:
       - id: pytest-all-sky
         name: pytest-all-sky
         stages: [manual] # only run when specified manually
-        entry: bash -c 'cd all-sky/python; uv run pytest -v --log-cli-level=info --show-capture=all --log-level=INFO'
+        entry: bash -c 'cd apps/all-sky/python; uv run pytest -v --log-cli-level=info --show-capture=all --log-level=INFO'
         language: system
         types: [python]
         pass_filenames: false
@@ -53,7 +53,7 @@ repos:
       - id: build-idg
         name: build-idg
         stages: [manual] # only run when specified manually
-        entry: bash -c 'cd idg/python; uv build'
+        entry: bash -c 'cd apps/idg/python; uv build'
         language: system
         types: [python]
         pass_filenames: false
@@ -61,7 +61,7 @@ repos:
       - id: build-all-sky
         name: build-all-sky
         stages: [manual] # only run when specified manually
-        entry: bash -c 'cd all-sky/python; uv build'
+        entry: bash -c 'cd apps/all-sky/python; uv build'
         language: system
         types: [python]
         pass_filenames: false

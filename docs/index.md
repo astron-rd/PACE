@@ -42,11 +42,11 @@ Use the navigation menu to browse these sections.
 
 ## Repository layout
 
-Each top-level folder contains code for a particular application, language, or
+Each folder under `apps/` contains code for a particular application, language, or
 framework combination. For example:
 
-- `idg/python` — Image-Domain Gridding in Python
-- `idg/cpp` — Image-Domain Gridding in C++
+- `apps/idg/python` — Image-Domain Gridding in Python
+- `apps/idg/cpp` — Image-Domain Gridding in C++
 
 ## Usage
 

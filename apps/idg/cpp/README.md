@@ -2,7 +2,7 @@
 
 This is a C++ implementation of IDG. It loads visibilities from an input file and uses Image Domain Gridding to create an image.
 
-For more information on the input data format, see the [Data Format documentation](../../docs/general/data-format.md).
+For more information on the input data format, see the [Data Format documentation](../../../docs/general/data-format.md).
 
 ## Building
 
