@@ -3,7 +3,7 @@
 import copy
 from importlib.resources import files
 
-import numpy as np
+import h5py
 import pytest
 
 from all_sky_python.all_sky_numba import sky_imager_numba_ravel_real
@@ -24,8 +24,9 @@ class TestAllSkyImagingNumba(BaseTestCase):
     def test_all_sky_ravel_real_image_verify(self):
         """Verify the all sky imager against reference images"""
 
-        visibilities = np.load(files("tests.data").joinpath("visibilities.npy"))
-        baselines = np.load(files("tests.data").joinpath("baselines.npy"))
+        test_data = h5py.File(files("tests.data").joinpath("data.h5"), "r")
+        visibilities = test_data["visibilities"][...]
+        baselines = test_data["baselines"][...]
 
         settings = copy.copy(BENCH_SETTINGS_SINGLE)
 

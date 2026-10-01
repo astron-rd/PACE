@@ -1,7 +1,7 @@
 import logging
 from typing import Callable
 
-from tests.load import load_npy
+from tests.load import load_hdf5
 from tests.measurements.measure import Measure
 from tests.settings import AllSkySettings
 
@@ -9,7 +9,7 @@ logger = logging.getLogger()
 
 
 def measure_imager(fn: Callable, settings: AllSkySettings, pmt_backends: str):
-    visibilities, baselines = load_npy(settings)
+    visibilities, baselines = load_hdf5(settings)
 
     measure = Measure(settings, pmt_backends)
     measure.warmup(

@@ -2,9 +2,10 @@ import copy
 from importlib.resources import files
 from typing import Callable
 
+import h5py
 import numpy as np
 
-from tests.load import load_npy
+from tests.load import load_hdf5
 from tests.settings import AllSkySettings
 
 
@@ -26,12 +27,14 @@ def verify_imager(
     y = settings.image_size_y
 
     if visibilities is None:
-        visibilities, _ = load_npy(settings)
+        visibilities, _ = load_hdf5(settings)
 
     if baselines is None:
-        _, baselines = load_npy(settings)
+        _, baselines = load_hdf5(settings)
 
-    reference_image = np.load(files("tests.references").joinpath(f"image_{x}_{y}.npy"))
+    reference_image = h5py.File(
+        files("tests.references").joinpath(f"image_{x}_{y}.h5"), "r"
+    )["data"][...]
     result_image = fn(visibilities, baselines, settings.frequency, x, y)
 
     # Create a circle as mask just below unit length. and remove those results from
