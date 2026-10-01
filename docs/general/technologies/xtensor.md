@@ -20,6 +20,8 @@ xtensor is but a small part of the whole [*xtensor* stack](https://github.com/xt
 
 Of this family, we used xtensor, xtensor-fftw, and briefly investigated xtensor-io for reading binary `.npy` files.
 
+On top of that, this repository uses [xtensor-wrappers](https://github.com/astron-rd/xtensor-wrappers), a small header-only library that provides a reusable, plan-based FFTW API around xtensor-fftw, including higher-level wrappers for 2D and batched transforms.
+
 ## The good, the bad, and the ugly
 
 xtensor offers an incredibly convenient way to work with multi-dimensional vectors, especially if you're introduction to scientific computing is with Python / NumPy. Defining *N*-dimensional arrays and manipulating them feels very natural, espcially, if you compare it to using C++'s standard library `std::vector`, and many operators that would require (multiple levels of) loops, are possible with a single function call. Thus, code that uses *xtensor* tends to be easier to read.
@@ -28,13 +30,13 @@ In particular, this is the case for xtensor-fftw that wraps the commonly used FF
 
 Lastly, we investigated the use of xtensor-io for storing and loading data stored in the `.npy` format accross all languages, since most languages offer a library with such functionality. Sadly, it does not support compound data types, which means having to store members of, e.g., a `struct` in a different file.
 
-## `xtensor-fftw` bechmark
+## `xtensor-fftw` benchmark
 
-The following table compares the performance of xtensor-fftw (left) vs. FFTW3 (right). It's clear that using FFTW3 natively is the more performant solution, especially for smaller volume FFTs, FFTW is a lot (~100) times faster. For larger data volumes, the difference is signficantly smaller, and in case of the complex-to-complex FFT, is as small as (roughly) a factor 4.
+The following table compares the performance of xtensor-fftw against FFTW3 when both are used in the most straightforward way. Using FFTW3 natively appears far more performant, especially for smaller FFTs, where it is roughly a hundred times faster. For larger data volumes the difference shrinks, and for the complex-to-complex FFT it is only (roughly) a factor 4.
 
-The huge difference can be attributed to the fact that every call to *xtensor*'s FFT routines, creates a new FFTW plan, while FFTW itself supports reusing the plan. Therefore these results are rather skewed, this will be addressed in the future.
+The apparent gap is almost entirely caused by plan creation. Every call to *xtensor*'s FFT convenience routines creates a new FFTW plan, while the FFTW benchmark creates a single plan up front and reuses it. Planning is an expensive step, so the naive xtensor comparison pays that cost on every single measurement.
 
-Note that these values were obtained using the [`fft-benchmark`](https://git.astron.nl/RD/fft-benchmark) tool and the these benchmarks ran on Node 508 of the [DAS-6 cluster](https://www.cs.vu.nl/das6/clusters.shtml).
+Note that these values were obtained using the [`fft-benchmark`](https://git.astron.nl/RD/fft-benchmark) tool and the benchmarks ran on `node508` of the [DAS-6 cluster](https://www.cs.vu.nl/das6/clusters.shtml).
 
 | Operation | xtensor-fftw time | FFTW3 time | Speedup (FFTW3 over xtensor-fftw) |
 | :--- | :---: | :---: | :---: |
@@ -68,3 +70,18 @@ Note that these values were obtained using the [`fft-benchmark`](https://git.ast
 | C2C/800 | 11.1 us | 2.48 us | $\\approx 4.5\\times$ |
 | C2C/900 | 28.6 us | 5.33 us | $\\approx 5.4\\times$ |
 | C2C/1000 | 20.0 us | 4.35 us | $\\approx 4.6\\times$ |
+
+### Plan reuse
+
+The benchmark above compares apples with oranges: the xtensor-fftw numbers include plan creation on every call, the FFTW numbers reuse a single plan. When both sides create the plan once and reuse it, the difference almost completely disappears, as the table below shows. xtensor-fftw is a wrapper around FFTW, so once the plan exists, execution is the same code path.
+
+| Operation | FFTW3 time | xtensor-fftw plan time | Speedup (FFTW3 over xtensor-fftw) |
+| :--- | :---: | :---: | :---: |
+| R2C/100 | 0.051 us | 0.052 us | $\\approx 1.0\\times$ |
+| R2C/1000 | 0.714 us | 0.739 us | $\\approx 1.0\\times$ |
+| C2R/100 | 0.054 us | 0.053 us | $\\approx 1.0\\times$ |
+| C2R/1000 | 0.744 us | 0.752 us | $\\approx 1.0\\times$ |
+| C2C/100 | 0.075 us | 0.081 us | $\\approx 1.0\\times$ |
+| C2C/1000 | 1.67 us | 1.67 us | $\\approx 1.0\\times$ |
+
+These values were obtained with the same `fft-benchmark` tool, updated so the xtensor-fftw benchmark creates its plan before the timed loop. The takeaway is that the choice of wrapper matters little for performance. What matters is using the plan based interface, so plan creation happens once and the same plan is reused for every transform of the same size. That is where the real end-to-end gains come from, and it is exactly what `xtensor-wrappers` provides and what the C++ implementations in this repository use.
