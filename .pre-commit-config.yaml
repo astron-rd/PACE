@@ -34,6 +34,12 @@ repos:
         additional_dependencies: [mdformat-frontmatter]
   - repo: local
     hooks:
+      - id: export-specs
+        name: export-specs
+        entry: bash -c 'cd specs; uv run export'
+        language: system
+        files: ^specs/
+        pass_filenames: false
       - id: pytest-idg
         name: pytest-idg
         stages: [manual] # only run when specified manually
