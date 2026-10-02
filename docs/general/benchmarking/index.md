@@ -9,6 +9,7 @@ The documentation is organized chronologically to reflect the project's progress
 1. **[Framework selection](1-frameworks.md)**: Initial exploration and evaluation of various benchmarking frameworks to find a suitable tool for multi-language performance tracking.
 1. **[Bencher integration](2-bencher.md)**: Investigation and proof-of-concept implementation using Bencher to validate its utility for recording and analyzing benchmarks.
 1. **[Proposed architecture](3-architecture.md)**: The development of a new architectural approach to optimize the benchmarking workflow on the DAS-6 cluster.
+1. **[Result specification](4-specification.md)**: The format of the result file that every implementation outputs per benchmark run.
 
 ## Current status and next steps
 
