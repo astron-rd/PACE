@@ -7,7 +7,7 @@ The generated documentation is in [`4-specification.md`](../docs/general/benchma
 
 1. Edit the model in [`src/pace_bench/models.py`](src/pace_bench/models.py).
 
-1. Bump the specifications version, using `major`, `minor` or `patch` depending on the change:
+1. Bump the specification version, using `major`, `minor` or `patch` depending on the change:
 
    ```sh
    uv version --bump minor
