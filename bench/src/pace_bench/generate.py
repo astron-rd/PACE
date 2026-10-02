@@ -4,7 +4,7 @@ import jsonschema_markdown
 from pydantic.json_schema import GenerateJsonSchema, JsonSchemaMode, JsonSchemaValue
 from pydantic_core import CoreSchema
 
-from pace_specs.models import EXAMPLE, BenchmarkResult
+from pace_bench.models import EXAMPLE, BenchmarkResult
 
 OUTPUT = Path("../docs/general/benchmarking/4-specification.md")
 

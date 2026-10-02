@@ -1,5 +1,5 @@
 [project]
-name = "pace-specs"
+name = "pace-bench"
 version = "0.2.0"
 description = "Add your description here"
 readme = "README.md"
@@ -11,7 +11,7 @@ dependencies = [
 ]
 
 [project.scripts]
-export = "pace_specs.generate:main"
+export = "pace_bench.generate:main"
 
 [build-system]
 requires = ["uv_build>=0.12.19,<0.13.0"]

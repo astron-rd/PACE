@@ -67,7 +67,7 @@ wheels = [
 ]
 
 [[package]]
-name = "pace-specs"
+name = "pace-bench"
 version = "0.2.0"
 source = { editable = "." }
 dependencies = [
