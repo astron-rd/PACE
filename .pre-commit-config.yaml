@@ -35,11 +35,11 @@ repos:
         exclude: ^docs/general/benchmarking/4-specification\.md$
   - repo: local
     hooks:
-      - id: export-specs
-        name: export-specs
-        entry: bash -c 'cd specs; uv run export'
+      - id: export-bench
+        name: export-bench
+        entry: bash -c 'cd bench; uv run export'
         language: system
-        files: ^specs/
+        files: ^bench/
         pass_filenames: false
       - id: pytest-idg
         name: pytest-idg
