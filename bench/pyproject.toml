@@ -1,7 +1,7 @@
 [project]
 name = "pace-bench"
-version = "0.2.0"
-description = "Add your description here"
+version = "1.0.0"
+description = "Benchmark tooling for PACE"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [

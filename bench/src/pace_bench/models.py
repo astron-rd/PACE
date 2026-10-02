@@ -1,7 +1,7 @@
 from importlib import metadata
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, NonNegativeFloat
 from pydantic.config import JsonDict
 from pydantic_extra_types.semantic_version import SemanticVersion
 
@@ -72,6 +72,6 @@ class Result(BaseModel):
         description="Git commit hash.",
     )
     hardware: Hardware = Field(description="Hardware configuration.")
-    timings: dict[str, float] = Field(
+    timings: dict[str, NonNegativeFloat] = Field(
         description="Measurements in seconds per benchmark phase."
     )
