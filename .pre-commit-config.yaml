@@ -32,7 +32,7 @@ repos:
     hooks:
       - id: mdformat
         additional_dependencies: [mdformat-frontmatter]
-        exclude: ^docs/general/benchmarking/4-specification\.md$
+        exclude: (^|/)4-specification\.md$
   - repo: local
     hooks:
       - id: export-bench
