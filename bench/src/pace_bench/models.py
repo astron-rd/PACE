@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from pydantic.config import JsonDict
 from pydantic_extra_types.semantic_version import SemanticVersion
 
-VERSION = metadata.version("pace-specs")
+VERSION = metadata.version("pace-bench")
 
 EXAMPLE: JsonDict = {
     "version": VERSION,
