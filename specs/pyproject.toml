@@ -5,8 +5,9 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "jsonschema-markdown>=2026.8.0",
     "pydantic>=2.13.5",
-    "pyfracturedjson>=2.2.0",
+    "pydantic-extra-types[semver]>=2.11.1",
 ]
 
 [project.scripts]
