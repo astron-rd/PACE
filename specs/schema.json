@@ -1,0 +1,12 @@
+{
+    "properties": {
+        "application": { "enum": ["all-sky", "dedisp", "idg"], "title": "Application", "type": "string" },
+        "language"   : { "enum": ["python", "rust", "julia"], "title": "Language", "type": "string" },
+        "commit"     : {"maxLength": 40, "minLength": 7, "title": "Commit", "type": "string"},
+        "hardware"   : {"title": "Hardware", "type": "string"},
+        "timings"    : { "additionalProperties": {"type": "number"}, "title": "Timings", "type": "object" }
+    },
+    "required"  : ["application", "language", "commit", "hardware", "timings"],
+    "title"     : "BenchmarkResult",
+    "type"      : "object"
+}
