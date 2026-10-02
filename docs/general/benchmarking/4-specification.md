@@ -6,7 +6,7 @@ Result of a single benchmark run.
 
 ```json
 {
-  "version": "0.2.0",
+  "version": "1.0.0",
   "application": "dedisp",
   "implementation": "rust",
   "commit": "a529875",
