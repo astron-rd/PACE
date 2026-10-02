@@ -1,10 +1,11 @@
-import json
+from pathlib import Path
 
-from pace_specs.api import app
+import fracturedjson
+
+from pace_specs.models import BenchmarkResult
 
 
 def main() -> None:
-    """Generate OpenAPI schema file."""
-    with open("openapi.json", "w") as file:
-        json.dump(app.openapi(), file, indent=2)
-        file.write("\n")
+    """Generate JSON Schema file."""
+    schema = BenchmarkResult.model_json_schema()
+    Path("schema.json").write_text(fracturedjson.dumps(schema))

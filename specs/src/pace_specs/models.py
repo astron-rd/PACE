@@ -7,4 +7,5 @@ class BenchmarkResult(BaseModel):
     application: Literal["all-sky", "dedisp", "idg"]
     language: Literal["python", "rust", "julia"]
     commit: str = Field(min_length=7, max_length=40)
+    hardware: str
     timings: dict[str, float]
