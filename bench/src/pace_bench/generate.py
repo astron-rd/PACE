@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import jsonschema_markdown
+from loguru import logger
 from pydantic.json_schema import GenerateJsonSchema, JsonSchemaMode, JsonSchemaValue
 from pydantic_core import CoreSchema
 
@@ -43,6 +44,8 @@ class GenerateOrderedJsonSchema(GenerateJsonSchema):
 def main() -> None:
     """Generate Markdown specification from the JSON Schema."""
     schema = Result.model_json_schema(schema_generator=GenerateOrderedJsonSchema)
+    # Silence log output from jsonschema-markdown
+    logger.disable("jsonschema_markdown")
     markdown = jsonschema_markdown.generate(
         schema,
         footer=False,
