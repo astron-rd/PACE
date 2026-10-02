@@ -1,4 +1,4 @@
-# BenchmarkResult
+# Result
 
 Result of a single benchmark run.
 
@@ -48,6 +48,18 @@ Result of a single benchmark run.
 
 # Definitions
 
+## Hardware
+
+Machine that ran the benchmark.
+
+#### Type: `object`
+
+| Property | Type | Required | Possible values | Description |
+| -------- | ---- | -------- | --------------- | ----------- |
+| cpu | `object` | ✅ | [Cpu](#cpu) | CPU configuration. |
+| gpu | `object` or `null` | ✅ | [Gpu](#gpu) | GPU configuration. |
+| memory | `object` | ✅ | [Memory](#memory) | Memory configuration. |
+
 ## Cpu
 
 Processor of the machine that ran the benchmark.
@@ -68,18 +80,6 @@ Graphics card of the machine that ran the benchmark.
 | Property | Type | Required | Possible values | Description |
 | -------- | ---- | -------- | --------------- | ----------- |
 | model | `string` | ✅ | string | GPU model name. |
-
-## Hardware
-
-Machine that ran the benchmark.
-
-#### Type: `object`
-
-| Property | Type | Required | Possible values | Description |
-| -------- | ---- | -------- | --------------- | ----------- |
-| cpu | `object` | ✅ | [Cpu](#cpu) | CPU configuration. |
-| gpu | `object` or `null` | ✅ | [Gpu](#gpu) | GPU configuration. |
-| memory | `object` | ✅ | [Memory](#memory) | Memory configuration. |
 
 ## Memory
 
