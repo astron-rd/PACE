@@ -7,7 +7,7 @@ from pydantic_core import CoreSchema
 
 from pace_bench.models import EXAMPLE, Result
 
-OUTPUT = Path("../docs/general/benchmarking/4-specification.md")
+OUTPUT = Path(__file__).parents[3] / "docs/general/benchmarking/4-specification.md"
 DEFS_PREFIX = "#/$defs/"
 
 
@@ -43,6 +43,7 @@ class GenerateOrderedJsonSchema(GenerateJsonSchema):
 
 def main() -> None:
     """Generate Markdown specification from the JSON Schema."""
+    Result.model_validate(EXAMPLE)
     schema = Result.model_json_schema(schema_generator=GenerateOrderedJsonSchema)
     # Silence log output from jsonschema-markdown
     logger.disable("jsonschema_markdown")
