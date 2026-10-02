@@ -5,9 +5,6 @@ The generated documentation is in [`4-specification.md`](../docs/general/benchma
 
 ## Updating the specification
 
-> [!NOTE]
-> See the [Pydantic documentation on models](https://pydantic.dev/docs/validation/latest/concepts/models/) for the available field types and constraints.
-
 1. Edit the model in [`src/pace_bench/models.py`](src/pace_bench/models.py).
 
 1. Bump the specifications version, using `major`, `minor` or `patch` depending on the change:
@@ -21,3 +18,6 @@ The generated documentation is in [`4-specification.md`](../docs/general/benchma
    ```sh
    uv run export
    ```
+
+> [!NOTE]
+> See the [Pydantic documentation on models](https://pydantic.dev/docs/validation/latest/concepts/models/) for the available field types and constraints.

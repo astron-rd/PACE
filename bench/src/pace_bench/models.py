@@ -5,10 +5,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from pydantic.config import JsonDict
 from pydantic_extra_types.semantic_version import SemanticVersion
 
-VERSION = metadata.version("pace-bench")
-
 EXAMPLE: JsonDict = {
-    "version": VERSION,
+    "version": metadata.version("pace-bench"),
     "application": "dedisp",
     "implementation": "rust",
     "commit": "a529875",
@@ -54,7 +52,7 @@ class Hardware(BaseModel):
     memory: Memory = Field(description="Memory configuration.")
 
 
-class BenchmarkResult(BaseModel):
+class Result(BaseModel):
     """Result of a single benchmark run."""
 
     model_config = ConfigDict(json_schema_extra={"examples": [EXAMPLE]})
