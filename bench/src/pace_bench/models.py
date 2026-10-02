@@ -48,7 +48,7 @@ class Hardware(BaseModel):
     """Machine that ran the benchmark."""
 
     cpu: Cpu = Field(description="CPU configuration.")
-    gpu: Gpu | None = Field(description="GPU configuration.")
+    gpu: Gpu | None = Field(default=None, description="GPU configuration.")
     memory: Memory = Field(description="Memory configuration.")
 
 
@@ -57,7 +57,7 @@ class Result(BaseModel):
 
     model_config = ConfigDict(json_schema_extra={"examples": [EXAMPLE]})
 
-    version: SemanticVersion = Field(description="Specification version.")
+    version: SemanticVersion = Field(description="Specification SemVer.")
     application: Literal["all-sky", "dedisp", "idg"] = Field(
         description="Benchmarked application."
     )
