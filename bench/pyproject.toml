@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
     "jsonschema-markdown>=2026.8.0",
+    "loguru>=0.7.3",
     "pydantic>=2.13.5",
     "pydantic-extra-types[semver]>=2.11.1",
 ]
