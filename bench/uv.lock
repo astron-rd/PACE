@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.14"
 
 [[package]]
@@ -72,6 +72,7 @@ version = "1.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "jsonschema-markdown" },
+    { name = "loguru" },
     { name = "pydantic" },
     { name = "pydantic-extra-types", extra = ["semver"] },
 ]
@@ -79,6 +80,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "jsonschema-markdown", specifier = ">=2026.8.0" },
+    { name = "loguru", specifier = ">=0.7.3" },
     { name = "pydantic", specifier = ">=2.13.5" },
     { name = "pydantic-extra-types", extras = ["semver"], specifier = ">=2.11.1" },
 ]
