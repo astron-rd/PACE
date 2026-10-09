@@ -1,6 +1,6 @@
 # Python IDG implementation
 
-This is a Python + Numba implementation of IDG. It takes visibilities in an input file and performs Image-Domain Gridding on them to create an image.
+This is a Python + Numba implementation of IDG. See ../jax for the JAX version. It takes visibilities in an input file and performs Image-Domain Gridding on them to create an image.
 
 For more information on the input data format, see the [Data Format documentation](../../docs/general/data-format.md).
 
@@ -26,7 +26,7 @@ Similar to the C++ version, the gridding process is the main computational bottl
 ## Basic Usage
 
 ```sh
-uv run idg {input-file}
+uv run idg-numba {input-file}
 ```
 
 You can get an input file from the input generator in `idg/input`. Use the `--store` flag to store the resulting image in an HDF5 file.

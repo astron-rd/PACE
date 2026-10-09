@@ -1,6 +1,6 @@
 [project]
-name = "idg-python"
-description = "Image-Domain Gridding (IDG) kernels implemented in Python"
+name = "idg-numba"
+description = "Image-Domain Gridding (IDG) kernels implemented in Python with Numba"
 version = "0.0.1"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -18,7 +18,6 @@ classifiers = [
 ]
 dependencies = [
     "h5py>=3.16.0",
-    "jax>=0.5",
     "numba>=0.61.2",
     "numpy>=1.26.4",
 ]
@@ -27,7 +26,7 @@ dependencies = [
 homepage = "https://github.com/astron-rd/pace"
 
 [project.scripts]
-idg = "idg_python.main:main"
+idg-numba = "idg_numba.main:main"
 
 [build-system]
 requires = ["uv_build>=0.12.15,<0.13"]
@@ -45,7 +44,7 @@ branch = true
 
 [tool.pytest.ini_options]
 env = ["PYTHONWARNINGS=default::DeprecationWarning"]
-addopts = "--cov-report term --cov-report xml --cov-report html --cov=idg_python --benchmark-skip --benchmark-warmup on"
+addopts = "--cov-report term --cov-report xml --cov-report html --cov=idg_numba --benchmark-skip --benchmark-warmup on"
 testpaths = ["tests"]
 
 [dependency-groups]
