@@ -5,7 +5,6 @@
 
 #include <xtensor/containers/xarray.hpp>
 #include <xtensor/core/xtensor_forward.hpp>
-#include <xtensor/generators/xbuilder.hpp>
 #include <xtensor/views/xview.hpp>
 
 #include <xtensor-wrappers/plan.hpp>
@@ -42,20 +41,22 @@ void Gridder::ifft_subgrids(xt::xarray<std::complex<float>> &subgrids) const {
   const size_t nr_subgrids = subgrids.shape(0);
   const size_t nr_correlations = subgrids.shape(1);
 
-  // One batched backward 2-D transform over all polarizations and subgrids.
+  // One batched in-place backward 2-D transform over all polarizations and
+  // subgrids. The in-place overload (input == output) reuses the caller's
+  // subgrids buffer, which avoids a second full-size copy and keeps the plan's
+  // borrowed input valid for its whole lifetime.
   xt::fftw::batch_layout layout;
   layout.howmany = nr_subgrids * nr_correlations;
   layout.n = {static_cast<int>(subgrid_size_), static_cast<int>(subgrid_size_)};
 
-  auto plan =
-      xt::fftw::make_batch_fft_plan(subgrids.data(), layout, FFTW_BACKWARD);
+  auto plan = xt::fftw::make_batch_fft_plan(subgrids.data(), subgrids.data(),
+                                            layout, FFTW_BACKWARD);
   plan.execute();
 
   // xt::fftw::ifft2 normalises by 1/(subgrid_size^2); the raw c2c plan does
-  // not, so reproduce that scaling and write the result back in place.
+  // not, so reproduce that scaling in place.
   const float scale = 1.0f / static_cast<float>(subgrid_size_ * subgrid_size_);
-  subgrids =
-      xt::eval(xt::reshape_view(plan.output(), subgrids.shape()) * scale);
+  subgrids *= scale;
 }
 
 void Gridder::add_subgrids_to_grid(
@@ -84,9 +85,10 @@ void Gridder::transform(xt::xarray<std::complex<float>> &grid) const {
   const size_t nr_correlations = nr_correlations_out_;
 
   // Shift the grid for each polarization so the zero-frequency bin is at the
-  // origin.
+  // origin. Every element is written below, so skip zero-filling.
   xt::xarray<std::complex<float>> input =
-      xt::zeros<std::complex<float>>({nr_correlations, height, width});
+      xt::xarray<std::complex<float>>::from_shape(
+          {nr_correlations, height, width});
   for (size_t i = 0; i < nr_correlations; ++i) {
     auto src = xt::view(grid, i, xt::all(), xt::all());
     auto dst = xt::view(input, i, xt::all(), xt::all());
