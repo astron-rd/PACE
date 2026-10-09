@@ -3,6 +3,65 @@ import numpy as np
 
 
 @nb.njit(fastmath=True)
+def polyval(coefficients: np.ndarray, x: np.ndarray) -> np.ndarray:
+    """Numba-compatible polynomial evaluation (equivalent to np.polyval)."""
+    result = np.zeros_like(x)
+    for i in range(len(x)):
+        val = coefficients[0]
+        for j in range(1, len(coefficients)):
+            val = val * x[i] + coefficients[j]
+        result[i] = val
+    return result
+
+
+@nb.njit(fastmath=True)
+def evaluate_spheroidal(nu: np.ndarray) -> np.ndarray:
+    """Evaluate the prolate spheroidal wave function."""
+    p = np.array(
+        [
+            [8.203343e-2, -3.644705e-1, 6.278660e-1, -5.335581e-1, 2.312756e-1],
+            [4.028559e-3, -3.697768e-2, 1.021332e-1, -1.201436e-1, 6.412774e-2],
+        ]
+    )
+    q = np.array(
+        [
+            [1.0000000e0, 8.212018e-1, 2.078043e-1],
+            [1.0000000e0, 9.599102e-1, 2.918724e-1],
+        ]
+    )
+
+    result = np.zeros_like(nu)
+
+    for part, end in [(0, 0.75), (1, 1.00)]:
+        mask = (nu >= (0.0 if part == 0 else 0.75)) & (nu <= end)
+        if not np.any(mask):
+            continue
+
+        nu_part = nu[mask]
+        nusq = nu_part**2
+        delnusq = nusq - end**2
+
+        top = polyval(p[part][::-1], delnusq)
+        bot = polyval(q[part][::-1], delnusq)
+
+        valid = bot != 0
+        result_part = np.zeros_like(nu_part)
+        result_part[valid] = (1.0 - nusq[valid]) * (top[valid] / bot[valid])
+        result[mask] = result_part
+
+    return result
+
+
+def get_taper(subgrid_size: int) -> np.ndarray:
+    """Construct the subgrid taper by evaluating the prolate spheroidal wave
+    function over a 1D grid and taking the outer product."""
+    x = np.abs(np.linspace(-1, 1, num=subgrid_size, endpoint=True))
+    x_spheroidal = evaluate_spheroidal(x)
+    taper = x_spheroidal[np.newaxis, :] * x_spheroidal[:, np.newaxis]
+    return taper.astype(np.float32)
+
+
+@nb.njit(fastmath=True)
 def compute_pixels(
     nr_correlations_out,
     nr_timesteps,
@@ -66,34 +125,19 @@ def compute_n(l: float, m: float) -> float:
 
 @nb.njit(cache=True)
 def visibilities_to_subgrid(
-    metadata: dict,
-    w_step: float,
-    grid_size: int,
-    image_size: float,
-    wavenumbers: np.ndarray,
-    visibilities: np.ndarray,
-    uvw: np.ndarray,
-    taper: np.ndarray,
-    nr_correlations_in: int,
-    subgrid_size: int,
-    subgrid: np.ndarray,
+    metadata,
+    w_step,
+    grid_size,
+    image_size,
+    wavenumbers,
+    visibilities,
+    uvw,
+    taper,
+    nr_correlations_in,
+    subgrid_size,
+    subgrid,
 ) -> None:
-    """
-    Grid visibilities onto a subgrid.
-
-    :param metadata: metadata for the subgrid
-    :param w_step: w step in wavelengths
-    :param grid_size: grid size in pixels
-    :param image_size: image size in radians
-    :param wavenumbers: wavenumbers of the frequencies
-    :param visibilities: visibility data
-    :param uvw: uvw coordinates
-    :param taper: taper function
-    :param nr_correlations_in: number of input correlations
-    :param subgrid_size: subgrid size in pixels
-    :param subgrid: subgrid array
-    """
-    # Load metadata
+    """Grid visibilities onto a single subgrid."""
     m = metadata
     bl = m["baseline"]
     offset = m["time_index"]
@@ -105,7 +149,6 @@ def visibilities_to_subgrid(
     w_offset_in_lambda = w_step * (m["coordinate"]["z"] + 0.5)
     nr_correlations_out = 4 if nr_correlations_in == 4 else 1
 
-    # Compute offsets
     u_offset = (x_coordinate + subgrid_size / 2 - grid_size / 2) * (
         2 * np.pi / image_size
     )
@@ -116,12 +159,10 @@ def visibilities_to_subgrid(
 
     for y in range(subgrid_size):
         for x in range(subgrid_size):
-            # Compute l, m, n
             l = compute_l(x, subgrid_size, image_size)
-            m = compute_m(y, subgrid_size, image_size)
-            n = compute_n(l, m)
+            m_val = compute_m(y, subgrid_size, image_size)
+            n = compute_n(l, m_val)
 
-            # Compute pixels
             pixels = compute_pixels(
                 nr_correlations_out,
                 nr_timesteps,
@@ -129,7 +170,7 @@ def visibilities_to_subgrid(
                 uvw,
                 bl,
                 l,
-                m,
+                m_val,
                 n,
                 u_offset,
                 v_offset,
@@ -141,7 +182,6 @@ def visibilities_to_subgrid(
                 visibilities,
             )
 
-            # Apply taper and store
             sph = taper[y, x]
             x_dst = int((x + (subgrid_size / 2)) % subgrid_size)
             y_dst = int((y + (subgrid_size / 2)) % subgrid_size)
@@ -162,22 +202,9 @@ def visibilities_to_subgrids(
     metadata,
     subgrids,
 ):
-    """
-    Grid visibilities onto subgrids.
-
-    :param w_step: w step in wavelengths
-    :param image_size: image size in radians
-    :param grid_size: grid size in pixels
-    :param wavenumbers: wavenumbers of the frequencies
-    :param uvw: uvw coordinates
-    :param visibilities: visibility data
-    :param taper: taper function
-    :param metadata: metadata array
-    :param subgrids: subgrid array
-    """
+    """Grid visibilities onto subgrids (parallel over subgrids)."""
     nr_subgrids = metadata.shape[0]
 
-    # Grid visibilities onto subgrids
     for s in nb.prange(nr_subgrids):
         visibilities_to_subgrid(
             metadata[s],
@@ -197,13 +224,7 @@ def visibilities_to_subgrids(
 
 @nb.njit(fastmath=True)
 def compute_phasor(subgrid_size: int) -> np.ndarray:
-    """
-    Compute the phasor which is used to shift the subgrid to the correct position
-    in the grid.
-
-    :param subgrid_size: size of the subgrid
-    :return: phasor array, shape (subgrid_size, subgrid_size)
-    """
+    """Compute the phasor used to shift a subgrid to its position in the grid."""
     phasor = np.zeros(shape=(subgrid_size, subgrid_size), dtype=np.complex64)
     for y in range(subgrid_size):
         for x in range(subgrid_size):
@@ -223,27 +244,11 @@ def add_subgrid_to_grid(
     subgrid_size: int,
     grid_size: int,
 ) -> None:
-    """
-    Add a subgrid to the grid.
-
-    :param s: subgrid index
-    :param metadata: metadata array
-    :param subgrids: subgrid array
-    :param grid: grid array
-    :param phasor: phasor array
-    :param nr_correlations: number of correlations
-    :param subgrid_size: size of the subgrid
-    :param grid_size: size of the grid
-    """
-    # Load metadata
+    """Add a subgrid to the grid."""
     m = metadata[s]
+    grid_x = m["coordinate"]["x"]
+    grid_y = m["coordinate"]["y"]
 
-    # Load position in grid
-    coordinate = m["coordinate"]
-    grid_x = coordinate["x"]
-    grid_y = coordinate["y"]
-
-    # Check whether subgrid fits in grid
     if (
         grid_x >= 0
         and grid_x < grid_size - subgrid_size
@@ -252,11 +257,9 @@ def add_subgrid_to_grid(
     ):
         for y in range(subgrid_size):
             for x in range(subgrid_size):
-                # Compute shifted position in subgrid
                 x_src = int((x + (subgrid_size / 2)) % subgrid_size)
                 y_src = int((y + (subgrid_size / 2)) % subgrid_size)
 
-                # Add subgrid value to grid
                 for p in range(nr_correlations):
                     grid[p, grid_y + y, grid_x + x] += np.complex64(
                         subgrids[s, p, y_src, x_src] * phasor[y, x]

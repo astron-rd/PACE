@@ -1,6 +1,6 @@
 [project]
-name = "idg-jax"
-description = "Image-Domain Gridding (IDG) implementation using JAX"
+name = "idg-python"
+description = "Image-Domain Gridding (IDG) implementation in Python, with selectable numba and jax backends"
 version = "0.0.1"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -14,18 +14,19 @@ classifiers = [
 dependencies = [
     "h5py>=3.11",
     "numpy>=2.0",
+    "numba>=0.60",
     "jax>=0.4",
 ]
 
 [project.scripts]
-idg-jax = "idg_jax.main:main"
+idg = "idg_python.main:main"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/idg_jax"]
+packages = ["src/idg_python"]
 
 [tool.uv]
 package = true

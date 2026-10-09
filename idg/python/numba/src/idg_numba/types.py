@@ -1,6 +1,0 @@
-import numpy as np
-
-GRIDTYPE = np.complex64
-
-FOURIER_DOMAIN_TO_IMAGE_DOMAIN = 0
-IMAGE_DOMAIN_TO_FOURIER_DOMAIN = 1
