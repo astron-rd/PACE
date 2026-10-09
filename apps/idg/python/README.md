@@ -2,7 +2,7 @@
 
 This is a Python + Numba implementation of IDG. It takes visibilities in an input file and performs Image-Domain Gridding on them to create an image.
 
-For more information on the input data format, see the [Data Format documentation](../../docs/general/data-format.md).
+For more information on the input data format, see the [Data Format documentation](../../../docs/general/data-format.md).
 
 ## Parallelization
 
