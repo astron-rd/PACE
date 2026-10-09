@@ -8,7 +8,8 @@ from pydantic_extra_types.semantic_version import SemanticVersion
 EXAMPLE: JsonDict = {
     "version": metadata.version("pace-bench"),
     "application": "dedisp",
-    "implementation": "rust",
+    "language": "rust",
+    "framework": "rayon",
     "commit": "a5298758",
     "hardware": {
         "cpu": {"model": "AMD EPYC 7763", "cores": 64},
@@ -61,10 +62,14 @@ class Result(BaseModel):
     application: Literal["all-sky", "dedisp", "idg"] = Field(
         description="Benchmarked application."
     )
-    implementation: str = Field(
+    language: Literal["cpp", "julia", "python", "rust"] = Field(
+        description="Programming language."
+    )
+    framework: str | None = Field(
+        default=None,
         min_length=1,
-        description="Implementation language or framework.",
-        examples=["python", "rust", "c++-openmp", "cuda"],
+        description="Acceleration framework.",
+        examples=["openmp", "cuda", "rayon", "numba"],
     )
     commit: str = Field(
         pattern=r"^[0-9a-f]{8}$",
