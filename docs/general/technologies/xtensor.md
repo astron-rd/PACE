@@ -32,48 +32,7 @@ Lastly, we investigated the use of xtensor-io for storing and loading data store
 
 ## `xtensor-fftw` benchmark
 
-The following table compares the performance of xtensor-fftw against FFTW3 when both are used in the most straightforward way. Using FFTW3 natively appears far more performant, especially for smaller FFTs, where it is roughly a hundred times faster. For larger data volumes the difference shrinks, and for the complex-to-complex FFT it is only (roughly) a factor 4.
-
-The apparent gap is almost entirely caused by plan creation. Every call to *xtensor*'s FFT convenience routines creates a new FFTW plan, while the FFTW benchmark creates a single plan up front and reuses it. Planning is an expensive step, so the naive xtensor comparison pays that cost on every single measurement.
-
-Note that these values were obtained using the [`fft-benchmark`](https://git.astron.nl/RD/fft-benchmark) tool and the benchmarks ran on `node508` of the [DAS-6 cluster](https://www.cs.vu.nl/das6/clusters.shtml).
-
-| Operation | xtensor-fftw time | FFTW3 time | Speedup (FFTW3 over xtensor-fftw) |
-| :--- | :---: | :---: | :---: |
-| R2C/100 | 11.6 us | 0.160 us | $\\approx 72.5\\times$ |
-| R2C/200 | 23.1 us | 0.301 us | $\\approx 76.8\\times$ |
-| R2C/300 | 20.7 us | 0.582 us | $\\approx 35.6\\times$ |
-| R2C/400 | 21.1 us | 0.766 us | $\\approx 27.6\\times$ |
-| R2C/500 | 22.2 us | 0.976 us | $\\approx 22.7\\times$ |
-| R2C/600 | 22.6 us | 1.13 us | $\\approx 20.0\\times$ |
-| R2C/700 | 34.8 us | 1.87 us | $\\approx 18.6\\times$ |
-| R2C/800 | 25.1 us | 1.53 us | $\\approx 16.4\\times$ |
-| R2C/900 | 34.2 us | 2.64 us | $\\approx 12.9\\times$ |
-| R2C/1000 | 35.4 us | 1.96 us | $\\approx 18.1\\times$ |
-| C2R/100 | 12.5 us | 0.162 us | $\\approx 77.2\\times$ |
-| C2R/200 | 23.7 us | 0.302 us | $\\approx 78.5\\times$ |
-| C2R/300 | 22.2 us | 0.615 us | $\\approx 36.1\\times$ |
-| C2R/400 | 22.9 us | 0.814 us | $\\approx 28.1\\times$ |
-| C2R/500 | 23.8 us | 1.05 us | $\\approx 22.7\\times$ |
-| C2R/600 | 24.6 us | 1.23 us | $\\approx 20.0\\times$ |
-| C2R/700 | 35.6 us | 1.88 us | $\\approx 18.9\\times$ |
-| C2R/800 | 26.4 us | 1.63 us | $\\approx 16.2\\times$ |
-| C2R/900 | 28.4 us | 1.80 us | $\\approx 15.8\\times$ |
-| C2R/1000 | 38.0 us | 2.13 us | $\\approx 17.8\\times$ |
-| C2C/100 | 6.64 us | 0.210 us | $\\approx 31.6\\times$ |
-| C2C/200 | 7.58 us | 0.433 us | $\\approx 17.5\\times$ |
-| C2C/300 | 15.3 us | 1.14 us | $\\approx 13.4\\times$ |
-| C2C/400 | 9.03 us | 0.895 us | $\\approx 10.1\\times$ |
-| C2C/500 | 17.2 us | 1.85 us | $\\approx 9.3\\times$ |
-| C2C/600 | 17.2 us | 2.38 us | $\\approx 7.2\\times$ |
-| C2C/700 | 17.5 us | 2.82 us | $\\approx 6.2\\times$ |
-| C2C/800 | 11.1 us | 2.48 us | $\\approx 4.5\\times$ |
-| C2C/900 | 28.6 us | 5.33 us | $\\approx 5.4\\times$ |
-| C2C/1000 | 20.0 us | 4.35 us | $\\approx 4.6\\times$ |
-
-### Plan reuse
-
-The benchmark above compares apples with oranges: the xtensor-fftw numbers include plan creation on every call, the FFTW numbers reuse a single plan. When both sides create the plan once and reuse it, the difference almost completely disappears, as the table below shows. xtensor-fftw is a wrapper around FFTW, so once the plan exists, execution is the same code path.
+The most common way to call xtensor-fftw is through its convenience functions, which create a new FFTW plan on every call. Planning is an expensive step, so comparing that against a benchmark that creates one plan up front and reuses it is apples versus oranges. Measured that naive way, FFTW3 appears up to a hundred times faster for small FFTs. When both sides create the plan once and reuse it, the difference almost completely disappears, as the table below shows. xtensor-fftw is a wrapper around FFTW, so once the plan exists, execution is the same code path.
 
 | Operation | FFTW3 time | xtensor-fftw plan time | Speedup (FFTW3 over xtensor-fftw) |
 | :--- | :---: | :---: | :---: |
@@ -84,4 +43,6 @@ The benchmark above compares apples with oranges: the xtensor-fftw numbers inclu
 | C2C/100 | 0.075 us | 0.081 us | $\\approx 1.0\\times$ |
 | C2C/1000 | 1.67 us | 1.67 us | $\\approx 1.0\\times$ |
 
-These values were obtained with the same `fft-benchmark` tool, updated so the xtensor-fftw benchmark creates its plan before the timed loop. The takeaway is that the choice of wrapper matters little for performance. What matters is using the plan based interface, so plan creation happens once and the same plan is reused for every transform of the same size. That is where the real end-to-end gains come from, and it is exactly what `xtensor-wrappers` provides and what the C++ implementations in this repository use.
+These values were obtained with the same [`fft-benchmark`](https://git.astron.nl/RD/fft-benchmark) tool, with the xtensor-fftw benchmark creating its plan before the timed loop, and the benchmarks ran on `node508` of the [DAS-6 cluster](https://www.cs.vu.nl/das6/clusters.shtml).
+
+The takeaway is that the choice of wrapper matters little for performance. What matters is using the plan based interface, so plan creation happens once and the same plan is reused for every transform of the same size. That is where the real end-to-end gains come from, and it is exactly what `xtensor-wrappers` provides and what the C++ implementations in this repository use.
