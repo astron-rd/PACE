@@ -3,11 +3,11 @@
 
 #include <omp.h>
 
-#include <xtensor-fftw/basic.hpp>
-#include <xtensor-fftw/helper.hpp>
 #include <xtensor/containers/xarray.hpp>
 #include <xtensor/core/xtensor_forward.hpp>
 #include <xtensor/views/xview.hpp>
+
+#include <xtensor-wrappers/plan.hpp>
 
 #include "IDG.h"
 #include "idgtypes.h"
@@ -38,15 +38,25 @@ void Gridder::grid_onto_subgrids(
 }
 
 void Gridder::ifft_subgrids(xt::xarray<std::complex<float>> &subgrids) const {
-  for (size_t s = 0; s < subgrids.shape(0); ++s) {
-    for (size_t c = 0; c < subgrids.shape(1); ++c) {
-      auto subgrid = xt::eval(xt::view(subgrids, s, c, xt::all(), xt::all()));
+  const size_t nr_subgrids = subgrids.shape(0);
+  const size_t nr_correlations = subgrids.shape(1);
 
-      subgrid = xt::fftw::ifft2(subgrid);
+  // One batched in-place backward 2-D transform over all polarizations and
+  // subgrids. The in-place overload (input == output) reuses the caller's
+  // subgrids buffer, which avoids a second full-size copy and keeps the plan's
+  // borrowed input valid for its whole lifetime.
+  xt::fftw::batch_layout layout;
+  layout.howmany = nr_subgrids * nr_correlations;
+  layout.n = {static_cast<int>(subgrid_size_), static_cast<int>(subgrid_size_)};
 
-      xt::view(subgrids, s, c, xt::all(), xt::all()) = subgrid;
-    }
-  }
+  auto plan = xt::fftw::make_batch_fft_plan(subgrids.data(), subgrids.data(),
+                                            layout, FFTW_BACKWARD);
+  plan.execute();
+
+  // xt::fftw::ifft2 normalises by 1/(subgrid_size^2); the raw c2c plan does
+  // not, so reproduce that scaling in place.
+  const float scale = 1.0f / static_cast<float>(subgrid_size_ * subgrid_size_);
+  subgrids *= scale;
 }
 
 void Gridder::add_subgrids_to_grid(
@@ -72,33 +82,38 @@ void Gridder::transform(xt::xarray<std::complex<float>> &grid) const {
   const size_t height = grid.shape()[1];
   const size_t width = grid.shape()[2];
   assert(height == width);
+  const size_t nr_correlations = nr_correlations_out_;
 
-  for (size_t i = 0; i < nr_correlations_out_; ++i) {
-    auto slice = xt::view(grid, i, xt::all(), xt::all());
-    auto tmp = xt::xarray<std::complex<float>>::from_shape(slice.shape());
-
-    for (size_t x = 0; x < width; ++x) {
-      for (size_t y = 0; y < height; ++y) {
-        size_t dst_x = (x + width / 2) % width;
-        size_t dst_y = (y + height / 2) % height;
-        tmp(dst_y, dst_x) = slice(y, x);
+  // Shift the grid for each polarization so the zero-frequency bin is at the
+  // origin. Every element is written below, so skip zero-filling.
+  xt::xarray<std::complex<float>> input =
+      xt::xarray<std::complex<float>>::from_shape(
+          {nr_correlations, height, width});
+  for (size_t i = 0; i < nr_correlations; ++i) {
+    auto src = xt::view(grid, i, xt::all(), xt::all());
+    auto dst = xt::view(input, i, xt::all(), xt::all());
+    for (size_t y = 0; y < height; ++y) {
+      for (size_t x = 0; x < width; ++x) {
+        dst(y, x) = src((x + width / 2) % width, (y + height / 2) % height);
       }
     }
+  }
 
-    tmp = xt::fftw::ifft2(tmp);
+  auto plan = xt::fftw::make_fft2_plan(input, FFTW_BACKWARD);
+  plan.execute();
+  const auto &out = plan.output();
 
-    for (size_t x = 0; x < width; ++x) {
-      for (size_t y = 0; y < height; ++y) {
-        size_t src_x = (x + width / 2) % width;
-        size_t src_y = (y + height / 2) % height;
-        slice(y, x) = tmp(src_y, src_x);
+  // Unshift and scale by 2/(height*width).
+  const std::complex<float> scale{2.0f / static_cast<float>(height * width),
+                                  0.0f};
+  for (size_t i = 0; i < nr_correlations; ++i) {
+    auto dst = xt::view(grid, i, xt::all(), xt::all());
+    auto src = xt::view(out, i, xt::all(), xt::all());
+    for (size_t y = 0; y < height; ++y) {
+      for (size_t x = 0; x < width; ++x) {
+        dst((x + width / 2) % width, (y + height / 2) % height) =
+            src(y, x) * scale;
       }
     }
-
-    std::complex<float> scale{2.0f, 0.0f};
-
-    slice *= scale;
-
-    xt::view(grid, i, xt::all(), xt::all()) = slice;
   }
 }
