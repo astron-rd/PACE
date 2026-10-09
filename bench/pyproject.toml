@@ -1,0 +1,19 @@
+[project]
+name = "pace-bench"
+version = "1.0.0"
+description = "Benchmark tooling for PACE"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "jsonschema-markdown>=2026.8.0",
+    "loguru>=0.7.3",
+    "pydantic>=2.13.5",
+    "pydantic-extra-types[semver]>=2.11.1",
+]
+
+[project.scripts]
+export = "pace_bench.generate:main"
+
+[build-system]
+requires = ["uv_build>=0.12.19,<0.13.0"]
+build-backend = "uv_build"
