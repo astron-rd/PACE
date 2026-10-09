@@ -1,8 +1,6 @@
 # IDG in JAX
 
-Image-Domain Gridding (IDG) implemented in Python with JAX. This is the JAX
-equivalent of the `../numba` implementation and mirrors its structure and
-results.
+Image-Domain Gridding (IDG) implemented in Python with JAX.
 
 ## Usage
 
@@ -42,9 +40,8 @@ idg/jax/
     └── test_kernels.py
 ```
 
-The JAX kernels in `kernels/gridding.py` use `jax.jit` and `jax.lax.scan` in
-place of the numba `@njit` loops in `../numba`. FFTs are computed with
-`numpy.fft` on the host, matching the numba implementation.
+The JAX kernels in `kernels/gridding.py` use `jax.jit` and JAX array
+constructs. FFTs are computed with `numpy.fft` on the host.
 
 ## Environment
 
@@ -56,6 +53,6 @@ uv sync --dev
 
 ## Validation
 
-The correctness reference numbers match the numba and C++ implementations:
-max absolute grid difference of `0.015028041`, relative-of-peak of
-`5.857762e-06` (float32-level agreement).
+Correctness is validated against the C++ implementation: max absolute grid
+difference of `0.015028041`, relative-of-peak of `5.857762e-06` (float32-level
+agreement).

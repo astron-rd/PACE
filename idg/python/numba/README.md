@@ -1,6 +1,6 @@
 # Python IDG implementation
 
-This is a Python + Numba implementation of IDG. See ../jax for the JAX version. It takes visibilities in an input file and performs Image-Domain Gridding on them to create an image.
+This is a Python + Numba implementation of IDG. It takes visibilities in an input file and performs Image-Domain Gridding on them to create an image.
 
 For more information on the input data format, see the [Data Format documentation](../../docs/general/data-format.md).
 

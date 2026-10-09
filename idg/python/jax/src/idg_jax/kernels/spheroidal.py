@@ -13,8 +13,8 @@ def _polyval(coefficients, x):
 
 @jax.jit
 def evaluate_spheroidal(nu):
-    """Evaluate the prolate spheroidal wave function (JAX port of the numba
-    version, which is a fast approximation of the PSWF used as taper)."""
+    """Evaluate the prolate spheroidal wave function, a fast approximation
+    of the PSWF used as taper."""
     p = jnp.array(
         [
             [8.203343e-2, -3.644705e-1, 6.278660e-1, -5.335581e-1, 2.312756e-1],

@@ -64,8 +64,8 @@ def _one_subgrid(
     out = jnp.zeros((nr_corr_out, subgrid_size, subgrid_size), dtype=jnp.complex64)
     out = out.at[idx_pol].add(total)
 
-    # taper and fft-shift (mirror numba: write pixels(y,x)*taper(y,x) into
-    # position (y+sg/2, x+sg/2))
+    # taper and fft-shift: write pixels(y,x)*taper(y,x) into
+    # position (y+sg/2, x+sg/2)
     out = out * taper[None, :, :]
     out = jnp.roll(out, subgrid_size // 2, axis=(1, 2))
     return out
@@ -159,7 +159,7 @@ def add_subgrid_to_grid(
     subgrid_size,
     grid_size,
 ):
-    """Add subgrid ``s`` to the grid (matches the numba per-index interface)."""
+    """Add subgrid ``s`` to the grid."""
     m = metadata[s]
     grid_x = int(m["coordinate"]["x"])
     grid_y = int(m["coordinate"]["y"])
