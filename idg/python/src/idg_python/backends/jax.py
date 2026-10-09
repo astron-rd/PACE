@@ -1,0 +1,335 @@
+import jax
+import jax.numpy as jnp
+import numpy as np
+from jax import lax
+
+# Number of subgrids processed in each jitted, vmapped batch. XLA threads the
+# batched kernel across cores, following the vectorize-over-an-axis best
+# practice; chunking keeps the (batch, nt, nch, sg, sg) intermediate bounded.
+_BATCH_SIZE = 256
+
+
+@jax.jit
+def _polyval(coefficients, x):
+    """Evaluate a polynomial (np.polyval equivalent) with JAX."""
+    result = jnp.zeros_like(x)
+    for c in coefficients:
+        result = result * x + c
+    return result
+
+
+@jax.jit
+def evaluate_spheroidal(nu):
+    """Evaluate the prolate spheroidal wave function, a fast approximation
+    of the PSWF used as taper."""
+    p = jnp.array(
+        [
+            [8.203343e-2, -3.644705e-1, 6.278660e-1, -5.335581e-1, 2.312756e-1],
+            [4.028559e-3, -3.697768e-2, 1.021332e-1, -1.201436e-1, 6.412774e-2],
+        ]
+    )
+    q = jnp.array(
+        [
+            [1.0000000e0, 8.212018e-1, 2.078043e-1],
+            [1.0000000e0, 9.599102e-1, 2.918724e-1],
+        ]
+    )
+
+    result = jnp.zeros_like(nu)
+
+    for part, end in [(0, 0.75), (1, 1.00)]:
+        lo = 0.0 if part == 0 else 0.75
+        mask = (nu >= lo) & (nu <= end)
+        nusq = nu**2
+        delnusq = nusq - end**2
+
+        top = _polyval(p[part][::-1], delnusq)
+        bot = _polyval(q[part][::-1], delnusq)
+
+        valid = bot != 0
+        term = jnp.where(valid, (1.0 - nusq) * (top / bot), 0.0)
+        result = jnp.where(mask, term, result)
+
+    return result
+
+
+def get_taper(subgrid_size: int) -> np.ndarray:
+    """Construct the subgrid taper by evaluating the prolate spheroidal wave
+    function over a 1D grid and taking the outer product."""
+    x = np.abs(np.linspace(-1, 1, num=subgrid_size, endpoint=True))
+    x_spheroidal = np.asarray(evaluate_spheroidal(jnp.asarray(x)))
+    taper = x_spheroidal[np.newaxis, :] * x_spheroidal[:, np.newaxis]
+    return taper.astype(np.float32)
+
+
+def compute_n(l, m):
+    tmp = l * l + m * m
+    return jnp.where(tmp >= 1.0, 1.0, tmp / (1.0 + jnp.sqrt(1.0 - tmp)))
+
+
+@jax.jit(static_argnames=("subgrid_size", "nr_corr_out"))
+def _one_subgrid(
+    u_s,
+    v_s,
+    w_s,
+    vis_s,
+    mask_s,
+    wavenumbers,
+    image_size,
+    grid_size,
+    subgrid_size,
+    xc,
+    yc,
+    zc,
+    w_step,
+    nr_corr_out,
+    taper,
+):
+    """Grid one subgrid's visibilities into a (nr_corr_out, sg, sg) array.
+
+    u_s/v_s/w_s: (nt,) per-timestep uvw for the subgrid's baseline.
+    vis_s: (nt, nch, nr_corr_in) visibilities (already sliced cb:ce).
+    mask_s: (nt,) 1 for real timesteps, 0 for padding.
+    wavenumbers: (nch,).
+    taper: (sg, sg).
+    """
+    idx = jnp.arange(subgrid_size)
+    c = (idx + 0.5 - subgrid_size / 2.0) * image_size / subgrid_size
+    l = c[None, :]  # (1, sg)  l varies with x (column), matches compute_l(x)
+    m = c[:, None]  # (sg, 1)  m varies with y (row), matches compute_m(y)
+    l_2d = jnp.broadcast_to(l, (subgrid_size, subgrid_size))
+    m_2d = jnp.broadcast_to(m, (subgrid_size, subgrid_size))
+    n = compute_n(l_2d, m_2d)  # (sg, sg)
+
+    u_offset = (xc + subgrid_size / 2 - grid_size / 2) * (2 * np.pi / image_size)
+    v_offset = (yc + subgrid_size / 2 - grid_size / 2) * (2 * np.pi / image_size)
+    w_offset = 2 * np.pi * w_step * (zc + 0.5)
+    phase_offset = u_offset * l_2d + v_offset * m_2d + w_offset * n  # (sg, sg)
+
+    # phase_index per timestep: (nt, sg, sg)
+    phase_index = (
+        u_s[:, None, None] * l_2d[None]
+        + v_s[:, None, None] * m_2d[None]
+        + w_s[:, None, None] * n[None]
+    )
+    wn = wavenumbers[None, :, None, None]  # (1, nch, 1, 1)
+    phase = phase_offset[None, None] - phase_index[:, None, :, :] * wn  # (nt,nch,sg,sg)
+    phasor = jnp.exp(1j * phase)  # (nt, nch, sg, sg)
+
+    # zero out padded timesteps so they contribute nothing
+    phasor = phasor * mask_s[:, None, None, None]
+
+    nr_corr_in = vis_s.shape[2]
+    total = jnp.einsum("tcp,tcxy->pxy", vis_s, phasor)  # (nr_corr_in, sg, sg)
+
+    # map input correlations onto output correlations (pol % nr_corr_out)
+    idx_pol = jnp.arange(nr_corr_in) % nr_corr_out
+    out = jnp.zeros((nr_corr_out, subgrid_size, subgrid_size), dtype=jnp.complex64)
+    out = out.at[idx_pol].add(total)
+
+    # taper and fft-shift: write pixels(y,x)*taper(y,x) into
+    # position (y+sg/2, x+sg/2)
+    out = out * taper[None, :, :]
+    out = jnp.roll(out, subgrid_size // 2, axis=(1, 2))
+    return out
+
+
+def _one_subgrid_batched(
+    u_b,
+    v_b,
+    w_b,
+    vis_b,
+    mask_b,
+    wavenumbers,
+    image_size,
+    grid_size,
+    subgrid_size,
+    xc_b,
+    yc_b,
+    zc_b,
+    w_step,
+    nr_corr_out,
+    taper,
+):
+    """vmap ``_one_subgrid`` across a batch of subgrids.
+
+    Leading axis (batch) is vectorized, letting XLA parallelize the batch.
+    """
+    return jax.vmap(
+        _one_subgrid,
+        in_axes=(0, 0, 0, 0, 0, None, None, None, None, 0, 0, 0, None, None, None),
+    )(
+        u_b,
+        v_b,
+        w_b,
+        vis_b,
+        mask_b,
+        wavenumbers,
+        image_size,
+        grid_size,
+        subgrid_size,
+        xc_b,
+        yc_b,
+        zc_b,
+        w_step,
+        nr_corr_out,
+        taper,
+    )
+
+
+@jax.jit(static_argnames=("subgrid_size",))
+def _add_one_subgrid(grid, sub, phasor, grid_x, grid_y, subgrid_size):
+    sub_shift = jnp.roll(
+        jnp.roll(sub, subgrid_size // 2, axis=0), subgrid_size // 2, axis=1
+    )
+    block = lax.dynamic_slice(grid, (grid_y, grid_x), (subgrid_size, subgrid_size))
+    updated = block + sub_shift * phasor
+    grid = lax.dynamic_update_slice(grid, updated, (grid_y, grid_x))
+    return grid
+
+
+@jax.jit(static_argnames=("subgrid_size",))
+def compute_phasor(subgrid_size: int):
+    y = jnp.arange(subgrid_size)
+    x = jnp.arange(subgrid_size)
+    phase = jnp.pi * (x[None, :] + y[:, None] - subgrid_size) / subgrid_size
+    return jnp.exp(1j * phase)
+
+
+def _gather(
+    uvw,
+    visibilities,
+    metadata,
+    subgrids,
+    wavenumbers,
+    taper,
+    w_step,
+    image_size,
+    grid_size,
+):
+    """Grid subgrids in batches, each batch one vmapped jit call.
+
+    Timesteps are padded to the batch's max and masked so padded entries
+    contribute nothing.
+    """
+    u = uvw["u"]
+    v = uvw["v"]
+    w = uvw["w"]
+    nr_corr_out = subgrids.shape[1]
+    subgrid_size = subgrids.shape[2]
+    nr_corr_in = visibilities.shape[3]
+    wn = np.asarray(wavenumbers, dtype=np.float64)[
+        int(metadata["channel_begin"][0]) : int(metadata["channel_end"][0])
+    ]
+    taper_j = jnp.asarray(taper)
+
+    max_nt = int(np.max(metadata["nr_timesteps"]))
+    nb = subgrids.shape[0]
+    nr_sg = max_nt
+    nch = visibilities.shape[2]
+
+    for start in range(0, nb, _BATCH_SIZE):
+        stop = min(start + _BATCH_SIZE, nb)
+        u_b = np.zeros((stop - start, nr_sg), dtype=np.float64)
+        v_b = np.zeros((stop - start, nr_sg), dtype=np.float64)
+        w_b = np.zeros((stop - start, nr_sg), dtype=np.float64)
+        vis_b = np.zeros((stop - start, nr_sg, nch, nr_corr_in), dtype=np.complex64)
+        mask_b = np.zeros((stop - start, nr_sg), dtype=np.float32)
+        xc = np.zeros(stop - start, dtype=np.int32)
+        yc = np.zeros(stop - start, dtype=np.int32)
+        zc = np.zeros(stop - start, dtype=np.int32)
+
+        for i, s in enumerate(range(start, stop)):
+            m = metadata[s]
+            bl = int(m["baseline"])
+            t0 = int(m["time_index"])
+            nt = int(m["nr_timesteps"])
+            cb = int(m["channel_begin"])
+            ce = int(m["channel_end"])
+            u_b[i, :nt] = u[bl, t0 : t0 + nt]
+            v_b[i, :nt] = v[bl, t0 : t0 + nt]
+            w_b[i, :nt] = w[bl, t0 : t0 + nt]
+            vis_b[i, :nt] = visibilities[bl, t0 : t0 + nt, cb:ce, :]
+            mask_b[i, :nt] = 1.0
+            xc[i] = int(m["coordinate"]["x"])
+            yc[i] = int(m["coordinate"]["y"])
+            zc[i] = int(m["coordinate"]["z"])
+
+        out = _one_subgrid_batched(
+            u_b,
+            v_b,
+            w_b,
+            vis_b,
+            mask_b,
+            wn,
+            image_size,
+            grid_size,
+            subgrid_size,
+            xc,
+            yc,
+            zc,
+            w_step,
+            nr_corr_out,
+            taper_j,
+        )
+        subgrids[start:stop] = np.asarray(out)
+
+
+def visibilities_to_subgrids(
+    w_step,
+    image_size,
+    grid_size,
+    wavenumbers,
+    uvw,
+    visibilities,
+    taper,
+    metadata,
+    subgrids,
+):
+    """Grid all subgrids. uvw: structured (u,v,w) arrays shape (nb, nt).
+    visibilities: (nb, nt, nch, ncorr). metadata: structured array.
+    taper: (sg, sg)."""
+    _gather(
+        uvw,
+        visibilities,
+        metadata,
+        subgrids,
+        wavenumbers,
+        taper,
+        w_step,
+        image_size,
+        grid_size,
+    )
+
+
+def add_subgrid_to_grid(
+    s: int,
+    metadata,
+    subgrids,
+    grid,
+    phasor,
+    nr_correlations,
+    subgrid_size,
+    grid_size,
+):
+    """Add subgrid ``s`` to the grid."""
+    m = metadata[s]
+    grid_x = int(m["coordinate"]["x"])
+    grid_y = int(m["coordinate"]["y"])
+    if (
+        grid_x >= 0
+        and grid_x < grid_size - subgrid_size
+        and grid_y >= 0
+        and grid_y < grid_size - subgrid_size
+    ):
+        for p in range(nr_correlations):
+            grid[p] = np.asarray(
+                _add_one_subgrid(
+                    jnp.asarray(grid[p]),
+                    jnp.asarray(subgrids[s, p]),
+                    jnp.asarray(phasor),
+                    grid_x,
+                    grid_y,
+                    subgrid_size,
+                )
+            )

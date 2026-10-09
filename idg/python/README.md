@@ -1,50 +1,71 @@
-# Python IDG implementation
+# IDG in Python
 
-This is a Python + Numba implementation of IDG. It takes visibilities in an input file and performs Image-Domain Gridding on them to create an image.
+Image-Domain Gridding (IDG) implemented in Python, with a selectable kernel
+backend. Two backends are provided, exposing the same interface:
 
-For more information on the input data format, see the [Data Format documentation](../../docs/general/data-format.md).
+- `numba`: Numba JIT kernels, parallelized over subgrids with `prange`.
+- `jax`: JAX kernels (currently a serial per-subgrid implementation).
 
-## Parallelization
+Both produce the same numerical results (float32-level agreement with the
+C++ implementation).
 
-The Python implementation uses Numba's Just-In-Time (JIT) compilation to accelerate the computational kernels. Parallelization is implemented using Numba's `parallel=True` decorator and the `prange` function.
+## Usage
 
-In the `visibilities_to_subgrids` kernel, the processing of subgrids is distributed across CPU cores:
+Select the backend with `--backend`:
 
-```python
-@nb.njit(parallel=True)
-def visibilities_to_subgrids(...):
-    # ...
-    for s in nb.prange(nr_subgrids):
-        visibilities_to_subgrid(...)
+```bash
+uv run idg {input-file} --backend numba
+uv run idg {input-file} --backend jax
 ```
 
-- **`parallel=True`**: This tells Numba to attempt to automatically parallelize loops and optimize the code for multi-core execution.
-- **`nb.prange`**: This is a special version of the Python `range` function that explicitly tells Numba that the loop iterations are independent and can be executed in parallel.
+The default backend is `numba`. To store the resulting grid and subgrids as
+`output.h5`:
 
-Similar to the C++ version, the gridding process is the main computational bottleneck, and parallelizing this stage provides the most significant speedup.
-
-## Basic Usage
-
-```sh
-uv run idg {input-file}
+```bash
+uv run idg {input-file} --store
 ```
 
-You can get an input file from the input generator in `idg/input`. Use the `--store` flag to store the resulting image in an HDF5 file.
+To write timings to a JSON file:
 
-### Unit tests
-
-```sh
-uvx pre-commit run --hook-stage manual --all -v pytest-idg
+```bash
+uv run idg {input-file} --json
+# or a custom filename
+uv run idg {input-file} --json custom.json
 ```
 
-### Linting
+## Structure
 
-```sh
-uvx pre-commit run --all
+```
+idg/
+├── pyproject.toml              # idg-python package definition
+├── src/idg_python/
+│   ├── config.py               # CLI / settings (backend selection)
+│   ├── gridder.py              # Gridder driver (grid, add subgrids, transform)
+│   ├── taper.py                # taper dispatch
+│   ├── types.py                # shared constants
+│   ├── main.py                 # entry point
+│   └── backends/
+│       ├── __init__.py         # get_backend() registry
+│       ├── numba.py            # Numba kernels
+│       └── jax.py              # JAX kernels
+└── tests/
+    └── test_backends.py
 ```
 
-### Packaging
+Each backend module exposes the same interface:
+`evaluate_spheroidal`, `get_taper`, `visibilities_to_subgrids`,
+`add_subgrid_to_grid` and `compute_phasor`.
 
-```sh
-uvx pre-commit run --hook-stage manual --all -v build-idg
+## Environment
+
+Requires Python >= 3.12. Set up with:
+
+```bash
+uv sync --dev
 ```
+
+## Validation
+
+Correctness is validated against the C++ implementation: max absolute grid
+difference of `0.015028041`, relative-of-peak of `5.857762e-06` (float32-level
+agreement).
