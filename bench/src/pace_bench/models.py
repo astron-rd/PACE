@@ -9,7 +9,7 @@ EXAMPLE: JsonDict = {
     "version": metadata.version("pace-bench"),
     "application": "dedisp",
     "implementation": "rust",
-    "commit": "a529875",
+    "commit": "a5298758",
     "hardware": {
         "cpu": {"model": "AMD EPYC 7763", "cores": 64},
         "gpu": {"model": "NVIDIA A100 80GB"},
@@ -67,8 +67,7 @@ class Result(BaseModel):
         examples=["python", "rust", "c++-openmp", "cuda"],
     )
     commit: str = Field(
-        min_length=7,
-        max_length=40,
+        pattern=r"^[0-9a-f]{8}$",
         description="Git commit hash.",
     )
     hardware: Hardware = Field(description="Hardware configuration.")
