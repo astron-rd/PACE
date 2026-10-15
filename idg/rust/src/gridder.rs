@@ -237,41 +237,34 @@ fn visibility_to_subgrid(
         * (2.0 * PI / image_size);
     let w_offset = 2.0 * PI * w_offset_in_lambda;
 
-    for y in 0..subgrid_size {
-        for x in 0..subgrid_size {
-            let pixels = compute_pixels_grid(
-                metadata.nr_timesteps,
-                metadata.time_index,
-                uvw,
-                metadata.baseline,
-                precalc.l.view(),
-                precalc.m.view(),
-                precalc.n.view(),
-                u_offset,
-                v_offset,
-                w_offset,
-                metadata.channel_begin,
-                metadata.channel_end,
-                correlation_count_in,
-                correlation_count_out,
-                subgrid_size,
-                wavenumbers,
-                visibilities,
-            );
+    let pixels = compute_pixels_grid(
+        metadata.nr_timesteps,
+        metadata.time_index,
+        uvw,
+        metadata.baseline,
+        precalc.l.view(),
+        precalc.m.view(),
+        precalc.n.view(),
+        u_offset,
+        v_offset,
+        w_offset,
+        metadata.channel_begin,
+        metadata.channel_end,
+        correlation_count_in,
+        correlation_count_out,
+        subgrid_size,
+        wavenumbers,
+        visibilities,
+    );
 
-            let _x_dst = (x + (subgrid_size / 2)) % subgrid_size;
-            let _y_dst = (y + (subgrid_size / 2)) % subgrid_size;
+    for pol in 0..correlation_count_out {
+        // TODO: REPLACE THE SHIFT THAT SHOULD HAPPEN HERE!!!
 
-            for pol in 0..correlation_count_out {
-                // TODO: REPLACE THE SHIFT THAT SHOULD HAPPEN HERE!!!
+        let tapered_pixels = pixels.slice(s![pol as usize, .., ..]).mul(&complex_taper);
 
-                let tapered_pixels = pixels.slice(s![pol as usize, .., ..]).mul(&complex_taper);
-
-                subgrid
-                    .slice_mut(s![pol as usize, .., ..])
-                    .assign(&tapered_pixels);
-            }
-        }
+        subgrid
+            .slice_mut(s![pol as usize, .., ..])
+            .assign(&tapered_pixels);
     }
 }
 
