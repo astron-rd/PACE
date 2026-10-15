@@ -53,6 +53,8 @@ impl Gridder {
         );
         assert_eq!(input.subgrid_size as usize, self.subgrids.shape()[2]);
 
+        let precalc = Precalc::new(input.subgrid_size, input.image_size);
+
         visibilities_to_subgrids(
             input.w_step,
             input.image_size,
@@ -64,14 +66,19 @@ impl Gridder {
             &input.visibilities,
             &input.taper,
             &input.metadata,
+            &precalc,
             self.subgrids.view_mut(),
         );
     }
 
     pub fn ifft_subgrids(&mut self, input: &Input) {
         let subgrid_size = input.subgrid_size.try_into().unwrap();
-        let mut plan: C2CPlanFloat =
-            C2CPlan::aligned(&[subgrid_size, subgrid_size], Sign::Backward, Flag::ESTIMATE).unwrap();
+        let mut plan: C2CPlanFloat = C2CPlan::aligned(
+            &[subgrid_size, subgrid_size],
+            Sign::Backward,
+            Flag::ESTIMATE,
+        )
+        .unwrap();
 
         let mut input: AlignedVec<Complex> = AlignedVec::new(subgrid_size * subgrid_size);
         let mut output: AlignedVec<Complex> = AlignedVec::new(subgrid_size * subgrid_size);
@@ -145,6 +152,7 @@ fn visibilities_to_subgrids(
     visibilities: &VisibilityArray,
     taper: &Taper,
     metadata: &MetadataArray,
+    precalc: &Precalc,
     mut subgrids: ArrayViewMut4<Complex>,
 ) {
     Zip::from(metadata)
@@ -161,9 +169,28 @@ fn visibilities_to_subgrids(
                 uvw,
                 visibilities,
                 taper,
+                precalc,
                 subgrid,
             );
         });
+}
+
+struct Precalc {
+    lm: Array1<Float>,
+    n: Array2<Float>,
+}
+
+impl Precalc {
+    pub fn new(subgrid_size: u32, image_size: Float) -> Self {
+        let lm = Array1::from_shape_fn(subgrid_size as usize, |i| {
+            compute_lm(i as u32, subgrid_size, image_size)
+        });
+        let n = Array2::from_shape_fn((subgrid_size as usize, subgrid_size as usize), |(x, y)| {
+            compute_n(lm[x], lm[y])
+        });
+
+        Self { lm, n }
+    }
 }
 
 fn visibility_to_subgrid(
@@ -177,6 +204,7 @@ fn visibility_to_subgrid(
     uvw: &UvwArray,
     visibilities: &VisibilityArray,
     taper: &Taper,
+    precalc: &Precalc,
     mut subgrid: ArrayViewMut3<Complex>,
 ) {
     let w_offset_in_lambda = w_step * (metadata.coordinate.z as Float + 0.5);
@@ -192,9 +220,9 @@ fn visibility_to_subgrid(
 
     for y in 0..subgrid_size {
         for x in 0..subgrid_size {
-            let l = compute_lm(x, subgrid_size, image_size);
-            let m = compute_lm(y, subgrid_size, image_size);
-            let n = compute_n(l, m);
+            let l = precalc.lm[x as usize];
+            let m = precalc.lm[y as usize];
+            let n = precalc.n[(x as usize, y as usize)];
 
             let pixels = compute_pixels(
                 metadata.nr_timesteps,
@@ -220,7 +248,8 @@ fn visibility_to_subgrid(
             let y_dst = (y + (subgrid_size / 2)) % subgrid_size;
 
             for pol in 0..correlation_count_out {
-                subgrid[(pol as usize, y_dst as usize, x_dst as usize)] = pixels[pol as usize] * sph;
+                subgrid[(pol as usize, y_dst as usize, x_dst as usize)] =
+                    pixels[pol as usize] * sph;
             }
         }
     }
