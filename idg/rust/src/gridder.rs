@@ -1,3 +1,5 @@
+use std::ops::{AddAssign, Mul};
+
 use fftw::{
     array::AlignedVec,
     plan::C2CPlan,
@@ -176,20 +178,35 @@ fn visibilities_to_subgrids(
 }
 
 struct Precalc {
-    lm: Array1<Float>,
+    l: Array2<Float>,
+    m: Array2<Float>,
     n: Array2<Float>,
 }
 
 impl Precalc {
     pub fn new(subgrid_size: u32, image_size: Float) -> Self {
-        let lm = Array1::from_shape_fn(subgrid_size as usize, |i| {
+        let subgrid_usize = subgrid_size as usize;
+
+        let lm = Array1::from_shape_fn(subgrid_usize, |i| {
             compute_lm(i as u32, subgrid_size, image_size)
         });
-        let n = Array2::from_shape_fn((subgrid_size as usize, subgrid_size as usize), |(x, y)| {
+        let l = lm.slice(s![.., NewAxis]);
+        let l = l
+            .broadcast([subgrid_usize, subgrid_usize])
+            .expect("should broadcast");
+        let m = lm.slice(s![NewAxis, ..]);
+        let m = m
+            .broadcast([subgrid_usize, subgrid_usize])
+            .expect("should broadcast");
+        let n = Array2::from_shape_fn((subgrid_usize, subgrid_usize), |(x, y)| {
             compute_n(lm[x], lm[y])
         });
 
-        Self { lm, n }
+        Self {
+            l: l.to_owned(),
+            m: m.to_owned(),
+            n,
+        }
     }
 }
 
@@ -210,6 +227,8 @@ fn visibility_to_subgrid(
     let w_offset_in_lambda = w_step * (metadata.coordinate.z as Float + 0.5);
     let subgrid_size = u32::try_from(subgrid.shape()[1]).expect("subgrid_size does not fit in u32");
 
+    let complex_taper = taper.map(|x| Complex::new(*x, 0.0));
+
     let u_offset = (metadata.coordinate.x as Float + subgrid_size as Float / 2.0
         - grid_size as Float / 2.0)
         * (2.0 * PI / image_size);
@@ -220,18 +239,14 @@ fn visibility_to_subgrid(
 
     for y in 0..subgrid_size {
         for x in 0..subgrid_size {
-            let l = precalc.lm[x as usize];
-            let m = precalc.lm[y as usize];
-            let n = precalc.n[(x as usize, y as usize)];
-
-            let pixels = compute_pixels(
+            let pixels = compute_pixels_grid(
                 metadata.nr_timesteps,
                 metadata.time_index,
                 uvw,
                 metadata.baseline,
-                l,
-                m,
-                n,
+                precalc.l.view(),
+                precalc.m.view(),
+                precalc.n.view(),
                 u_offset,
                 v_offset,
                 w_offset,
@@ -239,17 +254,22 @@ fn visibility_to_subgrid(
                 metadata.channel_end,
                 correlation_count_in,
                 correlation_count_out,
+                subgrid_size,
                 wavenumbers,
                 visibilities,
             );
 
-            let sph = taper[(y as usize, x as usize)];
-            let x_dst = (x + (subgrid_size / 2)) % subgrid_size;
-            let y_dst = (y + (subgrid_size / 2)) % subgrid_size;
+            let _x_dst = (x + (subgrid_size / 2)) % subgrid_size;
+            let _y_dst = (y + (subgrid_size / 2)) % subgrid_size;
 
             for pol in 0..correlation_count_out {
-                subgrid[(pol as usize, y_dst as usize, x_dst as usize)] =
-                    pixels[pol as usize] * sph;
+                // TODO: REPLACE THE SHIFT THAT SHOULD HAPPEN HERE!!!
+
+                let tapered_pixels = pixels.slice(s![pol as usize, .., ..]).mul(&complex_taper);
+
+                subgrid
+                    .slice_mut(s![pol as usize, .., ..])
+                    .assign(&tapered_pixels);
             }
         }
     }
@@ -307,6 +327,67 @@ fn compute_pixels(
                     channel as usize,
                     pol as usize,
                 )] * phasor;
+            }
+        }
+    }
+
+    pixels
+}
+
+fn compute_pixels_grid(
+    timestep_count: u32,
+    offset: u32,
+    uvw: &UvwArray,
+    baseline: u32,
+    l: ArrayView2<Float>,
+    m: ArrayView2<Float>,
+    n: ArrayView2<Float>,
+    u_offset: Float,
+    v_offset: Float,
+    w_offset: Float,
+    channel_begin: u32,
+    channel_end: u32,
+    correlation_count_in: u32,
+    correlation_count_out: u32,
+    subgrid_size: u32,
+    wavenumbers: &Array1<Float>,
+    visibilities: &Array4<Complex>,
+) -> Array3<Complex> {
+    let mut pixels = Array3::<Complex>::zeros((
+        correlation_count_out as usize,
+        subgrid_size as usize,
+        subgrid_size as usize,
+    ));
+
+    for time in 0..timestep_count {
+        let idx = offset + time;
+        let Uvw { u, v, w } = uvw[(baseline as usize, idx as usize)];
+
+        let lu = l.mul(u);
+        let mv = m.mul(v);
+        let nw = n.mul(w);
+        let phase_index = lu + mv + nw;
+        let lu_offset = l.mul(u_offset);
+        let mv_offset = m.mul(v_offset);
+        let nw_offset = n.mul(w_offset);
+        let phase_offset = lu_offset + mv_offset + nw_offset;
+
+        for channel in channel_begin..channel_end {
+            let phase = &phase_offset - (&phase_index * wavenumbers[channel as usize]);
+            let phasor = phase.map(|x| (x * Complex::i()).exp());
+
+            for pol in 0..correlation_count_in {
+                let mut pixels_mut =
+                    pixels.slice_mut(s![(pol % correlation_count_out) as usize, .., ..]);
+                let new_pixels = &phasor
+                    * visibilities[(
+                        baseline as usize,
+                        idx as usize,
+                        channel as usize,
+                        pol as usize,
+                    )];
+
+                pixels_mut.add_assign(&new_pixels);
             }
         }
     }
