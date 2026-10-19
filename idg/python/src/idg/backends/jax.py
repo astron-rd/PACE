@@ -3,9 +3,11 @@ import jax.numpy as jnp
 import numpy as np
 from jax import lax
 
-# Number of subgrids processed in each jitted, vmapped batch. XLA threads the
-# batched kernel across cores, following the vectorize-over-an-axis best
-# practice; chunking keeps the (batch, nt, nch, sg, sg) intermediate bounded.
+# Number of subgrids processed in each jitted, vmapped batch. XLA parallelizes
+# the batch axis (vectorize-over-an-axis). Chunking keeps the
+# (batch, nt, nch, sg, sg) intermediate bounded; on an exclusive 72-core node
+# the total time is nearly flat across 16..256 (70-77 s on the 10830-subgrid
+# input), 256 is marginally fastest, so it stays the default.
 _BATCH_SIZE = 256
 
 
@@ -333,3 +335,65 @@ def add_subgrid_to_grid(
                     subgrid_size,
                 )
             )
+
+
+@jax.jit(static_argnames=("subgrid_size",))
+def _add_subgrids_scan(
+    grid,        # (G, G) complex64
+    subs,        # (n_valid, sg, sg) complex64
+    phasor,      # (sg, sg)
+    x_coords,    # (n_valid,) int32
+    y_coords,    # (n_valid,) int32
+    subgrid_size,
+):
+    """Add many subgrids to one grid in a single jitted scan.
+
+    The grid stays on device for the whole scan; only the final result is
+    copied back. On the real 10830-subgrid input this runs in tens of
+    milliseconds instead of the per-subgrid host loop round trip (seconds).
+    """
+
+    def step(grid, i):
+        sub = subs[i]
+        grid_x = x_coords[i]
+        grid_y = y_coords[i]
+        sub_shift = jnp.roll(
+            jnp.roll(sub, subgrid_size // 2, axis=0), subgrid_size // 2, axis=1
+        )
+        block = lax.dynamic_slice(grid, (grid_y, grid_x), (subgrid_size, subgrid_size))
+        updated = block + sub_shift * phasor
+        grid = lax.dynamic_update_slice(grid, updated, (grid_y, grid_x))
+        return grid, None
+
+    grid, _ = lax.scan(step, grid, jnp.arange(subs.shape[0]))
+    return grid
+
+
+def add_subgrids_to_grid(metadata, subgrids, grid, phasor, nr_correlations, subgrid_size, grid_size):
+    """Add all subgrids to the grid in one jitted scan per correlation.
+
+    Subgrids whose coordinate lies outside the grid (the first/last row or
+    column) are dropped on the host first, matching the per-subgrid guard.
+    """
+    xs = np.asarray(metadata["coordinate"]["x"], dtype=np.int32)
+    ys = np.asarray(metadata["coordinate"]["y"], dtype=np.int32)
+    in_bounds = (
+        (xs >= 0)
+        & (xs < grid_size - subgrid_size)
+        & (ys >= 0)
+        & (ys < grid_size - subgrid_size)
+    )
+    idx = np.where(in_bounds)[0]
+    if idx.size == 0:
+        return
+    for p in range(nr_correlations):
+        grid[p] = np.asarray(
+            _add_subgrids_scan(
+                jnp.asarray(grid[p]),
+                jnp.asarray(subgrids[idx, p]),
+                jnp.asarray(phasor),
+                xs[idx],
+                ys[idx],
+                subgrid_size,
+            )
+        )

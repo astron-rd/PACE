@@ -61,6 +61,21 @@ class Gridder:
 
         phasor = self.backend.compute_phasor(subgrid_size)
 
+        # Backends may batch the whole add in one call; fall back to the
+        # per-subgrid interface if they only implement that.
+        batch_add = getattr(self.backend, "add_subgrids_to_grid", None)
+        if batch_add is not None and nr_subgrids > 0:
+            batch_add(
+                metadata,
+                subgrids,
+                grid,
+                phasor,
+                nr_correlations,
+                subgrid_size,
+                grid_size,
+            )
+            return
+
         for s in range(nr_subgrids):
             self.backend.add_subgrid_to_grid(
                 s,
