@@ -339,11 +339,11 @@ def add_subgrid_to_grid(
 
 @jax.jit(static_argnames=("subgrid_size",))
 def _add_subgrids_scan(
-    grid,        # (G, G) complex64
-    subs,        # (n_valid, sg, sg) complex64
-    phasor,      # (sg, sg)
-    x_coords,    # (n_valid,) int32
-    y_coords,    # (n_valid,) int32
+    grid,  # (G, G) complex64
+    subs,  # (n_valid, sg, sg) complex64
+    phasor,  # (sg, sg)
+    x_coords,  # (n_valid,) int32
+    y_coords,  # (n_valid,) int32
     subgrid_size,
 ):
     """Add many subgrids to one grid in a single jitted scan.
@@ -370,7 +370,9 @@ def _add_subgrids_scan(
     return grid
 
 
-def add_subgrids_to_grid(metadata, subgrids, grid, phasor, nr_correlations, subgrid_size, grid_size):
+def add_subgrids_to_grid(
+    metadata, subgrids, grid, phasor, nr_correlations, subgrid_size, grid_size
+):
     """Add all subgrids to the grid in one jitted scan per correlation.
 
     Subgrids whose coordinate lies outside the grid (the first/last row or
