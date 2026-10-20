@@ -37,8 +37,8 @@ uv run idg {input-file} --json custom.json
 
 ```
 idg/
-├── pyproject.toml              # idg-python package definition
-├── src/idg_python/
+├── pyproject.toml              # idg package definition
+├── src/idg/
 │   ├── config.py               # CLI / settings (backend selection)
 │   ├── gridder.py              # Gridder driver (grid, add subgrids, transform)
 │   ├── taper.py                # taper dispatch

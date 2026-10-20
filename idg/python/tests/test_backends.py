@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from idg_python.backends import available_backends, get_backend
+from idg.backends import available_backends, get_backend
 
 
 @pytest.mark.parametrize("backend_name", available_backends())

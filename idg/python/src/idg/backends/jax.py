@@ -348,9 +348,10 @@ def _add_subgrids_scan(
 ):
     """Add many subgrids to one grid in a single jitted scan.
 
-    The grid stays on device for the whole scan; only the final result is
-    copied back. On the real 10830-subgrid input this runs in tens of
-    milliseconds instead of the per-subgrid host loop round trip (seconds).
+    The grid stays in XLA buffers for the whole scan (CPU-only jax install);
+    only the final result is copied back to the NumPy grid. On the real
+    10830-subgrid input this runs in tens of milliseconds instead of the
+    per-subgrid host loop round trip (seconds).
     """
 
     def step(grid, i):
