@@ -4,9 +4,9 @@ import time
 import h5py
 import numpy as np
 
+from .backends import get_backend
 from .config import settings
 from .gridder import Gridder
-from .taper import get_taper
 from .types import FOURIER_DOMAIN_TO_IMAGE_DOMAIN, GRIDTYPE
 
 
@@ -43,6 +43,8 @@ class Timer:
 
 def main():
     timer = Timer()
+
+    backend = get_backend(settings.backend)
 
     timer.print_header("READING INPUT DATA", newline="")
     with h5py.File(settings.input, "r") as infile:
@@ -96,7 +98,10 @@ def main():
         (settings.nr_correlations_out, grid_size, grid_size), dtype=GRIDTYPE
     )
 
-    taper = timer.time("Initialize taper", lambda: get_taper(subgrid_size=subgrid_size))
+    taper = timer.time(
+        "Initialize taper",
+        lambda: backend.get_taper(subgrid_size=subgrid_size),
+    )
 
     subgrids = np.zeros(
         shape=(nr_subgrids, settings.nr_correlations_out, subgrid_size, subgrid_size),
@@ -106,6 +111,7 @@ def main():
     gridder = timer.time(
         "Initialize gridder",
         lambda: Gridder(
+            backend=backend,
             nr_correlations_in=nr_correlations_in,
             subgrid_size=subgrid_size,
         ),

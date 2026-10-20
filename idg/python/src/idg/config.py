@@ -13,6 +13,7 @@ class Settings:
     input: str
     store: bool
     json_output: str | None
+    backend: str
 
     def __init__(self):
         parser = argparse.ArgumentParser()
@@ -27,6 +28,12 @@ class Settings:
             const="timings.json",
             nargs="?",
             help="Output timings in JSON format (optional: specify filename)",
+        )
+        parser.add_argument(
+            "--backend",
+            choices=["numba", "jax"],
+            default="numba",
+            help="Kernel backend to use (default: numba)",
         )
         parser.parse_args(namespace=self)
 
