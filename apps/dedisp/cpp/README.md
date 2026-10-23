@@ -54,11 +54,11 @@ make
 ```
 
 - `-DDEDISP_GPU_TARGET` defaults to `cc89,cc120`, one multi-arch fatbin that
-  runs natively on both the AD4000 and the B4000. Narrow to `cc120` or `cc89`
-  only when the target machine is known, because a single-arch binary crashes
-  on the other card.
+    runs natively on both the AD4000 and the B4000. Narrow to `cc120` or `cc89`
+    only when the target machine is known, because a single-arch binary crashes
+    on the other card.
 - `OMP_TARGET_OFFLOAD=mandatory ./fdd` makes host fallback fail loudly, to
-  confirm real offload.
+    confirm real offload.
 
 ### AMD (ROCm clang)
 
