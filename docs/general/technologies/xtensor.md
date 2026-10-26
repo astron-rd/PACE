@@ -36,12 +36,12 @@ The most common way to call xtensor-fftw is through its convenience functions, w
 
 | Operation | FFTW3 time | xtensor-fftw plan time | Speedup (FFTW3 over xtensor-fftw) |
 | :-------- | :--------: | :--------------------: | :-------------------------------: |
-| R2C/100 | 0.051 us | 0.052 us | $\\approx 1.0\\times$ |
-| R2C/1000 | 0.714 us | 0.739 us | $\\approx 1.0\\times$ |
-| C2R/100 | 0.054 us | 0.053 us | $\\approx 1.0\\times$ |
-| C2R/1000 | 0.744 us | 0.752 us | $\\approx 1.0\\times$ |
-| C2C/100 | 0.075 us | 0.081 us | $\\approx 1.0\\times$ |
-| C2C/1000 | 1.67 us | 1.67 us | $\\approx 1.0\\times$ |
+| R2C/100   |  0.051 us  |        0.052 us        |       $\\approx 1.0\\times$       |
+| R2C/1000  |  0.714 us  |        0.739 us        |       $\\approx 1.0\\times$       |
+| C2R/100   |  0.054 us  |        0.053 us        |       $\\approx 1.0\\times$       |
+| C2R/1000  |  0.744 us  |        0.752 us        |       $\\approx 1.0\\times$       |
+| C2C/100   |  0.075 us  |        0.081 us        |       $\\approx 1.0\\times$       |
+| C2C/1000  |  1.67 us   |        1.67 us         |       $\\approx 1.0\\times$       |
 
 These values were obtained with the same [`fft-benchmark`](https://git.astron.nl/RD/fft-benchmark) tool, with the xtensor-fftw benchmark creating its plan before the timed loop, and the benchmarks ran on `node508` of the [DAS-6 cluster](https://www.cs.vu.nl/das6/clusters.shtml).
 

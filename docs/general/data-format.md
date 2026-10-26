@@ -33,13 +33,13 @@ The following factors were considered:
 
 The following evaluation was made:
 
-| Format | Supported Features | Library support | Ease of use |
+| Format      | Supported Features | Library support | Ease of use |
 | :---------- | -----------------: | --------------: | ----------: |
-| NPY | Good | Poor | Good |
-| HDF5 | Good | Good | Good |
-| Parqueet | Bad | / | / |
-| Safetensors | Bad | / | / |
-| Avro | Bad | / | / |
+| NPY         |               Good |            Poor |        Good |
+| HDF5        |               Good |            Good |        Good |
+| Parqueet    |                Bad |               / |           / |
+| Safetensors |                Bad |               / |           / |
+| Avro        |                Bad |               / |           / |
 
 In this evaluation HDF5 was the clear favorite. Since it is also commonly used
 in science and specifically astronomy, HDF5 was picked.
@@ -48,9 +48,9 @@ in science and specifically astronomy, HDF5 was picked.
 
 To read/write HDF5, the following libraries were chosen:
 
-| Language | Library |
+| Language | Library                                              |
 | -------- | ---------------------------------------------------- |
-| Python | [h5py](https://docs.h5py.org/en/stable/index.html) |
-| C++ | [h5cpp](https://github.com/ess-dmsc/h5cpp) |
-| Rust | [hdf5-metno](https://crates.io/crates/hdf5-metno) |
-| Julia | [HDF5.jl](https://juliaio.github.io/HDF5.jl/stable/) |
+| Python   | [h5py](https://docs.h5py.org/en/stable/index.html)   |
+| C++      | [h5cpp](https://github.com/ess-dmsc/h5cpp)           |
+| Rust     | [hdf5-metno](https://crates.io/crates/hdf5-metno)    |
+| Julia    | [HDF5.jl](https://juliaio.github.io/HDF5.jl/stable/) |

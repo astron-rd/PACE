@@ -83,11 +83,11 @@ job output is kept in the workflow log.
 
 ## Candidate tools
 
-| Tool | Cluster | Notes |
+| Tool         | Cluster   | Notes                                                                                                                                                                                                      |
 | ------------ | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| slurm-action | srun | One workflow step becomes one job from a self-hosted runner on the control node. The workflow matrix supplies the parameterisation, while result collection and comparison are hand-written. |
-| ReFrame | native | Knows Slurm partitions and writes the job scripts, runs every combination of `parameter()` values as separate jobs, writes its own reports and logs and compares them across sessions. |
-| JUBE | templates | From the Juelich Supercomputing Centre (JSC). Submits through job templates, runs every combination of parameterset values, collects results with regex patterns into CSV tables. Unmaintained since 2024. |
+| slurm-action | srun      | One workflow step becomes one job from a self-hosted runner on the control node. The workflow matrix supplies the parameterisation, while result collection and comparison are hand-written.               |
+| ReFrame      | native    | Knows Slurm partitions and writes the job scripts, runs every combination of `parameter()` values as separate jobs, writes its own reports and logs and compares them across sessions.                     |
+| JUBE         | templates | From the Juelich Supercomputing Centre (JSC). Submits through job templates, runs every combination of parameterset values, collects results with regex patterns into CSV tables. Unmaintained since 2024. |
 
 slurm-action is the driver: it submits to Slurm from the workflow and the matrix
 covers the parameterisation, so the result files need no further collection. It
