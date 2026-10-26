@@ -27,7 +27,7 @@ Scoring scheme:
 - ❌ = 0 points
 
 | Framework | Open source | Self-hosted | Multi-language | Performance tracking | Visualization |
-|---|---|---|---|---|---|
+| -------------------------------------------------------------------------------------- | ----------- | ----------- | -------------- | -------------------- | ------------- |
 | [Bencher](https://bencher.dev/) | ✅ | ✅ | ✅ | ✅ | ✅ |
 | [Neptune.ai](https://neptune.ai/) | ❌ | ✅ | ◯ | ❌ | ✅ |
 | [MLflow](https://mlflow.org/) | ✅ | ✅ | ❌ | ❌ | ✅ |

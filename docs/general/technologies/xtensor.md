@@ -35,7 +35,7 @@ Lastly, we investigated the use of xtensor-io for storing and loading data store
 The most common way to call xtensor-fftw is through its convenience functions, which create a new FFTW plan on every call. Planning is an expensive step, so comparing that against a benchmark that creates one plan up front and reuses it is apples versus oranges. Measured that naive way, FFTW3 appears up to a hundred times faster for small FFTs. When both sides create the plan once and reuse it, the difference almost completely disappears, as the table below shows. xtensor-fftw is a wrapper around FFTW, so once the plan exists, execution is the same code path.
 
 | Operation | FFTW3 time | xtensor-fftw plan time | Speedup (FFTW3 over xtensor-fftw) |
-| :--- | :---: | :---: | :---: |
+| :-------- | :--------: | :--------------------: | :-------------------------------: |
 | R2C/100 | 0.051 us | 0.052 us | $\\approx 1.0\\times$ |
 | R2C/1000 | 0.714 us | 0.739 us | $\\approx 1.0\\times$ |
 | C2R/100 | 0.054 us | 0.053 us | $\\approx 1.0\\times$ |
