@@ -126,12 +126,12 @@ Specialized concurrency constructs:
 
 Overview of Channel crates:
 
-| Crate | SPSC | MPSC | SPMC | MPMC |
+| Crate                                           | SPSC | MPSC | SPMC | MPMC        |
 | ----------------------------------------------- | ---- | ---- | ---- | ----------- |
-| [std::sync](https://doc.rust-lang.org/std/sync) | | X | | X (nightly) |
-| [crossbeam](https://crates.io/crates/crossbeam) | | | | X |
-| [Flume](https://crates.io/crates/flume) | | X | | X |
-| [Kanal](https://crates.io/crates/kanal) | | | | X |
-| [oneshot](https://crates.io/crates/oneshot) | X | | | |
-| [crossfire](https://crates.io/crates/crossfire) | X | X | | X |
-| [bus](https://crates.io/crates/bus) | | X | | |
+| [std::sync](https://doc.rust-lang.org/std/sync) |      | X    |      | X (nightly) |
+| [crossbeam](https://crates.io/crates/crossbeam) |      |      |      | X           |
+| [Flume](https://crates.io/crates/flume)         |      | X    |      | X           |
+| [Kanal](https://crates.io/crates/kanal)         |      |      |      | X           |
+| [oneshot](https://crates.io/crates/oneshot)     | X    |      |      |             |
+| [crossfire](https://crates.io/crates/crossfire) | X    | X    |      | X           |
+| [bus](https://crates.io/crates/bus)             |      | X    |      |             |
