@@ -24,6 +24,14 @@ Result of a single benchmark run.
       "mts": 3200
     }
   },
+  "parameters": {
+    "channel_count": 1024,
+    "bandwidth": 100.0,
+    "dm_start": 2.0,
+    "dm_end": 100.0,
+    "pulse_width": 4.0,
+    "tolerance": 1.25
+  },
   "timings": {
     "input": 0.42,
     "plan": 0.08,
@@ -42,6 +50,7 @@ Result of a single benchmark run.
 | language | `string` | ✅ | `cpp` `julia` `python` `rust` |  | Programming language. |  |
 | commit | `string` | ✅ | [`^[0-9a-f]{8}$`](https://regex101.com/?regex=%5E%5B0-9a-f%5D%7B8%7D%24) |  | Git commit hash. |  |
 | hardware | `object` | ✅ | [Hardware](#hardware) |  | Hardware configuration. |  |
+| parameters | `object` | ✅ | object |  | Input parameters of the benchmark run. |  |
 | timings | `object` | ✅ | object |  | Measurements in seconds per benchmark phase. |  |
 | framework | `string` or `null` |  | Length: `string >= 1` | `null` | Acceleration framework. | ```openmp```, ```cuda```, ```rayon```, ```numba``` |
 

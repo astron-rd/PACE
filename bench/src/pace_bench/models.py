@@ -16,6 +16,14 @@ EXAMPLE: JsonDict = {
         "gpu": {"model": "NVIDIA A100 80GB"},
         "memory": {"gb": 512, "mts": 3200},
     },
+    "parameters": {
+        "channel_count": 1024,
+        "bandwidth": 100.0,
+        "dm_start": 2.0,
+        "dm_end": 100.0,
+        "pulse_width": 4.0,
+        "tolerance": 1.25,
+    },
     "timings": {
         "input": 0.42,
         "plan": 0.08,
@@ -76,6 +84,9 @@ class Result(BaseModel):
         description="Git commit hash.",
     )
     hardware: Hardware = Field(description="Hardware configuration.")
+    parameters: dict[str, bool | int | float | str] = Field(
+        description="Input parameters of the benchmark run."
+    )
     timings: dict[str, NonNegativeFloat] = Field(
         description="Measurements in seconds per benchmark phase."
     )
