@@ -13,8 +13,8 @@ machines, too noisy for regression thresholds.
 
 The recommendation is to run the benchmarks on the DAS-6 cluster from a GitHub
 Actions matrix, with slurm-action submitting each job. Every implementation
-outputs a result file in a format defined by PACE, results are kept in the
-repository, and plots are rendered into the docs site.
+outputs its parameters and timings, results are kept in the repository, and
+plots are rendered into the docs site.
 
 ## Problems with Bencher
 
@@ -50,7 +50,8 @@ Beyond the [earlier criteria](1-frameworks.md), two requirements matter:
 The setup consists of four layers.
 
 1. **Run**: a GitHub Actions matrix runs benchmarks as separate Slurm jobs.
-1. **Emit**: every implementation outputs one result file per run.
+1. **Emit**: every implementation outputs its parameters and timings per run,
+   and the workflow adds the remaining fields.
 1. **Store**: result files are committed to the repository under `results/`.
 1. **View**: a script renders comparison and scaling plots into the docs site.
 
@@ -105,7 +106,7 @@ Python project per commit).
 ## Next steps
 
 1. Define the JSON specification of the result file.
-1. Make every implementation output a result file.
+1. Make every implementation output its parameters and timings.
 1. Run the benchmarks on DAS-6 via slurm-action.
 1. Render the comparison and scaling plots into the docs site.
 
