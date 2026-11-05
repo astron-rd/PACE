@@ -61,12 +61,18 @@ software version (e.g. commit id). For example:
 
 ```json
 {
+  "version": "1.0.0",
   "application": "idg",
-  "implementation": "rust",
-  "commit": "52cd29a",
-  "testbed": { "host": "node503", "cpu": "2x AMD EPYC 7302", "gpu": "RTX A4000" },
+  "language": "rust",
+  "framework": "rayon",
+  "commit": "52cd29a0",
+  "hardware": {
+    "cpu": { "model": "AMD EPYC 7302", "cores": 32 },
+    "gpu": { "model": "NVIDIA RTX A4000" },
+    "memory": { "gb": 128, "mts": 3200 }
+  },
   "parameters": { "grid_size": 4096, "subgrid_size": 32 },
-  "timings_s": {
+  "timings": {
     "compile": 0.0, "grid": 1.203, "ifft": 0.311, "add": 0.087, "transform": 0.402
   }
 }
