@@ -26,9 +26,8 @@ jobs:
             set +e
             section() { echo; echo "### $*"; }
             hostname
-            for t in rocm-smi amd-smi rocminfo nvidia-smi lspci; do printf "%s: " $t; command -v $t || echo missing; done
-            rocm-smi --showproductname --showmeminfo vram --json 2>&1 | head -40
-            amd-smi static --asic --vram --json 2>&1 | head -60
-            for d in /sys/class/drm/card*/device; do echo "$d vendor=$(cat $d/vendor 2>&1) device=$(cat $d/device 2>&1) vram=$(cat $d/mem_info_vram_total 2>&1)"; done
-            lspci -nn 2>&1 | grep -iE "vga|display|3d"
-            env | grep -E "^(SLURM_JOB_GPUS|SLURM_GPUS|ROCR_VISIBLE_DEVICES|HIP_VISIBLE_DEVICES|GPU_DEVICE_ORDINAL|CUDA_VISIBLE_DEVICES)=" | sort
+            scontrol show job -d "$SLURM_JOB_ID" 2>&1 | grep -iE "gres|tres|IDX"
+            grep . /etc/slurm/gres.conf 2>&1 | grep -v "^#"
+            for d in /sys/class/drm/card[0-9]*/device; do [ -e "$d/vendor" ] && echo "$(basename $(dirname $d)) $(basename $(readlink -f $d)) vendor=$(cat $d/vendor) device=$(cat $d/device)"; done
+            nvidia-smi --query-gpu=index,name,pci.bus_id --format=csv,noheader 2>&1
+            env | grep -E "^(CUDA_VISIBLE_DEVICES|ROCR_VISIBLE_DEVICES|GPU_DEVICE_ORDINAL|SLURM_.*GPU.*)=" | sort
