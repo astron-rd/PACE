@@ -9,25 +9,56 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: W7700
-            partition: rbq
-            gres: gpu:W7700
-          - name: R9700
-            partition: rbq
-            gres: gpu:R9700
-    name: probe (${{ matrix.name }})
+          - { partition: rbq, gpu: W7700 }
+          - { partition: rbq, gpu: R9700 }
+          - { partition: rbq, gpu: AD4000 }
+          - { partition: rbq, gpu: B4000 }
+          - { partition: defq, gpu: A4000 }
+          - { partition: defq, gpu: V100 }
+          - { partition: defq, gpu: A100 }
+          - { partition: defq, gpu: AD5000 }
+          - { partition: defq, gpu: TitanRTX }
+    name: probe (${{ matrix.gpu }})
     steps:
       - uses: astron-rd/slurm-action@v1.2
         with:
           partition: ${{ matrix.partition }}
-          gres: ${{ matrix.gres }}
+          gres: gpu:${{ matrix.gpu }}
           time: 00:05:00
           commands: |
             set +e
-            section() { echo; echo "### $*"; }
             hostname
-            scontrol show job -d "$SLURM_JOB_ID" 2>&1 | grep -iE "gres|tres|IDX"
-            grep . /etc/slurm/gres.conf 2>&1 | grep -v "^#"
-            for d in /sys/class/drm/card[0-9]*/device; do [ -e "$d/vendor" ] && echo "$(basename $(dirname $d)) $(basename $(readlink -f $d)) vendor=$(cat $d/vendor) device=$(cat $d/device)"; done
-            nvidia-smi --query-gpu=index,name,pci.bus_id --format=csv,noheader 2>&1
-            env | grep -E "^(CUDA_VISIBLE_DEVICES|ROCR_VISIBLE_DEVICES|GPU_DEVICE_ORDINAL|SLURM_.*GPU.*)=" | sort
+            env | grep -E "^SLURM_(STEP|JOB)_GPUS=" | sort
+            scontrol show job -d "$SLURM_JOB_ID" | grep -oE "GRES=[^ ]+"
+            for t in lspci nvidia-smi rocm-smi amd-smi rocminfo clinfo vulkaninfo; do printf "%s=%s\n" "$t" "$(command -v $t || echo -)"; done
+            python3 - <<'PY'
+            import glob, os, subprocess
+            def rd(p):
+                try: return open(p).read().strip()
+                except OSError as e: return f"<{e.strerror}>"
+            def can_open(p):
+                try: os.close(os.open(p, os.O_RDWR | os.O_CLOEXEC)); return "ok"
+                except OSError as e: return e.strerror
+            for dev in sorted(glob.glob("/sys/bus/pci/devices/*")):
+                if not rd(f"{dev}/class").startswith("0x03"): continue
+                addr = os.path.basename(dev)
+                print(f"\n## {addr} driver={os.path.basename(os.path.realpath(dev + '/driver'))}")
+                print("  ids", *(f"{k}={rd(f'{dev}/{k}')}" for k in ("vendor", "device", "subsystem_vendor", "subsystem_device", "revision")))
+                print("  vram_total", rd(f"{dev}/mem_info_vram_total"))
+                bars = []
+                for line in rd(f"{dev}/resource").splitlines()[:6]:
+                    s, e, _ = (int(x, 16) for x in line.split())
+                    bars.append((e - s + 1) >> 20 if e else 0)
+                print("  bars_mib", bars)
+                for d in sorted(glob.glob(f"{dev}/drm/*")):
+                    n = os.path.basename(d)
+                    print(f"  /dev/dri/{n} open={can_open('/dev/dri/' + n)}")
+                vmm = subprocess.run(["lspci", "-vmm", "-nn", "-s", addr], capture_output=True, text=True).stdout
+                for line in vmm.splitlines():
+                    if line.split(":")[0] in ("Vendor", "Device", "SVendor", "SDevice"): print("  " + line)
+            print()
+            for n in sorted(glob.glob("/dev/nvidia[0-9]*")): print(f"{n} open={can_open(n)}")
+            for f in sorted(glob.glob("/proc/driver/nvidia/gpus/*/information")):
+                print(f, {l.split(':', 1)[0]: l.split(':', 1)[1].strip() for l in rd(f).splitlines() if l.split(':')[0] in ('Model', 'Bus Location')})
+            PY
+            nvidia-smi --query-gpu=pci.bus_id,name,memory.total,pci.sub_device_id --format=csv,noheader 2>&1
