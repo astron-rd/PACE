@@ -19,24 +19,5 @@ jobs:
           time: 00:05:00
           commands: |
             set +e
-            hostname
-            python3 - <<'PY2'
-            import glob, re
-            GiB = 1 << 30
-            rd = lambda p: open(p).read().strip()
-            bs = int(rd("/sys/devices/system/memory/block_size_bytes"), 16)
-            print("block size GiB", bs / GiB)
-            ram = []
-            for d in glob.glob("/sys/firmware/memmap/*"):
-                ram.append((int(rd(f"{d}/start"), 16), int(rd(f"{d}/end"), 16) + 1, rd(f"{d}/type")))
-            for a, b, t in sorted(ram):
-                print(f"memmap {a / GiB:12.6f} - {b / GiB:12.6f} GiB  {(b - a) / GiB:12.6f} GiB  {t}")
-            on = sorted(int(re.search(r"(\d+)$", d)[1]) for d in glob.glob("/sys/devices/system/memory/memory*") if rd(f"{d}/state") == "online")
-            runs, s0 = [], on[0]
-            for x, y in zip(on, on[1:] + [None]):
-                if y != x + 1: runs.append((s0, x)); s0 = y
-            for a, b in runs:
-                print(f"online blocks {a}-{b}  = {a * bs / GiB:.0f} - {(b + 1) * bs / GiB:.0f} GiB")
-            print("online total GiB", len(on) * bs / GiB)
-            print("System RAM total GiB", sum(b - a for a, b, t in ram if t == "System RAM") / GiB)
-            PY2
+            sacct -j 8498,8505 -X -o JobID,JobName%30,State,Submit,End
+            squeue -u "$USER" -o "%i %j %T %R"
