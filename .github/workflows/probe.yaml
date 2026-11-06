@@ -1,0 +1,39 @@
+name: probe
+on:
+  push:
+    branches: [probe/das6-hardware]
+jobs:
+  probe:
+    runs-on: [slurm]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: cpu
+            gres: ""
+          - name: A4000
+            gres: gpu:A4000
+    name: probe (${{ matrix.name }})
+    steps:
+      - uses: astron-rd/slurm-action@v1.2
+        with:
+          partition: defq
+          gres: ${{ matrix.gres }}
+          time: 00:05:00
+          commands: |
+            set +e
+            section() { echo; echo "### $*"; }
+            section host; hostname; whoami; id; uname -a
+            section nproc; nproc; nproc --all
+            section lscpu; lscpu
+            section cpuinfo; grep -m1 "model name" /proc/cpuinfo
+            section meminfo; head -3 /proc/meminfo
+            section dmidecode; command -v dmidecode; dmidecode -t memory 2>&1 | grep -i -m6 -E "speed|size|error|denied"
+            section dmi-sysfs; ls -l /sys/firmware/dmi/tables 2>&1; ls /sys/class/dmi/id 2>&1
+            section lshw; command -v lshw && lshw -C memory -short 2>&1 | head -20
+            section edac; ls /sys/devices/system/edac/mc 2>&1
+            section nvidia-smi; command -v nvidia-smi; nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv,noheader 2>&1
+            section slurm; env | grep -E "^SLURM_(JOB_PARTITION|CPUS|JOB_CPUS|GPUS|NODELIST|MEM)" | sort
+            section tools; for t in uv python3 git module; do printf "%s: " $t; command -v $t || type $t 2>&1 | head -1; done
+            section python; python3 --version 2>&1
+            section modules; module avail 2>&1 | head -40
