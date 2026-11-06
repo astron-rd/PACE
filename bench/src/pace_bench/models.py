@@ -68,7 +68,7 @@ class Result(BaseModel):
     model_config = ConfigDict(json_schema_extra={"examples": [EXAMPLE]})
 
     version: SemanticVersion = Field(description="Specification SemVer.")
-    timestamp: AwareDatetime = Field(description="Start time of the run.")
+    timestamp: AwareDatetime = Field(description="Benchmark start time.")
     application: Literal["all-sky", "dedisp", "idg"] = Field(
         description="Benchmarked application."
     )
