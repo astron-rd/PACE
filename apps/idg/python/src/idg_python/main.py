@@ -153,9 +153,7 @@ def main():
             output["parameters"][key] = value
 
         for operation, duration in timer.timings.items():
-            output["timings"][operation.lower().replace(" ", "_")] = round(
-                duration * 1000, 2
-            )
+            output["timings"][operation.lower().replace(" ", "_")] = duration
 
         with open(settings.json_output, "w") as f:
             json.dump(output, f, indent=2)
