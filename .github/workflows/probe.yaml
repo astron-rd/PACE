@@ -20,12 +20,14 @@ jobs:
           commands: |
             set +e
             hostname
-            env | grep ^SLURM_ | sort
-            cat /proc/self/cgroup
-            cg=/sys/fs/cgroup$(sed -n 's/^0:://p' /proc/self/cgroup)
-            for d in "$cg" "$(dirname "$cg")" "$(dirname "$(dirname "$cg")")"; do
-              echo "== $d"
-              for f in memory.max memory.high memory.swap.max cpuset.cpus.effective cpu.max; do printf '%s ' $f; cat "$d/$f" 2>&1; done
-            done
-            for f in memory.limit_in_bytes memory.memsw.limit_in_bytes; do ls /sys/fs/cgroup/memory 2>/dev/null | head -1; done
-            scontrol show job -d "$SLURM_JOB_ID"
+            ls -l /sys/firmware/dmi/tables/ /sys/firmware/acpi/tables/ | head -40
+            ls -ld /sys/firmware/dmi/entries/17-* | head -3; ls -d /sys/firmware/dmi/entries/17-* | wc -l
+            head -c 64 /sys/firmware/dmi/entries/17-0/raw | od -An -tx1 | head -2
+            udevadm --version
+            udevadm info /sys/class/dmi/id | grep -E "MEMORY_(ARRAY|DEVICE_[0-9]+_(SIZE|LOCATOR|PRESENT))" | head -60
+            udevadm info /sys/class/dmi/id | grep -c MEMORY_DEVICE_.*_SIZE
+            awk '/^Node/{z=$0} /present/{p+=$2} /spanned/{s+=$2} END{print "zoneinfo present GiB", p*4096/2^30, "spanned GiB", s*4096/2^30}' /proc/zoneinfo
+            dmesg 2>&1 | grep -E "^\[.*\] Memory:|DMI:|e820" | head -5
+            journalctl -k -b 2>&1 | grep -E "Memory:" | head -3
+            which lstopo hwloc-ls lshw dmidecode inxi 2>&1
+            cat /sys/devices/system/node/node*/meminfo | grep MemTotal
