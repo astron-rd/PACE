@@ -10,13 +10,9 @@ jobs:
       matrix:
         include:
           - { partition: rbq, gpu: W7700 }
-          - { partition: rbq, gpu: R9700 }
-          - { partition: rbq, gpu: AD4000 }
-          - { partition: rbq, gpu: B4000 }
           - { partition: defq, gpu: A4000 }
           - { partition: defq, gpu: V100 }
           - { partition: defq, gpu: A100 }
-          - { partition: defq, gpu: AD5000 }
           - { partition: defq, gpu: TitanRTX }
     name: probe (${{ matrix.gpu }})
     steps:
@@ -28,37 +24,31 @@ jobs:
           commands: |
             set +e
             hostname
-            env | grep -E "^SLURM_(STEP|JOB)_GPUS=" | sort
-            scontrol show job -d "$SLURM_JOB_ID" | grep -oE "GRES=[^ ]+"
-            for t in lspci nvidia-smi rocm-smi amd-smi rocminfo clinfo vulkaninfo; do printf "%s=%s\n" "$t" "$(command -v $t || echo -)"; done
+            scontrol show node "$SLURMD_NODENAME" | grep -oE "RealMemory=[0-9]+"
+            lsmem --summary 2>&1
             python3 - <<'PY'
-            import glob, os, subprocess
+            import glob, re, subprocess
             def rd(p):
                 try: return open(p).read().strip()
                 except OSError as e: return f"<{e.strerror}>"
-            def can_open(p):
-                try: os.close(os.open(p, os.O_RDWR | os.O_CLOEXEC)); return "ok"
-                except OSError as e: return e.strerror
-            for dev in sorted(glob.glob("/sys/bus/pci/devices/*")):
-                if not rd(f"{dev}/class").startswith("0x03"): continue
-                addr = os.path.basename(dev)
-                print(f"\n## {addr} driver={os.path.basename(os.path.realpath(dev + '/driver'))}")
-                print("  ids", *(f"{k}={rd(f'{dev}/{k}')}" for k in ("vendor", "device", "subsystem_vendor", "subsystem_device", "revision")))
-                print("  vram_total", rd(f"{dev}/mem_info_vram_total"))
-                bars = []
-                for line in rd(f"{dev}/resource").splitlines()[:6]:
-                    s, e, _ = (int(x, 16) for x in line.split())
-                    bars.append((e - s + 1) >> 20 if e else 0)
-                print("  bars_mib", bars)
-                for d in sorted(glob.glob(f"{dev}/drm/*")):
-                    n = os.path.basename(d)
-                    print(f"  /dev/dri/{n} open={can_open('/dev/dri/' + n)}")
-                vmm = subprocess.run(["lspci", "-vmm", "-nn", "-s", addr], capture_output=True, text=True).stdout
-                for line in vmm.splitlines():
-                    if line.split(":")[0] in ("Vendor", "Device", "SVendor", "SDevice"): print("  " + line)
-            print()
-            for n in sorted(glob.glob("/dev/nvidia[0-9]*")): print(f"{n} open={can_open(n)}")
-            for f in sorted(glob.glob("/proc/driver/nvidia/gpus/*/information")):
-                print(f, {l.split(':', 1)[0]: l.split(':', 1)[1].strip() for l in rd(f).splitlines() if l.split(':')[0] in ('Model', 'Bus Location')})
+            GiB = 1 << 30
+            kib = int(re.search(r"MemTotal:\s+(\d+)", rd("/proc/meminfo"))[1])
+            print(f"meminfo MemTotal      {kib * 1024 / GiB:8.2f} GiB")
+            udev = subprocess.run(["udevadm", "info", "/sys/class/dmi/id"], capture_output=True, text=True).stdout
+            sizes = [int(v) for k, v in re.findall(r"E: (MEMORY_DEVICE_\d+_SIZE)=(\d+)", udev)]
+            print(f"dmi       DIMMs       {sum(sizes) / GiB:8.2f} GiB  n={len(sizes)} {sorted(set(s // GiB for s in sizes))}")
+            print("dmi       array max  ", re.findall(r"MEMORY_ARRAY_\w+=\S+", udev))
+            edac = [int(rd(f)) for f in glob.glob("/sys/devices/system/edac/mc/mc*/dimm*/size")]
+            print(f"edac      DIMMs       {sum(edac) / 1024:8.2f} GiB  n={len(edac)}")
+            bs = int(rd("/sys/devices/system/memory/block_size_bytes"), 16)
+            on = sum(rd(f) == "online" for f in glob.glob("/sys/devices/system/memory/memory*/state"))
+            print(f"sysfs     mem blocks  {on * bs / GiB:8.2f} GiB  block={bs >> 20} MiB n={on}")
+            nodes = [int(re.search(r"MemTotal:\s+(\d+)", rd(f))[1]) for f in glob.glob("/sys/devices/system/node/node*/meminfo")]
+            print(f"numa      MemTotal    {[round(n / 2**20, 1) for n in nodes]} GiB")
+            ram = []
+            for d in glob.glob("/sys/firmware/memmap/*"):
+                if rd(f"{d}/type") == "System RAM":
+                    try: ram.append(int(rd(f"{d}/end"), 16) - int(rd(f"{d}/start"), 16) + 1)
+                    except ValueError: pass
+            print(f"firmware  memmap RAM  {sum(ram) / GiB:8.2f} GiB  n={len(ram)}")
             PY
-            nvidia-smi --query-gpu=pci.bus_id,name,memory.total,pci.sub_device_id --format=csv,noheader 2>&1
