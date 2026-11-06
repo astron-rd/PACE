@@ -19,13 +19,14 @@ jobs:
           time: 00:05:00
           commands: |
             set +e
-            hostname
-            udevadm info /sys/class/dmi/id | grep -E "MEMORY_DEVICE_[0-9]+_" | sed 's/^E: MEMORY_DEVICE_[0-9]*_//; s/=.*//' | sort | uniq -c
-            udevadm info /sys/class/dmi/id | grep -E "MEMORY_DEVICE_[0-9]+_(SIZE|PRESENT|LOCATOR|SPEED_MTS|CONFIGURED_SPEED_MTS|TYPE|PART_NUMBER)=" | sed -n '40,200p'
-            python3 - <<'PY2'
-            import re, subprocess
-            u = subprocess.run(["udevadm", "info", "/sys/class/dmi/id"], capture_output=True, text=True).stdout
-            s = [int(v) for v in re.findall(r"^E: MEMORY_DEVICE_\d+_SIZE=(\d+)$", u, re.M)]
-            print("n", len(s), "GiB", sum(s) / 2**30)
-            PY2
-            lstopo --of console --no-io 2>&1 | head -8
+            hostname; uname -r
+            grep -iE "edac|ee1004|spd|i2c|piix4|ghes|ipmi|k10temp|amd_atl" /proc/modules | cut -d" " -f1
+            ls /sys/bus/i2c/devices/ 2>&1 | head; ls /sys/bus/i2c/drivers/ 2>&1
+            for f in /sys/bus/i2c/devices/*/name; do echo "$f $(cat $f)"; done 2>/dev/null | head -20
+            ls -l /sys/bus/i2c/drivers/ee1004/*/eeprom /sys/bus/i2c/drivers/spd5118/*/eeprom 2>&1 | head
+            ls /sys/devices/system/edac/ 2>&1; ls /sys/devices/system/edac/mc 2>&1
+            ls /lib/modules/$(uname -r)/kernel/drivers/edac/ 2>&1 | head -30
+            ls /lib/modules/$(uname -r)/kernel/drivers/misc/eeprom/ /lib/modules/$(uname -r)/kernel/drivers/hwmon/ 2>&1 | grep -iE "ee1004|spd|eeprom"
+            ls -l /run/udev/data/+dmi:id 2>&1; wc -c < /run/udev/data/+dmi:id
+            ls -l /dev/ipmi* /dev/mem /dev/i2c-* 2>&1 | head
+            ls /sys/firmware/ ; ls /sys/firmware/efi 2>&1 | head
