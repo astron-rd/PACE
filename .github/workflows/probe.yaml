@@ -19,5 +19,5 @@ jobs:
           time: 00:05:00
           commands: |
             set +e
-            sacct -j 8498,8505 -X -o JobID,JobName%30,State,Submit,End
+            scancel 8498 8505
             squeue -u "$USER" -o "%i %j %T %R"
