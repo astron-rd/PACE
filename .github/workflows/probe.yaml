@@ -20,35 +20,23 @@ jobs:
           commands: |
             set +e
             hostname
-            lscpu | grep "Model name"
-            python3 -c "import os; print('threads', len(os.sched_getaffinity(0)))"
-            udevadm info /sys/class/dmi/id | grep -E "CONFIGURED_SPEED_MTS" | sort -u -t= -k2
-            lspci -vmm -s "$(nvidia-smi --query-gpu=pci.bus_id --format=csv,noheader | cut -c5-)" | grep "^Device"
-            scontrol show node "$SLURMD_NODENAME" | grep -oE "RealMemory=[0-9]+"
-            lsmem --summary 2>&1
-            python3 - <<'PY'
-            import glob, re, subprocess
-            def rd(p):
-                try: return open(p).read().strip()
-                except OSError as e: return f"<{e.strerror}>"
+            python3 - <<'PY2'
+            import glob, re
             GiB = 1 << 30
-            kib = int(re.search(r"MemTotal:\s+(\d+)", rd("/proc/meminfo"))[1])
-            print(f"meminfo MemTotal      {kib * 1024 / GiB:8.2f} GiB")
-            udev = subprocess.run(["udevadm", "info", "/sys/class/dmi/id"], capture_output=True, text=True).stdout
-            sizes = [int(v) for k, v in re.findall(r"E: (MEMORY_DEVICE_\d+_SIZE)=(\d+)", udev)]
-            print(f"dmi       DIMMs       {sum(sizes) / GiB:8.2f} GiB  n={len(sizes)} {sorted(set(s // GiB for s in sizes))}")
-            print("dmi       array max  ", re.findall(r"MEMORY_ARRAY_\w+=\S+", udev))
-            edac = [int(rd(f)) for f in glob.glob("/sys/devices/system/edac/mc/mc*/dimm*/size")]
-            print(f"edac      DIMMs       {sum(edac) / 1024:8.2f} GiB  n={len(edac)}")
+            rd = lambda p: open(p).read().strip()
             bs = int(rd("/sys/devices/system/memory/block_size_bytes"), 16)
-            on = sum(rd(f) == "online" for f in glob.glob("/sys/devices/system/memory/memory*/state"))
-            print(f"sysfs     mem blocks  {on * bs / GiB:8.2f} GiB  block={bs >> 20} MiB n={on}")
-            nodes = [int(re.search(r"MemTotal:\s+(\d+)", rd(f))[1]) for f in glob.glob("/sys/devices/system/node/node*/meminfo")]
-            print(f"numa      MemTotal    {[round(n / 2**20, 1) for n in nodes]} GiB")
+            print("block size GiB", bs / GiB)
             ram = []
             for d in glob.glob("/sys/firmware/memmap/*"):
-                if rd(f"{d}/type") == "System RAM":
-                    try: ram.append(int(rd(f"{d}/end"), 16) - int(rd(f"{d}/start"), 16) + 1)
-                    except ValueError: pass
-            print(f"firmware  memmap RAM  {sum(ram) / GiB:8.2f} GiB  n={len(ram)}")
-            PY
+                ram.append((int(rd(f"{d}/start"), 16), int(rd(f"{d}/end"), 16) + 1, rd(f"{d}/type")))
+            for a, b, t in sorted(ram):
+                print(f"memmap {a / GiB:12.6f} - {b / GiB:12.6f} GiB  {(b - a) / GiB:12.6f} GiB  {t}")
+            on = sorted(int(re.search(r"(\d+)$", d)[1]) for d in glob.glob("/sys/devices/system/memory/memory*") if rd(f"{d}/state") == "online")
+            runs, s0 = [], on[0]
+            for x, y in zip(on, on[1:] + [None]):
+                if y != x + 1: runs.append((s0, x)); s0 = y
+            for a, b in runs:
+                print(f"online blocks {a}-{b}  = {a * bs / GiB:.0f} - {(b + 1) * bs / GiB:.0f} GiB")
+            print("online total GiB", len(on) * bs / GiB)
+            print("System RAM total GiB", sum(b - a for a, b, t in ram if t == "System RAM") / GiB)
+            PY2
