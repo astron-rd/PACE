@@ -47,7 +47,7 @@ Result of a single benchmark run.
 | Property | Type | Required | Possible values | Default | Description | Examples |
 | -------- | ---- | -------- | --------------- | ------- | ----------- | -------- |
 | version | `string` | ✅ | [`^(0\|[1-9]\d*)\.(0\|[1-9]\d*)\.(0\|[1-9]\d*)(?:-((?:0\|[1-9]\d*\|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0\|[1-9]\d*\|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$`](https://regex101.com/?regex=%5E%280%7C%5B1-9%5D%5Cd%2A%29%5C.%280%7C%5B1-9%5D%5Cd%2A%29%5C.%280%7C%5B1-9%5D%5Cd%2A%29%28%3F%3A-%28%28%3F%3A0%7C%5B1-9%5D%5Cd%2A%7C%5Cd%2A%5Ba-zA-Z-%5D%5B0-9a-zA-Z-%5D%2A%29%28%3F%3A%5C.%28%3F%3A0%7C%5B1-9%5D%5Cd%2A%7C%5Cd%2A%5Ba-zA-Z-%5D%5B0-9a-zA-Z-%5D%2A%29%29%2A%29%29%3F%28%3F%3A%5C%2B%28%5B0-9a-zA-Z-%5D%2B%28%3F%3A%5C.%5B0-9a-zA-Z-%5D%2B%29%2A%29%29%3F%24) |  | Specification SemVer. |  |
-| timestamp | `string` | ✅ | Format: [`date-time`](https://json-schema.org/understanding-json-schema/reference/string#built-in-formats) |  | Start time of the run. |  |
+| timestamp | `string` | ✅ | Format: [`date-time`](https://json-schema.org/understanding-json-schema/reference/string#built-in-formats) |  | Benchmark start time. |  |
 | application | `string` | ✅ | `all-sky` `dedisp` `idg` |  | Benchmarked application. |  |
 | language | `string` | ✅ | `cpp` `julia` `python` `rust` |  | Programming language. |  |
 | commit | `string` | ✅ | [`^[0-9a-f]{8}$`](https://regex101.com/?regex=%5E%5B0-9a-f%5D%7B8%7D%24) |  | Git commit hash. |  |
