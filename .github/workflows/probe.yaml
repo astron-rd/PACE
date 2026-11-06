@@ -9,11 +9,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { partition: rbq, gpu: W7700 }
-          - { partition: defq, gpu: A4000 }
-          - { partition: defq, gpu: V100 }
           - { partition: defq, gpu: A100 }
-          - { partition: defq, gpu: TitanRTX }
     name: probe (${{ matrix.gpu }})
     steps:
       - uses: astron-rd/slurm-action@v1.2
@@ -24,6 +20,10 @@ jobs:
           commands: |
             set +e
             hostname
+            lscpu | grep "Model name"
+            python3 -c "import os; print('threads', len(os.sched_getaffinity(0)))"
+            udevadm info /sys/class/dmi/id | grep -E "CONFIGURED_SPEED_MTS" | sort -u -t= -k2
+            lspci -vmm -s "$(nvidia-smi --query-gpu=pci.bus_id --format=csv,noheader | cut -c5-)" | grep "^Device"
             scontrol show node "$SLURMD_NODENAME" | grep -oE "RealMemory=[0-9]+"
             lsmem --summary 2>&1
             python3 - <<'PY'
