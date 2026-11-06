@@ -24,9 +24,9 @@ class Timer:
 
     def time(self, description, operation):
         print(f"{description:<38}", end="")
-        start = time.time()
+        start = time.perf_counter()
         result = operation()
-        end = time.time()
+        end = time.perf_counter()
         duration = end - start
         print(f" {duration:>9.6f} s")
         self.timings[description] = duration
