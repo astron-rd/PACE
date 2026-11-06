@@ -21,7 +21,7 @@ Result of a single benchmark run.
       "model": "A100 PCIe 40GB"
     },
     "memory": {
-      "gib": 1026,
+      "gib": 1024,
       "mts": 3200
     }
   },

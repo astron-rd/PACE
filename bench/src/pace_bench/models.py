@@ -15,7 +15,7 @@ EXAMPLE: JsonDict = {
     "hardware": {
         "cpu": {"model": "AMD EPYC 7H12 64-Core Processor", "threads": 16},
         "gpu": {"model": "A100 PCIe 40GB"},
-        "memory": {"gib": 1026, "mts": 3200},
+        "memory": {"gib": 1024, "mts": 3200},
     },
     "parameters": {
         "channel_count": 1024,
