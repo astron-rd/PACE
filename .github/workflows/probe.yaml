@@ -20,14 +20,12 @@ jobs:
           commands: |
             set +e
             hostname
-            ls -l /sys/firmware/dmi/tables/ /sys/firmware/acpi/tables/ | head -40
-            ls -ld /sys/firmware/dmi/entries/17-* | head -3; ls -d /sys/firmware/dmi/entries/17-* | wc -l
-            head -c 64 /sys/firmware/dmi/entries/17-0/raw | od -An -tx1 | head -2
-            udevadm --version
-            udevadm info /sys/class/dmi/id | grep -E "MEMORY_(ARRAY|DEVICE_[0-9]+_(SIZE|LOCATOR|PRESENT))" | head -60
-            udevadm info /sys/class/dmi/id | grep -c MEMORY_DEVICE_.*_SIZE
-            awk '/^Node/{z=$0} /present/{p+=$2} /spanned/{s+=$2} END{print "zoneinfo present GiB", p*4096/2^30, "spanned GiB", s*4096/2^30}' /proc/zoneinfo
-            dmesg 2>&1 | grep -E "^\[.*\] Memory:|DMI:|e820" | head -5
-            journalctl -k -b 2>&1 | grep -E "Memory:" | head -3
-            which lstopo hwloc-ls lshw dmidecode inxi 2>&1
-            cat /sys/devices/system/node/node*/meminfo | grep MemTotal
+            udevadm info /sys/class/dmi/id | grep -E "MEMORY_DEVICE_[0-9]+_" | sed 's/^E: MEMORY_DEVICE_[0-9]*_//; s/=.*//' | sort | uniq -c
+            udevadm info /sys/class/dmi/id | grep -E "MEMORY_DEVICE_[0-9]+_(SIZE|PRESENT|LOCATOR|SPEED_MTS|CONFIGURED_SPEED_MTS|TYPE|PART_NUMBER)=" | sed -n '40,200p'
+            python3 - <<'PY2'
+            import re, subprocess
+            u = subprocess.run(["udevadm", "info", "/sys/class/dmi/id"], capture_output=True, text=True).stdout
+            s = [int(v) for v in re.findall(r"^E: MEMORY_DEVICE_\d+_SIZE=(\d+)$", u, re.M)]
+            print("n", len(s), "GiB", sum(s) / 2**30)
+            PY2
+            lstopo --of console --no-io 2>&1 | head -8
