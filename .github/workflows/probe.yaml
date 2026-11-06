@@ -9,6 +9,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - { partition: rbq, gpu: W7700 }
+          - { partition: rbq, gpu: R9700 }
+          - { partition: rbq, gpu: AD4000 }
+          - { partition: rbq, gpu: B4000 }
+          - { partition: rbq, gpu: AD5000 }
+          - { partition: defq, gpu: A4000 }
+          - { partition: defq, gpu: V100 }
           - { partition: defq, gpu: A100 }
     name: probe (${{ matrix.gpu }})
     steps:
@@ -19,8 +26,13 @@ jobs:
           time: 00:05:00
           commands: |
             set +e
-            hostname
-            ls /sys/devices/system/edac/mc/mc0
-            for m in /sys/devices/system/edac/mc/mc*; do echo "$m size_mb=$(cat $m/size_mb) name=$(cat $m/mc_name)"; done
-            for f in /sys/devices/system/edac/mc/mc*/{dimm,rank}*/size; do echo "$f $(cat $f) $(cat ${f%size}dimm_label 2>/dev/null) $(cat ${f%size}dimm_mem_type 2>/dev/null)"; done 2>&1 | head -40
-            ls -l /sys/bus/i2c/devices/2-0056/
+            python3 - <<'PY'
+            import glob, os, socket
+            rd = lambda p: open(p).read().strip()
+            mcs = sorted(glob.glob("/sys/devices/system/edac/mc/mc*/"))
+            mb = [int(rd(m + "size_mb")) for m in mcs]
+            names = sorted({rd(m + "mc_name") for m in mcs})
+            print(f"RESULT {socket.gethostname()} edac_gib={sum(mb) / 1024} per_mc={mb} drivers={names}")
+            for m in mcs[:1]:
+                print("RESULT  entries", sorted(os.path.basename(d) for d in glob.glob(m + "*") if os.path.basename(d)[:4] in ("dimm", "rank", "csro"))[:4])
+            PY
