@@ -9,15 +9,15 @@ The generated documentation is in [`4-specification.md`](../docs/general/benchma
 
 1. Bump the specification version, using `major`, `minor` or `patch` depending on the change:
 
-   ```sh
-   uv version --bump minor
-   ```
+    ```sh
+    uv version --bump minor
+    ```
 
 1. Update the documentation:
 
-   ```sh
-   uv run export
-   ```
+    ```sh
+    uv run export
+    ```
 
 > [!NOTE]
 > See the [Pydantic documentation on models](https://pydantic.dev/docs/validation/latest/concepts/models/) for the available field types and constraints.

@@ -10,7 +10,7 @@ PACE requires a robust solution for recording, storing, and visualizing
 benchmarking results that can handle:
 
 - Experiment-level data: parameters, configurations, and custom metrics such as
-  fine-grained timings
+    fine-grained timings
 - System-level metrics: CPU, GPU, and resource utilization
 - Multi-language support: C++, Rust, Python, and Julia
 - Performance regression tracking: Monitoring changes across commits

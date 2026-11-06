@@ -34,7 +34,7 @@ List concrete outputs expected from this task, such as:
 ## Acceptance Criteria
 
 - Task outcome verified (e.g., code runs, report reviewed, or benchmarks
-  validated)
+    validated)
 - Rationale for design or implementation choices included
 - Linked references and related discussions documented
 
