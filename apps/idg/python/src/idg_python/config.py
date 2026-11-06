@@ -24,7 +24,7 @@ class Settings:
             "--json",
             dest="json_output",
             metavar="JSON",
-            const="timings.json",
+            const="result.json",
             nargs="?",
             help="Output timings in JSON format (optional: specify filename)",
         )
