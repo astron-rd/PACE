@@ -9,21 +9,26 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: cpu
-            gres: ""
-          - name: A4000
-            gres: gpu:A4000
+          - name: W7700
+            partition: rbq
+            gres: gpu:W7700
+          - name: R9700
+            partition: rbq
+            gres: gpu:R9700
     name: probe (${{ matrix.name }})
     steps:
       - uses: astron-rd/slurm-action@v1.2
         with:
-          partition: defq
+          partition: ${{ matrix.partition }}
           gres: ${{ matrix.gres }}
           time: 00:05:00
           commands: |
             set +e
             section() { echo; echo "### $*"; }
             hostname
-            sinfo -o "%P %N %G %f" 2>&1
-            scontrol show config 2>&1 | grep -iE "^(SLURM_VERSION|GresTypes|SelectType)"
-            nvidia-smi --query-gpu=name,memory.total,pci.device_id,mig.mode.current --format=csv 2>&1
+            for t in rocm-smi amd-smi rocminfo nvidia-smi lspci; do printf "%s: " $t; command -v $t || echo missing; done
+            rocm-smi --showproductname --showmeminfo vram --json 2>&1 | head -40
+            amd-smi static --asic --vram --json 2>&1 | head -60
+            for d in /sys/class/drm/card*/device; do echo "$d vendor=$(cat $d/vendor 2>&1) device=$(cat $d/device 2>&1) vram=$(cat $d/mem_info_vram_total 2>&1)"; done
+            lspci -nn 2>&1 | grep -iE "vga|display|3d"
+            env | grep -E "^(SLURM_JOB_GPUS|SLURM_GPUS|ROCR_VISIBLE_DEVICES|HIP_VISIBLE_DEVICES|GPU_DEVICE_ORDINAL|CUDA_VISIBLE_DEVICES)=" | sort
