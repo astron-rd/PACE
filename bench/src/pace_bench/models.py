@@ -1,12 +1,13 @@
 from importlib import metadata
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, NonNegativeFloat
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, NonNegativeFloat
 from pydantic.config import JsonDict
 from pydantic_extra_types.semantic_version import SemanticVersion
 
 EXAMPLE: JsonDict = {
     "version": metadata.version("pace-bench"),
+    "timestamp": "2026-11-06T14:03:27Z",
     "application": "dedisp",
     "language": "rust",
     "framework": "rayon",
@@ -67,6 +68,9 @@ class Result(BaseModel):
     model_config = ConfigDict(json_schema_extra={"examples": [EXAMPLE]})
 
     version: SemanticVersion = Field(description="Specification SemVer.")
+    timestamp: AwareDatetime = Field(
+        description="Start of the benchmark run, ISO 8601 with time zone."
+    )
     application: Literal["all-sky", "dedisp", "idg"] = Field(
         description="Benchmarked application."
     )
