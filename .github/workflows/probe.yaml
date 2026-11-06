@@ -25,7 +25,7 @@ jobs:
             section() { echo; echo "### $*"; }
             hostname
             python3 - <<'PY'
-            import json, os, subprocess
+            import json, os, re, subprocess
 
             def run(*cmd):
                 r = subprocess.run(cmd, capture_output=True, text=True)
@@ -37,8 +37,8 @@ jobs:
                 for l in run("udevadm", "info", "/sys/class/dmi/id").splitlines()
                 if l.startswith("E: ")
             )
-            sizes = [int(v) for k, v in udev.items() if k.startswith("MEMORY_DEVICE_") and k.endswith("_SIZE")]
-            speeds = {int(v) for k, v in udev.items() if k.endswith("_CONFIGURED_SPEED_MTS")}
+            sizes = [int(v) for k, v in udev.items() if re.fullmatch(r"MEMORY_DEVICE_\d+_SIZE", k)]
+            speeds = {int(v) for k, v in udev.items() if re.fullmatch(r"MEMORY_DEVICE_\d+_CONFIGURED_SPEED_MTS", k)}
             gpus = []
             for row in run("nvidia-smi", "--query-gpu=name,memory.total,driver_version", "--format=csv,noheader,nounits").splitlines():
                 name, mib, driver = (f.strip() for f in row.split(","))
@@ -51,7 +51,4 @@ jobs:
             print(json.dumps({"hardware": hardware}, indent=2))
             print("dimms:", len(sizes), "speeds:", sorted(speeds))
             print(open("/proc/meminfo").readline().strip())
-            for k, v in udev.items():
-                if k.startswith("MEMORY_DEVICE_") and k.split("_", 3)[3] in ("SIZE", "LOCATOR", "BANK_LOCATOR", "TYPE", "FORM_FACTOR", "PRESENT"):
-                    print("udev", k, v)
             PY
