@@ -6,28 +6,28 @@ Bencher is the selected benchmarking framework for PACE, chosen for its unique c
 
 - **Cross-language support**
 
-  - Native Rust SDK
-  - Google Benchmark/Catch2 integration for C++
-  - Python support via custom benchmarks
-  - Language-agnostic JSON adapter
+    - Native Rust SDK
+    - Google Benchmark/Catch2 integration for C++
+    - Python support via custom benchmarks
+    - Language-agnostic JSON adapter
 
 - **Continuous performance benchmarking**
 
-  - Built-in regression detection
-  - CI/CD integration capabilities
-  - Historical trend analysis
+    - Built-in regression detection
+    - CI/CD integration capabilities
+    - Historical trend analysis
 
 - **Flexibility**
 
-  - Self-hosted or cloud deployment
-  - Custom metrics and parameters
-  - Adaptable to various benchmarking scenarios
+    - Self-hosted or cloud deployment
+    - Custom metrics and parameters
+    - Adaptable to various benchmarking scenarios
 
 - **Team collaboration**
 
-  - Shared dashboards and reports
-  - Performance regression alerts
-  - Comprehensive visualization
+    - Shared dashboards and reports
+    - Performance regression alerts
+    - Comprehensive visualization
 
 ## Proof of concept
 
@@ -37,7 +37,7 @@ We successfully implemented a Bencher integration, demonstrating:
 
 - IDG Python refactoring: Modified to support benchmarking metrics output
 - Custom upload script: Handles JSON result formatting and Bencher API
-  communication
+    communication
 - Flexible metric tracking: Supports both timing and parameter data
 
 ### Current approach
@@ -104,7 +104,7 @@ python3 bencher/upload.py --project "$BENCHER_PROJECT" \
 - `token`: Bencher API token
 - `benchmark`: The application under test, e.g. `idg`
 - `branch`: The specific implementation of this benchmark, e.g. `python` (not
-  the Git branch name)
+    the Git branch name)
 - `results.json`: Path to JSON file with benchmarking results
 
 ### Successful output

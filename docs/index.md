@@ -23,20 +23,20 @@ The current PACE applications are:
 The documentation is organized into three categories:
 
 - Applications
-  - Image-Domain Gridding
-  - All-sky Imaging (LOFTY)
-  - Fourier-Domain Dedispersion
-  - Fourier-Domain Dedispersion Details
+    - Image-Domain Gridding
+    - All-sky Imaging (LOFTY)
+    - Fourier-Domain Dedispersion
+    - Fourier-Domain Dedispersion Details
 - Programming Languages
-  - Jax
-  - Python
-  - Rust
+    - Jax
+    - Python
+    - Rust
 - General
-  - Benchmarking
-    - Frameworks
-    - Bencher
-    - Architecture
-  - Data Format
+    - Benchmarking
+        - Frameworks
+        - Bencher
+        - Architecture
+    - Data Format
 
 Use the navigation menu to browse these sections.
 

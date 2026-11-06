@@ -31,7 +31,7 @@ repos:
       rev: 1.0.0
       hooks:
           - id: mdformat
-            additional_dependencies: [mdformat-frontmatter, mdformat-gfm]
+            additional_dependencies: [mdformat-frontmatter, mdformat-gfm, mdformat-mkdocs]
             exclude: (^|/)4-specification\.md$
     - repo: local
       hooks:

@@ -31,19 +31,19 @@ Some useful papers and online resources:
 
 Due to variations in the interstellar medium (ISM) along the line of sight to a
 radio transient (e.g. a pulsar), the signal is dispersed as a function of
-frequency. There is a time delay between the signal observed at $\\nu$ and a
-reference frequency $\\nu_0$, described by:
+frequency. There is a time delay between the signal observed at $\nu$ and a
+reference frequency $\nu_0$, described by:
 
 $$
-\\Delta t(\\nu, \\mathrm{DM}) = \\mathrm{DM},\\kappa\_{\\mathrm{DM}}\\left(\\nu^{-2} - \\nu_0^{-2}\\right)
+\Delta t(\nu, \mathrm{DM}) = \mathrm{DM}\,\kappa_{\mathrm{DM}}\left(\nu^{-2} - \nu_0^{-2}\right)
 $$
 
-where $\\kappa\_{\\mathrm{DM}}$ is a proportionality constant and $\\mathrm{DM}$
+where $\kappa_{\mathrm{DM}}$ is a proportionality constant and $\mathrm{DM}$
 is the dispersion measure, defined as the path integral over electron density
 along the line-of-sight:
 
 $$
-\\mathrm{DM} = \\int n_e(\\ell),\\mathrm{d}\\ell
+\mathrm{DM} = \int n_e(\ell)\,\mathrm{d}\ell
 $$
 
 ### Beamformed input data
@@ -58,7 +58,7 @@ For a trial DM, the relative delay between two frequencies scales approximately
 as:
 
 $$
-\\Delta t \\propto \\mathrm{DM}\\left(\\nu_1^{-2} - \\nu_2^{-2}\\right)
+\Delta t \propto \mathrm{DM}\left(\nu_1^{-2} - \nu_2^{-2}\right)
 $$
 
 so lower-frequency channels must be shifted by larger amounts than
@@ -66,11 +66,11 @@ higher-frequency channels.
 
 ### Time-domain dedispersion
 
-Given a Stokes I spectrum $I(t, \\nu)$, time-domain dedispersion applies
+Given a Stokes I spectrum $I(t, \nu)$, time-domain dedispersion applies
 channel-dependent delays and sums channels:
 
 $$
-I(t, \\mathrm{DM}) = \\sum\_{\\nu} I\\left(t - \\Delta t(\\nu, \\mathrm{DM}), \\nu\\right)
+I(t, \mathrm{DM}) = \sum_{\nu} I\left(t - \Delta t(\nu, \mathrm{DM}), \nu\right)
 $$
 
 Since DM is usually unknown, this process is repeated for many trial DMs (often
@@ -85,26 +85,26 @@ Instead of applying time delays directly, Fourier-Domain Dedispersion (FDD)
 applies equivalent phase shifts in frequency space. This increases arithmetic
 intensity and is often better suited to modern accelerators such as GPUs.
 
-We Fourier-transform each channel (observation frequency) $\\nu$ to obtain
+We Fourier-transform each channel (observation frequency) $\nu$ to obtain
 intensity as a function of spin frequency $f_s$:
 
 $$
-I(f_s, \\nu) = \\mathcal{F}\_{t \\rightarrow f_s}{I(t, \\nu)} = \\int I(t, \\nu),e^{-2\\pi i f_s t},\\mathrm{d}t
+I(f_s, \nu) = \mathcal{F}_{t \rightarrow f_s}\{I(t, \nu)\} = \int I(t, \nu)\,e^{-2\pi i f_s t}\,\mathrm{d}t
 $$
 
 In this space, the time delay is applied as a phase rotation:
 
 $$
-\\mathcal{W}(f_s, \\nu, \\mathrm{DM}) = e^{-2\\pi i f_s,\\Delta t(\\nu, \\mathrm{DM})}
+\mathcal{W}(f_s, \nu, \mathrm{DM}) = e^{-2\pi i f_s\,\Delta t(\nu, \mathrm{DM})}
 $$
 
 A discrete-time equivalent for channel spectrum $X_c[k]$ is:
 
 $$
-X'\_c[k] = X_c[k] e^{-2\\pi i k \\tau_c / N}
+X'_c[k] = X_c[k] e^{-2\pi i k \tau_c / N}
 $$
 
-where $N$ is the transform length and $\\tau_c$ is the delay for channel $c$ at
+where $N$ is the transform length and $\tau_c$ is the delay for channel $c$ at
 the current trial DM.
 
 ### Algorithm
@@ -113,7 +113,7 @@ For each block of beamformed data, FDD proceeds in three steps:
 
 1. FFT the time series of every frequency channel.
 1. For each trial DM, compute per-channel delays and apply corresponding phase
-   rotations in the Fourier domain.
+    rotations in the Fourier domain.
 1. Sum corrected channels to form a dedispersed output for that DM.
 
 In pseudocode:
@@ -268,13 +268,13 @@ fft_r2c_inplace(nsamp_fft, nchans, nsamp_padded, data_nu)
 ```
 
 - Input: `nsamp_fft` real values per channel (zero-padded after `nsamps`
-  samples)
+    samples)
 - Output: `nfreq = nsamp_fft/2 + 1` complex values per channel
 - Batch size: `nchans` (process all channels)
 - Stride: `nsamp_padded` floats between channels = `nsamp_padded/2` complex
-  values between channels
+    values between channels
 - Note: Dedispersion only consumes bins `0..nfreq-1`; higher bins from the
-  padded FFT are not used
+    padded FFT are not used
 
 **Dedispersion in Frequency Domain**
 
@@ -311,13 +311,13 @@ fft_c2r_inplace(nsamp_fft, ndm, nsamp_padded, data_dm)
 ```
 
 - Input: `data_dm` contains nfreq complex values per DM (rest is zero from
-  initialisation)
+    initialisation)
 - Output: `nsamp_fft` real values per DM (zero-padded to `nsamp_padded`)
 - Batch size: `ndm` (process all output DMs)
 - Stride: `nsamp_padded` floats between DMs
 - Note: The FFT length is `nsamp_fft` (not `nsamp_padded`), so only the first
-  `nsamp_fft` time samples are computed, the remaining padded region is
-  undefined
+    `nsamp_fft` time samples are computed, the remaining padded region is
+    undefined
 
 **Copy output (trimmed to valid region)**
 
@@ -336,9 +336,9 @@ copy_data(ndm, nsamps_computed, nsamp_padded, nsamps_computed, data_dm, output)
 **Why only `nsamps_computed`?**
 
 - We keep the earliest `nsamps_computed = nsamps - max_delay` samples from each
-  DM output row
+    DM output row
 - We drop the last `max_delay` samples, which depend on data beyond the observed
-  time window
+    time window
 - This avoids edge effects from delay alignment near the end of the buffer
 
 **Buffer visualisation**

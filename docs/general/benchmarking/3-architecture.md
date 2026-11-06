@@ -19,31 +19,31 @@ plots are rendered into the docs site.
 ## Problems with Bencher
 
 - **Access.** Not every team member could get access to the project on
-  bencher.dev.
+    bencher.dev.
 - **Platform churn.** Bencher's docs: "Do not specify an exact version if using
-  Bencher Cloud as there are still occasional breaking changes." Five of the
-  eight releases between May and July 2026 are marked BREAKING.
+    Bencher Cloud as there are still occasional breaking changes." Five of the
+    eight releases between May and July 2026 are marked BREAKING.
 - **Runner noise.** A hosted runner is a virtual machine on shared hardware, so
-  the CPU model and the load next to it change from run to run: `ubuntu-latest`
-  varies 10 to 20 % run to run by github-action-benchmark's own estimate, and
-  the Bencher trial on it raised a false +10.66 % alert on a 20 us kernel
-  ([report](https://bencher.dev/perf/astron-pace/reports/f3bf8381-e065-4ae8-86e2-bd20cd186d2c)).
+    the CPU model and the load next to it change from run to run: `ubuntu-latest`
+    varies 10 to 20 % run to run by github-action-benchmark's own estimate, and
+    the Bencher trial on it raised a false +10.66 % alert on a 20 us kernel
+    ([report](https://bencher.dev/perf/astron-pace/reports/f3bf8381-e065-4ae8-86e2-bd20cd186d2c)).
 - **No GPUs.** The GPU and multi-node work of the later PACE milestones (M3 to
-  M5) needs GPU nodes, which CI runners do not offer.
+    M5) needs GPU nodes, which CI runners do not offer.
 - **Data model.** Bencher, like github-action-benchmark, CodSpeed and Nyrkio,
-  records a value per branch, testbed and commit. Encoding the language as
-  "branch" only gives one timeline per language.
+    records a value per branch, testbed and commit. Encoding the language as
+    "branch" only gives one timeline per language.
 
 ## Requirements
 
 Beyond the [earlier criteria](1-frameworks.md), two requirements matter:
 
 - **Comparison across implementations**: results for the same application in
-  Python, C++, Rust, Julia and soon the OpenMP, OpenACC and GPU variants must be
-  viewable side by side.
+    Python, C++, Rust, Julia and soon the OpenMP, OpenACC and GPU variants must be
+    viewable side by side.
 - **Low maintenance**: running a benchmark server is outside the scope of the
-  project. DAS-6 is the way around that, but it should not turn into support
-  requests for the people who maintain it.
+    project. DAS-6 is the way around that, but it should not turn into support
+    requests for the people who maintain it.
 
 ## Proposed architecture
 
@@ -126,25 +126,25 @@ The following steps are required to operationalize this architecture:
 ## Sources
 
 - Bencher: [changelog](https://bencher.dev/docs/reference/changelog/),
-  [CLI install](https://bencher.dev/docs/how-to/install-cli/)
+    [CLI install](https://bencher.dev/docs/how-to/install-cli/)
 - github-action-benchmark:
-  [repository](https://github.com/benchmark-action/github-action-benchmark)
+    [repository](https://github.com/benchmark-action/github-action-benchmark)
 - CodSpeed:
-  [benchmarks in CI without noise](https://codspeed.io/blog/benchmarks-in-ci-without-noise)
+    [benchmarks in CI without noise](https://codspeed.io/blog/benchmarks-in-ci-without-noise)
 - Nyrkio: [repository](https://github.com/nyrkio/nyrkio)
 - DAS-6: [job policy](https://www.cs.vu.nl/das/jobs.shtml)
 - GitHub Actions:
-  [matrix](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/run-job-variations)
+    [matrix](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/run-job-variations)
 - slurm-action: [repository](https://github.com/astron-rd/slurm-action)
 - ReFrame:
-  [tutorial](https://reframe-hpc.readthedocs.io/en/stable/tutorial.html),
-  [manpage](https://reframe-hpc.readthedocs.io/en/stable/manpage.html)
+    [tutorial](https://reframe-hpc.readthedocs.io/en/stable/tutorial.html),
+    [manpage](https://reframe-hpc.readthedocs.io/en/stable/manpage.html)
 - JUBE: [repository](https://github.com/FZJ-JSC/JUBE),
-  [tutorial](https://apps.fz-juelich.de/jsc/jube/docu/tutorial.html)
+    [tutorial](https://apps.fz-juelich.de/jsc/jube/docu/tutorial.html)
 - ReBench: [configuration](https://rebench.readthedocs.io/en/latest/config/)
 - hyperfine: [repository](https://github.com/sharkdp/hyperfine)
 - Ramble:
-  [getting started](https://ramble.readthedocs.io/en/latest/getting_started.html)
+    [getting started](https://ramble.readthedocs.io/en/latest/getting_started.html)
 - Benchpark: [repository](https://github.com/llnl/benchpark)
 - Pavilion2: [documentation](https://pavilion2.readthedocs.io/en/latest/)
 - Conbench: [repository](https://github.com/conbench/conbench)

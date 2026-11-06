@@ -16,14 +16,18 @@ geometric separation and on the sky direction being imaged.
 ### Visibilities and image formation
 
 For a given observing frequency, a visibility can be related to a sky direction
-$(\\ell, m, n)$ through a phase factor of the form
+$(\ell, m, n)$ through a phase factor of the form
 
-$$ e^{-2\\pi i \\nu (u\\ell + vm + w(n-1))/c} $$
+$$
+e^{-2\pi i \nu (u\ell + vm + w(n-1))/c}
+$$
 
-where $(u,v,w)$ are the baseline coordinates, $\\nu$ is the observing frequency,
+where $(u,v,w)$ are the baseline coordinates, $\nu$ is the observing frequency,
 $c$ is the speed of light, and
 
-$$ n = \\sqrt{1 - \\ell^2 - m^2} $$
+$$
+n = \sqrt{1 - \ell^2 - m^2}
+$$
 
 An image pixel is formed by combining the contributions from all baselines for
 that direction.
@@ -46,14 +50,16 @@ LOFTY provides tools for working with LOFAR station statistics products,
 including XST-based imaging. For all-sky imaging, the relevant inputs are a
 visibility matrix, the corresponding baseline coordinates, and the observing
 frequency. The implementation then evaluates the imaging equation directly on an
-$(\\ell, m)$ image grid.
+$(\ell, m)$ image grid.
 
 ### Image grid
 
-The image is sampled on a regular grid in direction cosines $(\\ell, m)$,
-typically covering the square $[-1, 1] \\times [-1, 1]$. Only points satisfying
+The image is sampled on a regular grid in direction cosines $(\ell, m)$,
+typically covering the square $[-1, 1] \times [-1, 1]$. Only points satisfying
 
-$$ \\ell^2 + m^2 < 1 $$
+$$
+\ell^2 + m^2 < 1
+$$
 
 correspond to valid sky directions, so pixels outside this radius are masked or
 left undefined.
@@ -64,8 +70,10 @@ For each image pixel, LOFTY computes the phase for each baseline and combines
 the visibility contributions. In the simplest form implemented in the code base,
 the image is computed as the mean over all baselines:
 
-$$ I(\\ell, m) = \\Re \\left\\langle V\_{pq} ; e^{-2\\pi i \\nu (u\_{pq}\\ell +
-v\_{pq}m + w\_{pq}(n-1))/c} \\right\\rangle\_{p,q} $$
+$$
+I(\ell, m) = \Re \left\langle V_{pq} \; e^{-2\pi i \nu (u_{pq}\ell +
+v_{pq}m + w_{pq}(n-1))/c} \right\rangle_{p,q}
+$$
 
 This is a direct imaging approach rather than a gridding-and-FFT pipeline.
 
@@ -73,10 +81,10 @@ This is a direct imaging approach rather than a gridding-and-FFT pipeline.
 
 At a high level, the all-sky imaging kernel proceeds as follows:
 
-1. Build an $(\\ell, m)$ image grid.
-1. Compute $n = \\sqrt{1 - \\ell^2 - m^2}$ for valid sky pixels.
+1. Build an $(\ell, m)$ image grid.
+1. Compute $n = \sqrt{1 - \ell^2 - m^2}$ for valid sky pixels.
 1. For each baseline, form the phase term from $(u,v,w)$, frequency, and sky
-   direction.
+    direction.
 1. Multiply the visibility by the corresponding complex phasor.
 1. Average or sum the contributions from all baselines.
 1. Take the real part to obtain the image.

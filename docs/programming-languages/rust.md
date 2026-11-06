@@ -9,12 +9,12 @@ properties:
 
 - Native compiled binaries that offer performance rivalling C and C++.
 - Memory safety semantics that grant C++-like memory flexibility without using a
-  garbage collector.
+    garbage collector.
 - Iterator semantics that make it easy to write astronomy code without getting
-  lost in `for` loops.
+    lost in `for` loops.
 - Trivial parallelization using said iterators.
 - Memory and data-race safe parallelization if parallel iterators are not
-  applicable.
+    applicable.
 - Excellent build system and library ecosystem.
 - Easy FFI integration with C and C++ code.
 

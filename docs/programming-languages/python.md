@@ -23,32 +23,32 @@ fragmented.
 ### History crash course
 
 1. Because many Python libraries are incompatible with one another, it is
-   standard practice to install tools in so called `virtual environments`
-   (virtualenv). Historically these where created by using the `virtualenv`
-   package (library).
+    standard practice to install tools in so called `virtual environments`
+    (virtualenv). Historically these where created by using the `virtualenv`
+    package (library).
 
 1. To install packages, `pip` is used, this tool downloads packages from
-   pypi.org.
+    pypi.org.
 
 1. To make your python project something you can install you use the
-   `setuptools` package. This is the _packaging tool_. However, historically,
-   this tool required writing a `setup.py` script which meant you could do
-   anything, this lead to a lot of none-portability problems.
+    `setuptools` package. This is the _packaging tool_. However, historically,
+    this tool required writing a `setup.py` script which meant you could do
+    anything, this lead to a lot of none-portability problems.
 
 1. To solve the issue with 3. we moved to `setup.cfg`. However, this is specific
-   to `setuptools` and there are other packaging libraries.
+    to `setuptools` and there are other packaging libraries.
 
 1. To solve the issue with 4. we moved to `pyproject.toml` this file is coverned
-   by a PEP and so its officially native Python. This file can recognize
-   different packaging frameworks and build tools all within a single file.
+    by a PEP and so its officially native Python. This file can recognize
+    different packaging frameworks and build tools all within a single file.
 
 1. But this wasn't enough because `pip` and `virtualenv` are very slow and
-   having to combine the two in some glue scripts to integrate with CI/CD or
-   `pre-commit` is error prone.
+    having to combine the two in some glue scripts to integrate with CI/CD or
+    `pre-commit` is error prone.
 
 1. So now all the world uses `uv` which uses hardlinks to only download a
-   package once and then cache it in `~/.cache/uv`. So `uv` replaces both `pip`
-   and `virtualenv`
+    package once and then cache it in `~/.cache/uv`. So `uv` replaces both `pip`
+    and `virtualenv`
 
 ### Usage of `tox`
 
