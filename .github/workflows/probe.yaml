@@ -50,4 +50,8 @@ jobs:
             }
             print(json.dumps({"hardware": hardware}, indent=2))
             print("dimms:", len(sizes), "speeds:", sorted(speeds))
+            print(open("/proc/meminfo").readline().strip())
+            for k, v in udev.items():
+                if k.startswith("MEMORY_DEVICE_") and k.split("_", 3)[3] in ("SIZE", "LOCATOR", "BANK_LOCATOR", "TYPE", "FORM_FACTOR", "PRESENT"):
+                    print("udev", k, v)
             PY
