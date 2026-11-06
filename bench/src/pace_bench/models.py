@@ -38,7 +38,7 @@ class Cpu(BaseModel):
     """Processor of the machine that ran the benchmark."""
 
     model: str = Field(description="CPU model name.")
-    threads: int = Field(gt=0, description="Number of hardware threads available.")
+    threads: int = Field(gt=0, description="Allocated hardware threads.")
 
 
 class Gpu(BaseModel):
@@ -50,8 +50,8 @@ class Gpu(BaseModel):
 class Memory(BaseModel):
     """Main memory of the machine that ran the benchmark."""
 
-    gib: int = Field(gt=0, description="Memory size in gibibytes.")
-    mts: int = Field(gt=0, description="Memory speed in megatransfers per second.")
+    gib: int = Field(gt=0, description="Size in gibibytes.")
+    mts: int = Field(gt=0, description="Speed in megatransfers per second.")
 
 
 class Hardware(BaseModel):

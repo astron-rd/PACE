@@ -82,7 +82,7 @@ Processor of the machine that ran the benchmark.
 | Property | Type | Required | Possible values | Description |
 | -------- | ---- | -------- | --------------- | ----------- |
 | model | `string` | ✅ | string | CPU model name. |
-| threads | `integer` | ✅ | `0 < x ` | Number of hardware threads available. |
+| threads | `integer` | ✅ | `0 < x ` | Allocated hardware threads. |
 
 ## Gpu
 
@@ -102,5 +102,5 @@ Main memory of the machine that ran the benchmark.
 
 | Property | Type | Required | Possible values | Description |
 | -------- | ---- | -------- | --------------- | ----------- |
-| gib | `integer` | ✅ | `0 < x ` | Memory size in gibibytes. |
-| mts | `integer` | ✅ | `0 < x ` | Memory speed in megatransfers per second. |
+| gib | `integer` | ✅ | `0 < x ` | Size in gibibytes. |
+| mts | `integer` | ✅ | `0 < x ` | Speed in megatransfers per second. |
