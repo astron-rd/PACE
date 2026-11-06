@@ -23,8 +23,31 @@ jobs:
           commands: |
             set +e
             section() { echo; echo "### $*"; }
-            section host; hostname
-            section udev-memory; udevadm --version; udevadm info /sys/class/dmi/id 2>&1 | grep -E "MEMORY_(ARRAY|DEVICE_[0-9]+_(SPEED|CONFIGURED_SPEED|SIZE|TYPE|PRESENT|LOCATOR))" | head -40
-            section udev-db; ls -l /run/udev/data 2>&1 | grep -i dmi
-            section edac-dimm; ls /sys/devices/system/edac/mc/mc0 2>&1; grep . /sys/devices/system/edac/mc/mc0/dimm0/* 2>&1
-            section placement; grep Cpus_allowed_list /proc/self/status; lscpu -e=CPU,CORE,SOCKET
+            hostname
+            python3 - <<'PY'
+            import json, os, subprocess
+
+            def run(*cmd):
+                r = subprocess.run(cmd, capture_output=True, text=True)
+                return r.stdout if r.returncode == 0 else ""
+
+            lscpu = dict(l.split(":", 1) for l in run("lscpu").splitlines() if ":" in l)
+            udev = dict(
+                l[3:].split("=", 1)
+                for l in run("udevadm", "info", "/sys/class/dmi/id").splitlines()
+                if l.startswith("E: ")
+            )
+            sizes = [int(v) for k, v in udev.items() if k.startswith("MEMORY_DEVICE_") and k.endswith("_SIZE")]
+            speeds = {int(v) for k, v in udev.items() if k.endswith("_CONFIGURED_SPEED_MTS")}
+            gpus = []
+            for row in run("nvidia-smi", "--query-gpu=name,memory.total,driver_version", "--format=csv,noheader,nounits").splitlines():
+                name, mib, driver = (f.strip() for f in row.split(","))
+                gpus.append({"model": name, "memory_mib": int(mib), "driver": driver})
+            hardware = {
+                "cpu": {"model": lscpu["Model name"].strip(), "threads": len(os.sched_getaffinity(0))},
+                "memory": {"mib": sum(sizes) // 2**20, "mts": sorted(speeds)},
+                "gpus": gpus,
+            }
+            print(json.dumps({"hardware": hardware}, indent=2))
+            print("dimms:", len(sizes), "speeds:", sorted(speeds))
+            PY
