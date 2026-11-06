@@ -19,5 +19,13 @@ jobs:
           time: 00:05:00
           commands: |
             set +e
-            scancel 8498 8505
-            squeue -u "$USER" -o "%i %j %T %R"
+            hostname
+            env | grep ^SLURM_ | sort
+            cat /proc/self/cgroup
+            cg=/sys/fs/cgroup$(sed -n 's/^0:://p' /proc/self/cgroup)
+            for d in "$cg" "$(dirname "$cg")" "$(dirname "$(dirname "$cg")")"; do
+              echo "== $d"
+              for f in memory.max memory.high memory.swap.max cpuset.cpus.effective cpu.max; do printf '%s ' $f; cat "$d/$f" 2>&1; done
+            done
+            for f in memory.limit_in_bytes memory.memsw.limit_in_bytes; do ls /sys/fs/cgroup/memory 2>/dev/null | head -1; done
+            scontrol show job -d "$SLURM_JOB_ID"
