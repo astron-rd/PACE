@@ -20,9 +20,7 @@ jobs:
           time: 00:05:00
           commands: |
             hostname
-            echo "R env OMP: [${OMP_NUM_THREADS-unset}] [${OMP_THREAD_LIMIT-unset}]"
-            echo "R nproc: [$(nproc)]"
-            echo "R OMP_NUM_THREADS=4 nproc: [$(OMP_NUM_THREADS=4 nproc)]"
-            echo "R SLURM_CPUS_ON_NODE: [${SLURM_CPUS_ON_NODE-unset}]"
-            echo "R SLURM_JOB_CPUS_PER_NODE: [${SLURM_JOB_CPUS_PER_NODE-unset}]"
-            echo "R hwloc-calc: [$(hwloc-calc -N pu all)]"
+            env | grep -E '^SLURM.*(CPU|TASK|GPU|MEM|TRES|GRES|NODE|THREAD|SOCKET|CORE)' | sort | sed 's/^/R env: /'
+            scontrol show config | grep -E 'SelectType|TaskPlugin|GresTypes' | sed 's/^/R conf: /'
+            scontrol show node $(hostname) | grep -E 'CPUTot|ThreadsPerCore|Sockets|RealMemory|Gres|CfgTRES|AllocTRES' | sed 's/^/R node: /'
+            scontrol show job $SLURM_JOB_ID | grep -E 'NumCPUs|TRES|MinMemory|Gres' | sed 's/^/R job: /'
