@@ -9,6 +9,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - { partition: rbq, gpu: W7700 }
+          - { partition: rbq, gpu: AD4000 }
           - { partition: defq, gpu: A100 }
     name: probe (${{ matrix.gpu }})
     steps:
@@ -19,10 +21,7 @@ jobs:
           time: 00:05:00
           commands: |
             hostname
-            source /etc/profile.d/lmod.sh
-            module load spack/2026.10.06 >/dev/null 2>&1
-            echo "LOADED=$LOADEDMODULES"
-            echo "MODULEPATH=$MODULEPATH"
-            module -t avail 2>&1 | grep -v ':$' | sed 's/^/AVAIL /'
-            command -v spack && spack --version
-            spack find 2>&1 | grep -iE "python|uv|hwloc|pciutils|dmidecode|lshw|clinfo|vulkan|rocm|cuda" | head -40 | sed 's/^/FIND /'
+            ls /etc/OpenCL/vendors/ 2>&1 | sed 's/^/ICD /'
+            source /etc/profile.d/lmod.sh 2>/dev/null
+            module load rocm >/dev/null 2>&1
+            clinfo 2>&1 | grep -E "Number of platforms|Platform Name|Number of devices|  Device Name|Board Name" | sed 's/^/CL /'
