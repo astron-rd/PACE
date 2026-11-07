@@ -9,7 +9,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { partition: rbq, gpu: R9700 }
           - { partition: rbq, gpu: W7700 }
     name: probe (${{ matrix.gpu }})
     steps:
@@ -21,8 +20,12 @@ jobs:
           commands: |
             set +e
             hostname
-            ls /opt/rocm/bin | grep -iE "smi|rocminfo|agent" | tr "\n" " "; echo
-            echo "--- amd-smi"; /opt/rocm/bin/amd-smi static --asic --bus 2>&1 | grep -iE "^GPU|MARKET|BDF|DEVICE_ID|REV_ID|PRODUCT" | head -20
-            echo "--- rocm-smi"; /opt/rocm/bin/rocm-smi --showproductname 2>&1 | grep -iE "GPU\[" | head -10
-            echo "--- rocminfo"; /opt/rocm/bin/rocminfo 2>&1 | grep -E "Marketing Name|^  Name:" | head -10
-            echo "--- HIP_VISIBLE/ROCR"; env | grep -E "ROCR|HIP_VIS|GPU_DEVICE"
+            echo "PATH=$PATH"
+            echo "plain: $(command -v amd-smi || echo missing)"
+            echo "login shell: $(bash -lc 'command -v amd-smi' || echo missing)"
+            source /etc/profile.d/lmod.sh
+            module load rocm 2>&1
+            echo "module rocm: $(command -v amd-smi || echo missing) loaded=$LOADEDMODULES"
+            amd-smi static --asic 2>&1 | grep MARKET_NAME
+            stat -c '%y %n' /opt/rocm-7.14.0 /opt/rocm-7.14.0/bin/amd-smi
+            readlink -f /opt/rocm
