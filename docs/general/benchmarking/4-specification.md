@@ -18,7 +18,7 @@ Result of a single benchmark run.
       "threads": 16
     },
     "gpu": {
-      "model": "A100 PCIe 40GB"
+      "model": "NVIDIA A100-PCIE-40GB"
     },
     "memory": {
       "gib": 1024,

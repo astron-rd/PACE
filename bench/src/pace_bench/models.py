@@ -14,7 +14,7 @@ EXAMPLE: JsonDict = {
     "commit": "a5298758",
     "hardware": {
         "cpu": {"model": "AMD EPYC 7H12 64-Core Processor", "threads": 16},
-        "gpu": {"model": "A100 PCIe 40GB"},
+        "gpu": {"model": "NVIDIA A100-PCIE-40GB"},
         "memory": {"gib": 1024, "mts": 3200},
     },
     "parameters": {
