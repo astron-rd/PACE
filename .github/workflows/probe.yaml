@@ -10,7 +10,6 @@ jobs:
       matrix:
         include:
           - { partition: rbq, gpu: W7700 }
-          - { partition: rbq, gpu: R9700 }
           - { partition: defq, gpu: A100 }
     name: probe (${{ matrix.gpu }})
     steps:
@@ -21,10 +20,17 @@ jobs:
           time: 00:05:00
           commands: |
             hostname
-            echo "R nproc: [$(nproc)]"
-            echo "R lscpu sed: [$(lscpu | sed -n 's/^Model name: *//p')]"
-            echo "R gib: [$(( $(cat /sys/devices/system/edac/mc/mc*/size_mb | paste -sd+) >> 10 ))]"
-            echo "R mts: [$(udevadm info -q property /sys/class/dmi/id | grep -m1 CONFIGURED_SPEED_MTS)]"
-            echo "R nvidia: [$(nvidia-smi --query-gpu=name --format=csv,noheader 2>&1)]"
+            hwloc-info --help 2>&1 | grep -iE "attr|^ *-[a-z] " | sed 's/^/R hi-help: /'
+            hwloc-calc --help 2>&1 | grep -iE "number" | sed 's/^/R hc-help: /'
+            hwloc-info 2>&1 | sed 's/^/R hwloc-info: /'
+            hwloc-info package:0 2>&1 | grep -iE "CPUModel|cpuset" | sed 's/^/R hi-pkg: /'
+            hwloc-info -g "info CPUModel" package:0 2>&1 | sed 's/^/R hi-g: /'
+            hwloc-calc -N pu all 2>&1 | sed 's/^/R hc-N: /'
+            hwloc-calc -N pu 2>&1 | head -2 | sed 's/^/R hc-N-noall: /'
+            nvidia-smi -L 2>&1 | sed 's/^/R nv-L: /'
+            nvidia-smi --help-query-gpu 2>&1 | grep -iE "^\"name\"|product_name" | sed 's/^/R nv-q: /'
+            udevadm info /sys/class/dmi/id 2>&1 | grep -m1 CONFIGURED_SPEED_MTS | sed 's/^/R udev: /'
             source /etc/profile.d/lmod.sh && module load rocm 2>/dev/null
-            echo "R amd grep: [$(amd-smi static --asic 2>&1 | grep MARKET_NAME)]"
+            amd-smi static --help 2>&1 | grep -iE "asic" | sed 's/^/R amd-help: /'
+            amd-smi static -a 2>&1 | grep MARKET_NAME | sed 's/^/R amd-a: /'
+            amd-smi list 2>&1 | grep -i name | sed 's/^/R amd-list: /'
