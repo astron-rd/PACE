@@ -21,7 +21,10 @@ jobs:
           time: 00:05:00
           commands: |
             hostname
-            ls /etc/OpenCL/vendors/ 2>&1 | sed 's/^/ICD /'
             source /etc/profile.d/lmod.sh 2>/dev/null
             module load rocm >/dev/null 2>&1
-            clinfo 2>&1 | grep -E "Number of platforms|Platform Name|Number of devices|  Device Name|Board Name" | sed 's/^/CL /'
+            env | grep -iE "OCL|OPENCL" | sed 's/^/ENV /'
+            ls $(dirname $(dirname $(command -v clinfo)))/etc/OpenCL/vendors 2>&1 | sed 's/^/ROCMICD /'
+            clinfo -l 2>&1 | sed 's/^/CLL /'
+            clinfo 2>&1 | grep -iE "Device Name|Board Name|Device Vendor  " | sed 's/^/CL /'
+            OCL_ICD_VENDORS=$(dirname $(dirname $(command -v clinfo)))/etc/OpenCL/vendors clinfo -l 2>&1 | sed 's/^/CLROCM /'
