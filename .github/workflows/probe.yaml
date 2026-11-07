@@ -10,6 +10,7 @@ jobs:
       matrix:
         include:
           - { partition: rbq, gpu: W7700 }
+          - { partition: defq, gpu: A100 }
     name: probe (${{ matrix.gpu }})
     steps:
       - uses: astron-rd/slurm-action@v1.2
@@ -19,11 +20,9 @@ jobs:
           time: 00:05:00
           commands: |
             hostname
-            echo "R cpu.model: [$(lscpu | sed -n 's/^Model name: *//p')]"
-            echo "R cpu.threads: [$(hwloc-calc -N pu all)]"
-            echo "R gpu nvidia: [$(nvidia-smi --query-gpu=name --format=csv,noheader 2>&1)]"
-            echo "R module bare: [$(type module 2>&1 | head -1)]"
-            module load rocm 2>/dev/null
-            echo "R gpu amd: [$(amd-smi static -a | sed -n 's/^ *MARKET_NAME: //p')]"
-            echo "R memory.gib: [$(echo $(( $(cat /sys/devices/system/edac/mc/mc*/size_mb | paste -sd+) >> 10 )))]"
-            echo "R memory.mts: [$(udevadm info /sys/class/dmi/id | sed -n 's/.*_CONFIGURED_SPEED_MTS=//p' | head -1)]"
+            echo "R env OMP: [${OMP_NUM_THREADS-unset}] [${OMP_THREAD_LIMIT-unset}]"
+            echo "R nproc: [$(nproc)]"
+            echo "R OMP_NUM_THREADS=4 nproc: [$(OMP_NUM_THREADS=4 nproc)]"
+            echo "R SLURM_CPUS_ON_NODE: [${SLURM_CPUS_ON_NODE-unset}]"
+            echo "R SLURM_JOB_CPUS_PER_NODE: [${SLURM_JOB_CPUS_PER_NODE-unset}]"
+            echo "R hwloc-calc: [$(hwloc-calc -N pu all)]"
