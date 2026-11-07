@@ -9,7 +9,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { partition: rbq, gpu: W7700 }
           - { partition: defq, gpu: A100 }
     name: probe (${{ matrix.gpu }})
     steps:
@@ -19,14 +18,11 @@ jobs:
           gres: gpu:${{ matrix.gpu }}
           time: 00:05:00
           commands: |
-            set +e
             hostname
             source /etc/profile.d/lmod.sh
-            echo "=== avail"; module -t avail 2>&1 | grep -v ':$' | tr "\n" " "; echo
-            for m in $(module -t avail 2>&1 | grep -v ':$' | grep -v '/$'); do
-              out=$( (module purge; module load "$m" >/dev/null 2>&1 && for t in rocm-smi amd-smi rocminfo clinfo vulkaninfo dmidecode lshw uv uvx python3 python3.14 nvidia-smi nvcc hipcc lstopo; do p=$(command -v $t) && case "$p" in /usr/bin/*|/bin/*) ;; *) printf "%s " "$t";; esac; done) 2>/dev/null )
-              [ -n "$out" ] && echo "TOOLS $m: $out"
-            done
-            module purge
-            for t in rocm-smi amd-smi rocminfo clinfo vulkaninfo dmidecode lshw uv python3 lstopo; do echo "BASE $t: $(command -v $t || echo -)"; done
-            python3 --version
+            module load spack/2026.10.06 >/dev/null 2>&1
+            echo "LOADED=$LOADEDMODULES"
+            echo "MODULEPATH=$MODULEPATH"
+            module -t avail 2>&1 | grep -v ':$' | sed 's/^/AVAIL /'
+            command -v spack && spack --version
+            spack find 2>&1 | grep -iE "python|uv|hwloc|pciutils|dmidecode|lshw|clinfo|vulkan|rocm|cuda" | head -40 | sed 's/^/FIND /'
