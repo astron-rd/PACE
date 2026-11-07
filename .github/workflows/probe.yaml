@@ -9,13 +9,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { partition: rbq, gpu: W7700 }
           - { partition: rbq, gpu: R9700 }
-          - { partition: rbq, gpu: AD4000 }
-          - { partition: rbq, gpu: B4000 }
-          - { partition: defq, gpu: A4000 }
-          - { partition: defq, gpu: V100 }
-          - { partition: defq, gpu: A100 }
     name: probe (${{ matrix.gpu }})
     steps:
       - uses: astron-rd/slurm-action@v1.2
@@ -25,28 +19,15 @@ jobs:
           time: 00:05:00
           commands: |
             set +e
-            python3 - <<'PY'
-            import glob, os, socket, subprocess
-            rd = lambda p: open(p).read().strip() if os.path.exists(p) else None
-            host = socket.gethostname()
-            try:
-                print("RESULT", host, "nvidia-smi:", subprocess.run(["nvidia-smi", "--query-gpu=name,pci.bus_id", "--format=csv,noheader"], capture_output=True, text=True).stdout.strip())
-            except FileNotFoundError:
-                print("RESULT", host, "nvidia-smi: missing")
-            ids = [p for p in ("/usr/share/libdrm/amdgpu.ids", "/opt/amdgpu/share/libdrm/amdgpu.ids") if os.path.exists(p)]
-            print("RESULT", host, "amdgpu.ids:", ids)
-            for r in sorted(glob.glob("/dev/dri/renderD*")):
-                try:
-                    os.close(os.open(r, os.O_RDWR))
-                except OSError as e:
-                    continue
-                dev = f"/sys/class/drm/{os.path.basename(r)}/device"
-                vid, did, rev = rd(dev + "/vendor"), rd(dev + "/device"), rd(dev + "/revision")
-                name = None
-                if ids and vid == "0x1002":
-                    key = f"{did[2:].upper()},\t{rev[2:].upper()},"
-                    for line in open(ids[0]):
-                        if line.upper().startswith(key):
-                            name = line.rstrip("\n").split("\t")[-1]
-                print("RESULT", host, "open", r, os.path.basename(os.path.realpath(dev)), vid, did, rev, "product_name:", rd(dev + "/product_name"), "| amdgpu.ids:", name)
-            PY
+            hostname
+            source /etc/profile.d/lmod.sh 2>/dev/null
+            module -t avail 2>&1 | grep -iE "rocm|amd|hip|cuda|nvhpc|pci" | head -20
+            ls -d /opt/rocm* /opt/amdgpu* 2>&1
+            lspci --version
+            ls -l /usr/share/misc/pci.ids /usr/share/hwdata/pci.ids 2>&1
+            head -20 /usr/share/misc/pci.ids 2>/dev/null | grep -i version
+            curl -sS -m 10 -o /tmp/pci.ids.$$ https://pci-ids.ucw.cz/v2.2/pci.ids && echo download ok
+            bus=$(basename $(readlink -f /sys/class/drm/renderD130/device))
+            lspci -vmm -s $bus | grep ^Device
+            lspci -i /tmp/pci.ids.$$ -vmm -s $bus | grep ^Device
+            rm -f /tmp/pci.ids.$$
