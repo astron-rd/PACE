@@ -10,6 +10,7 @@ jobs:
       matrix:
         include:
           - { partition: rbq, gpu: R9700 }
+          - { partition: rbq, gpu: W7700 }
     name: probe (${{ matrix.gpu }})
     steps:
       - uses: astron-rd/slurm-action@v1.2
@@ -20,14 +21,8 @@ jobs:
           commands: |
             set +e
             hostname
-            source /etc/profile.d/lmod.sh 2>/dev/null
-            module -t avail 2>&1 | grep -iE "rocm|amd|hip|cuda|nvhpc|pci" | head -20
-            ls -d /opt/rocm* /opt/amdgpu* 2>&1
-            lspci --version
-            ls -l /usr/share/misc/pci.ids /usr/share/hwdata/pci.ids 2>&1
-            head -20 /usr/share/misc/pci.ids 2>/dev/null | grep -i version
-            curl -sS -m 10 -o /tmp/pci.ids.$$ https://pci-ids.ucw.cz/v2.2/pci.ids && echo download ok
-            bus=$(basename $(readlink -f /sys/class/drm/renderD130/device))
-            lspci -vmm -s $bus | grep ^Device
-            lspci -i /tmp/pci.ids.$$ -vmm -s $bus | grep ^Device
-            rm -f /tmp/pci.ids.$$
+            ls /opt/rocm/bin | grep -iE "smi|rocminfo|agent" | tr "\n" " "; echo
+            echo "--- amd-smi"; /opt/rocm/bin/amd-smi static --asic --bus 2>&1 | grep -iE "^GPU|MARKET|BDF|DEVICE_ID|REV_ID|PRODUCT" | head -20
+            echo "--- rocm-smi"; /opt/rocm/bin/rocm-smi --showproductname 2>&1 | grep -iE "GPU\[" | head -10
+            echo "--- rocminfo"; /opt/rocm/bin/rocminfo 2>&1 | grep -E "Marketing Name|^  Name:" | head -10
+            echo "--- HIP_VISIBLE/ROCR"; env | grep -E "ROCR|HIP_VIS|GPU_DEVICE"
