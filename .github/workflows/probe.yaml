@@ -10,7 +10,6 @@ jobs:
       matrix:
         include:
           - { partition: rbq, gpu: W7700 }
-          - { partition: defq, gpu: A100 }
     name: probe (${{ matrix.gpu }})
     steps:
       - uses: astron-rd/slurm-action@v1.2
@@ -24,6 +23,7 @@ jobs:
             echo "R cpu.threads: [$(hwloc-calc -N pu all)]"
             echo "R gpu nvidia: [$(nvidia-smi --query-gpu=name --format=csv,noheader 2>&1)]"
             echo "R module bare: [$(type module 2>&1 | head -1)]"
-            echo "R gpu amd: [$(module load rocm 2>&1 && amd-smi static -a 2>&1 | sed -n 's/^ *MARKET_NAME: //p')]"
+            module load rocm 2>/dev/null
+            echo "R gpu amd: [$(amd-smi static -a | sed -n 's/^ *MARKET_NAME: //p')]"
             echo "R memory.gib: [$(echo $(( $(cat /sys/devices/system/edac/mc/mc*/size_mb | paste -sd+) >> 10 )))]"
             echo "R memory.mts: [$(udevadm info /sys/class/dmi/id | sed -n 's/.*_CONFIGURED_SPEED_MTS=//p' | head -1)]"
