@@ -11,6 +11,7 @@ jobs:
         include:
           - { partition: rbq, gpu: W7700 }
           - { partition: defq, gpu: A100 }
+          - { partition: defq, gpu: V100 }
     name: probe (${{ matrix.gpu }})
     steps:
       - uses: astron-rd/slurm-action@v1.2
@@ -20,15 +21,10 @@ jobs:
           time: 00:05:00
           commands: |
             hostname
-            echo "R affinity $(python3 -c 'import os; print(len(os.sched_getaffinity(0)))')"
-            echo "R nproc $(nproc)"
-            echo "R hwloc-calc $(hwloc-calc --number-of pu all)"
-            echo "R hwloc-calc-cores $(hwloc-calc --number-of core all)"
-            echo "R hwloc-info-attr $(hwloc-info --get-attr 'info CPUModel' package:0)"
-            hwloc-info 2>&1 | sed 's/^/R hwloc-info: /'
-            hwloc-info -s 2>&1 | sed 's/^/R hwloc-info-s: /'
-            lstopo-no-graphics --only pu 2>&1 | wc -l | sed 's/^/R lstopo-pu-lines /'
-            lstopo-no-graphics -s 2>&1 | head -12 | sed 's/^/R lstopo-s: /'
-            lscpu -J 2>/dev/null | python3 -c 'import json,sys; d={e["field"]:e["data"] for e in json.load(sys.stdin)["lscpu"]}; print("R lscpu", d.get("Model name:"), "| CPU(s):", d.get("CPU(s):"), "| On-line:", d.get("On-line CPU(s) list:"))'
-            source /etc/profile.d/lmod.sh 2>/dev/null; module load spack/2026.10.06 numactl >/dev/null 2>&1
-            numactl --show 2>&1 | sed 's/^/R numactl: /'
+            for t in edac-util ras-mc-ctl edac-ctl hwloc-info hwloc-calc nvidia-smi udevadm; do echo "R path $t: $(command -v $t || echo -)"; done
+            dpkg-query -W -f='R pkg ${Package} ${Version} ${db:Status-Status}\n' edac-utils rasdaemon hwloc pciutils 2>&1 | sed 's/^dpkg-query/R pkg dpkg-query/'
+            ls /usr/sbin /usr/bin /usr/local/bin /usr/local/sbin 2>/dev/null | grep -iE "edac|ras-mc|rasdaemon" | sed 's/^/R found /'
+            find /var/software /opt -maxdepth 6 \( -name "edac-util" -o -name "ras-mc-ctl" \) 2>/dev/null | head | sed 's/^/R found /'
+            systemctl is-active rasdaemon 2>&1 | sed 's/^/R rasdaemon service: /'
+            edac-util -s 2>&1 | head -3 | sed 's/^/R edac-util: /'
+            ras-mc-ctl --layout 2>&1 | head -5 | sed 's/^/R ras-mc-ctl: /'
