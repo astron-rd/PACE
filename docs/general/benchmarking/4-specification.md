@@ -14,14 +14,14 @@ Result of a single benchmark run.
   "commit": "a5298758",
   "hardware": {
     "cpu": {
-      "model": "AMD EPYC 7763",
-      "cores": 64
+      "model": "AMD EPYC 7H12 64-Core Processor",
+      "threads": 16
     },
     "gpu": {
-      "model": "NVIDIA A100 80GB"
+      "model": "NVIDIA A100-PCIE-40GB"
     },
     "memory": {
-      "gb": 512,
+      "gib": 1024,
       "mts": 3200
     }
   },
@@ -82,7 +82,7 @@ Processor of the machine that ran the benchmark.
 | Property | Type | Required | Possible values | Description |
 | -------- | ---- | -------- | --------------- | ----------- |
 | model | `string` | ✅ | string | CPU model name. |
-| cores | `integer` | ✅ | `0 < x ` | Number of physical cores. |
+| threads | `integer` | ✅ | `0 < x ` | Allocated hardware threads. |
 
 ## Gpu
 
@@ -102,5 +102,5 @@ Main memory of the machine that ran the benchmark.
 
 | Property | Type | Required | Possible values | Description |
 | -------- | ---- | -------- | --------------- | ----------- |
-| gb | `integer` | ✅ | `0 < x ` | Memory size in gigabytes. |
-| mts | `integer` | ✅ | `0 < x ` | Memory speed in megatransfers per second. |
+| gib | `integer` | ✅ | `0 < x ` | Size in gibibytes. |
+| mts | `integer` | ✅ | `0 < x ` | Speed in megatransfers per second. |

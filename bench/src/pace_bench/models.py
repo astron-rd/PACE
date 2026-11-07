@@ -13,9 +13,9 @@ EXAMPLE: JsonDict = {
     "framework": "rayon",
     "commit": "a5298758",
     "hardware": {
-        "cpu": {"model": "AMD EPYC 7763", "cores": 64},
-        "gpu": {"model": "NVIDIA A100 80GB"},
-        "memory": {"gb": 512, "mts": 3200},
+        "cpu": {"model": "AMD EPYC 7H12 64-Core Processor", "threads": 16},
+        "gpu": {"model": "NVIDIA A100-PCIE-40GB"},
+        "memory": {"gib": 1024, "mts": 3200},
     },
     "parameters": {
         "channel_count": 1024,
@@ -38,7 +38,7 @@ class Cpu(BaseModel):
     """Processor of the machine that ran the benchmark."""
 
     model: str = Field(description="CPU model name.")
-    cores: int = Field(gt=0, description="Number of physical cores.")
+    threads: int = Field(gt=0, description="Allocated hardware threads.")
 
 
 class Gpu(BaseModel):
@@ -50,8 +50,8 @@ class Gpu(BaseModel):
 class Memory(BaseModel):
     """Main memory of the machine that ran the benchmark."""
 
-    gb: int = Field(gt=0, description="Memory size in gigabytes.")
-    mts: int = Field(gt=0, description="Memory speed in megatransfers per second.")
+    gib: int = Field(gt=0, description="Size in gibibytes.")
+    mts: int = Field(gt=0, description="Speed in megatransfers per second.")
 
 
 class Hardware(BaseModel):
