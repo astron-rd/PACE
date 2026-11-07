@@ -23,7 +23,7 @@ jobs:
             hostname
             echo "R nproc: [$(nproc)]"
             echo "R lscpu sed: [$(lscpu | sed -n 's/^Model name: *//p')]"
-            echo "R gib: [$(( $(paste -sd+ /sys/devices/system/edac/mc/mc*/size_mb) >> 10 ))]"
+            echo "R gib: [$(( $(cat /sys/devices/system/edac/mc/mc*/size_mb | paste -sd+) >> 10 ))]"
             echo "R mts: [$(udevadm info -q property /sys/class/dmi/id | grep -m1 CONFIGURED_SPEED_MTS)]"
             echo "R nvidia: [$(nvidia-smi --query-gpu=name --format=csv,noheader 2>&1)]"
             source /etc/profile.d/lmod.sh && module load rocm 2>/dev/null
