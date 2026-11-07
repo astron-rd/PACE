@@ -10,8 +10,8 @@ jobs:
       matrix:
         include:
           - { partition: rbq, gpu: W7700 }
+          - { partition: rbq, gpu: R9700 }
           - { partition: defq, gpu: A100 }
-          - { partition: defq, gpu: V100 }
     name: probe (${{ matrix.gpu }})
     steps:
       - uses: astron-rd/slurm-action@v1.2
@@ -21,10 +21,19 @@ jobs:
           time: 00:05:00
           commands: |
             hostname
-            for t in edac-util ras-mc-ctl edac-ctl hwloc-info hwloc-calc nvidia-smi udevadm; do echo "R path $t: $(command -v $t || echo -)"; done
-            dpkg-query -W -f='R pkg ${Package} ${Version} ${db:Status-Status}\n' edac-utils rasdaemon hwloc pciutils 2>&1 | sed 's/^dpkg-query/R pkg dpkg-query/'
-            ls /usr/sbin /usr/bin /usr/local/bin /usr/local/sbin 2>/dev/null | grep -iE "edac|ras-mc|rasdaemon" | sed 's/^/R found /'
-            find /var/software /opt -maxdepth 6 \( -name "edac-util" -o -name "ras-mc-ctl" \) 2>/dev/null | head | sed 's/^/R found /'
-            systemctl is-active rasdaemon 2>&1 | sed 's/^/R rasdaemon service: /'
-            edac-util -s 2>&1 | head -3 | sed 's/^/R edac-util: /'
-            ras-mc-ctl --layout 2>&1 | head -5 | sed 's/^/R ras-mc-ctl: /'
+            echo "R nproc: $(nproc)"
+            echo "R hwloc-calc: $(hwloc-calc --number-of pu all)"
+            echo "R hwloc model: [$(hwloc-info --get-attr 'info CPUModel' package:0)]"
+            hwloc-info --version | sed 's/^/R /'
+            echo "R lscpu model: [$(lscpu -J | python3 -c 'import json,sys;print(next(f["data"] for f in json.load(sys.stdin)["lscpu"] if f["field"]=="Model name:"))' 2>&1)]"
+            awk --version 2>&1 | head -1 | sed 's/^/R awk: /'
+            echo "R awk gib: $(awk '{s+=$1} END {print rshift(s,10)}' /sys/devices/system/edac/mc/mc*/size_mb 2>&1)"
+            udevadm --version | sed 's/^/R systemd: /'
+            udevadm info -q property /sys/class/dmi/id | grep -m1 CONFIGURED_SPEED_MTS | sed 's/^/R grep mts: /'
+            udevadm info -q property --property=MEMORY_DEVICE_0_CONFIGURED_SPEED_MTS --value /sys/class/dmi/id 2>&1 | sed 's/^/R prop mts: /'
+            nvidia-smi --query-gpu=name --format=csv,noheader 2>&1 | head -1 | sed 's/^/R nvidia: /'
+            source /etc/profile.d/lmod.sh && module load rocm 2>/dev/null
+            amd-smi static --asic --csv 2>&1 | head -3 | sed 's/^/R amd csv: /'
+            amd-smi static --asic --json 2>&1 | grep -i market | sed 's/^/R amd json: /'
+            amd-smi list 2>&1 | head -6 | sed 's/^/R amd list: /'
+            rocm-smi --showproductname 2>&1 | grep -iE "card series|market" | sed 's/^/R rocm-smi: /'
