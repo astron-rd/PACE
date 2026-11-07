@@ -10,6 +10,7 @@ jobs:
       matrix:
         include:
           - { partition: rbq, gpu: W7700 }
+          - { partition: defq, gpu: A100 }
     name: probe (${{ matrix.gpu }})
     steps:
       - uses: astron-rd/slurm-action@v1.2
@@ -20,12 +21,12 @@ jobs:
           commands: |
             set +e
             hostname
-            echo "PATH=$PATH"
-            echo "plain: $(command -v amd-smi || echo missing)"
-            echo "login shell: $(bash -lc 'command -v amd-smi' || echo missing)"
             source /etc/profile.d/lmod.sh
-            module load rocm 2>&1
-            echo "module rocm: $(command -v amd-smi || echo missing) loaded=$LOADEDMODULES"
-            amd-smi static --asic 2>&1 | grep MARKET_NAME
-            stat -c '%y %n' /opt/rocm-7.14.0 /opt/rocm-7.14.0/bin/amd-smi
-            readlink -f /opt/rocm
+            echo "=== avail"; module -t avail 2>&1 | grep -v ':$' | tr "\n" " "; echo
+            for m in $(module -t avail 2>&1 | grep -v ':$' | grep -v '/$'); do
+              out=$( (module purge; module load "$m" >/dev/null 2>&1 && for t in rocm-smi amd-smi rocminfo clinfo vulkaninfo dmidecode lshw uv uvx python3 python3.14 nvidia-smi nvcc hipcc lstopo; do p=$(command -v $t) && case "$p" in /usr/bin/*|/bin/*) ;; *) printf "%s " "$t";; esac; done) 2>/dev/null )
+              [ -n "$out" ] && echo "TOOLS $m: $out"
+            done
+            module purge
+            for t in rocm-smi amd-smi rocminfo clinfo vulkaninfo dmidecode lshw uv python3 lstopo; do echo "BASE $t: $(command -v $t || echo -)"; done
+            python3 --version
