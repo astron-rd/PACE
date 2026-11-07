@@ -13,7 +13,6 @@ jobs:
           - { partition: rbq, gpu: R9700 }
           - { partition: rbq, gpu: AD4000 }
           - { partition: rbq, gpu: B4000 }
-          - { partition: rbq, gpu: AD5000 }
           - { partition: defq, gpu: A4000 }
           - { partition: defq, gpu: V100 }
           - { partition: defq, gpu: A100 }
@@ -27,12 +26,27 @@ jobs:
           commands: |
             set +e
             python3 - <<'PY'
-            import glob, os, socket
-            rd = lambda p: open(p).read().strip()
-            mcs = sorted(glob.glob("/sys/devices/system/edac/mc/mc*/"))
-            mb = [int(rd(m + "size_mb")) for m in mcs]
-            names = sorted({rd(m + "mc_name") for m in mcs})
-            print(f"RESULT {socket.gethostname()} edac_gib={sum(mb) / 1024} per_mc={mb} drivers={names}")
-            for m in mcs[:1]:
-                print("RESULT  entries", sorted(os.path.basename(d) for d in glob.glob(m + "*") if os.path.basename(d)[:4] in ("dimm", "rank", "csro"))[:4])
+            import glob, os, socket, subprocess
+            rd = lambda p: open(p).read().strip() if os.path.exists(p) else None
+            host = socket.gethostname()
+            try:
+                print("RESULT", host, "nvidia-smi:", subprocess.run(["nvidia-smi", "--query-gpu=name,pci.bus_id", "--format=csv,noheader"], capture_output=True, text=True).stdout.strip())
+            except FileNotFoundError:
+                print("RESULT", host, "nvidia-smi: missing")
+            ids = [p for p in ("/usr/share/libdrm/amdgpu.ids", "/opt/amdgpu/share/libdrm/amdgpu.ids") if os.path.exists(p)]
+            print("RESULT", host, "amdgpu.ids:", ids)
+            for r in sorted(glob.glob("/dev/dri/renderD*")):
+                try:
+                    os.close(os.open(r, os.O_RDWR))
+                except OSError as e:
+                    continue
+                dev = f"/sys/class/drm/{os.path.basename(r)}/device"
+                vid, did, rev = rd(dev + "/vendor"), rd(dev + "/device"), rd(dev + "/revision")
+                name = None
+                if ids and vid == "0x1002":
+                    key = f"{did[2:].upper()},\t{rev[2:].upper()},"
+                    for line in open(ids[0]):
+                        if line.upper().startswith(key):
+                            name = line.rstrip("\n").split("\t")[-1]
+                print("RESULT", host, "open", r, os.path.basename(os.path.realpath(dev)), vid, did, rev, "product_name:", rd(dev + "/product_name"), "| amdgpu.ids:", name)
             PY
