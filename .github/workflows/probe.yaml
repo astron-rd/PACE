@@ -21,19 +21,10 @@ jobs:
           time: 00:05:00
           commands: |
             hostname
-            echo "R nproc: $(nproc)"
-            echo "R hwloc-calc: $(hwloc-calc --number-of pu all)"
-            echo "R hwloc model: [$(hwloc-info --get-attr 'info CPUModel' package:0)]"
-            hwloc-info --version | sed 's/^/R /'
-            echo "R lscpu model: [$(lscpu -J | python3 -c 'import json,sys;print(next(f["data"] for f in json.load(sys.stdin)["lscpu"] if f["field"]=="Model name:"))' 2>&1)]"
-            awk --version 2>&1 | head -1 | sed 's/^/R awk: /'
-            echo "R awk gib: $(awk '{s+=$1} END {print rshift(s,10)}' /sys/devices/system/edac/mc/mc*/size_mb 2>&1)"
-            udevadm --version | sed 's/^/R systemd: /'
-            udevadm info -q property /sys/class/dmi/id | grep -m1 CONFIGURED_SPEED_MTS | sed 's/^/R grep mts: /'
-            udevadm info -q property --property=MEMORY_DEVICE_0_CONFIGURED_SPEED_MTS --value /sys/class/dmi/id 2>&1 | sed 's/^/R prop mts: /'
-            nvidia-smi --query-gpu=name --format=csv,noheader 2>&1 | head -1 | sed 's/^/R nvidia: /'
+            echo "R nproc: [$(nproc)]"
+            echo "R lscpu sed: [$(lscpu | sed -n 's/^Model name: *//p')]"
+            echo "R gib: [$(( $(paste -sd+ /sys/devices/system/edac/mc/mc*/size_mb) >> 10 ))]"
+            echo "R mts: [$(udevadm info -q property /sys/class/dmi/id | grep -m1 CONFIGURED_SPEED_MTS)]"
+            echo "R nvidia: [$(nvidia-smi --query-gpu=name --format=csv,noheader 2>&1)]"
             source /etc/profile.d/lmod.sh && module load rocm 2>/dev/null
-            amd-smi static --asic --csv 2>&1 | head -3 | sed 's/^/R amd csv: /'
-            amd-smi static --asic --json 2>&1 | grep -i market | sed 's/^/R amd json: /'
-            amd-smi list 2>&1 | head -6 | sed 's/^/R amd list: /'
-            rocm-smi --showproductname 2>&1 | grep -iE "card series|market" | sed 's/^/R rocm-smi: /'
+            echo "R amd grep: [$(amd-smi static --asic 2>&1 | grep MARKET_NAME)]"
