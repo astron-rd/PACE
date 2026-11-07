@@ -10,7 +10,6 @@ jobs:
       matrix:
         include:
           - { partition: rbq, gpu: W7700 }
-          - { partition: rbq, gpu: AD4000 }
           - { partition: defq, gpu: A100 }
     name: probe (${{ matrix.gpu }})
     steps:
@@ -22,9 +21,15 @@ jobs:
           commands: |
             hostname
             source /etc/profile.d/lmod.sh 2>/dev/null
-            module load rocm >/dev/null 2>&1
-            env | grep -iE "OCL|OPENCL" | sed 's/^/ENV /'
-            ls $(dirname $(dirname $(command -v clinfo)))/etc/OpenCL/vendors 2>&1 | sed 's/^/ROCMICD /'
-            clinfo -l 2>&1 | sed 's/^/CLL /'
-            clinfo 2>&1 | grep -iE "Device Name|Board Name|Device Vendor  " | sed 's/^/CL /'
-            OCL_ICD_VENDORS=$(dirname $(dirname $(command -v clinfo)))/etc/OpenCL/vendors clinfo -l 2>&1 | sed 's/^/CLROCM /'
+            run() {
+              echo "=== $1"; lstopo-no-graphics --version
+              lstopo-no-graphics --of xml 2>/dev/null > /tmp/t.$$.xml
+              grep -oE 'name="(CPUModel|GPUModel|GPUVendor|AMDProductName|AMDUUID|Backend|DMI[A-Za-z]*|PCIVendor|PCIDevice|Model|Size|Speed|DeviceLocation)" value="[^"]*"' /tmp/t.$$.xml | sort | uniq -c | sed 's/^/X /'
+              grep -oE 'type="(OSDev|Misc|MemCache)"[^>]*name="[^"]*"' /tmp/t.$$.xml | sort -u | sed 's/^/O /' | head -20
+              echo "PU $(hwloc-calc --number-of pu all 2>&1)  allowed: $(hwloc-calc --number-of pu all --restrict binding 2>&1)"
+              grep -oE 'local_memory="[0-9]+"' /tmp/t.$$.xml | sed 's/^/MEM /'
+              rm -f /tmp/t.$$.xml
+            }
+            run system
+            module load rocm >/dev/null 2>&1; run "system+rocm"
+            module load spack/2026.10.06 >/dev/null 2>&1; module load hwloc >/dev/null 2>&1; run "spack hwloc+rocm"
