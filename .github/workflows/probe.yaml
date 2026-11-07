@@ -20,16 +20,15 @@ jobs:
           time: 00:05:00
           commands: |
             hostname
-            source /etc/profile.d/lmod.sh 2>/dev/null
-            run() {
-              echo "=== $1"; lstopo-no-graphics --version
-              lstopo-no-graphics --of xml 2>/dev/null > /tmp/t.$$.xml
-              grep -oE 'name="(CPUModel|GPUModel|GPUVendor|AMDProductName|AMDUUID|Backend|DMI[A-Za-z]*|PCIVendor|PCIDevice|Model|Size|Speed|DeviceLocation)" value="[^"]*"' /tmp/t.$$.xml | sort | uniq -c | sed 's/^/X /'
-              grep -oE 'type="(OSDev|Misc|MemCache)"[^>]*name="[^"]*"' /tmp/t.$$.xml | sort -u | sed 's/^/O /' | head -20
-              echo "PU $(hwloc-calc --number-of pu all 2>&1)  allowed: $(hwloc-calc --number-of pu all --restrict binding 2>&1)"
-              grep -oE 'local_memory="[0-9]+"' /tmp/t.$$.xml | sed 's/^/MEM /'
-              rm -f /tmp/t.$$.xml
-            }
-            run system
-            module load rocm >/dev/null 2>&1; run "system+rocm"
-            module load spack/2026.10.06 >/dev/null 2>&1; module load hwloc >/dev/null 2>&1; run "spack hwloc+rocm"
+            echo "R affinity $(python3 -c 'import os; print(len(os.sched_getaffinity(0)))')"
+            echo "R nproc $(nproc)"
+            echo "R hwloc-calc $(hwloc-calc --number-of pu all)"
+            echo "R hwloc-calc-cores $(hwloc-calc --number-of core all)"
+            echo "R hwloc-info-attr $(hwloc-info --get-attr 'info CPUModel' package:0)"
+            hwloc-info 2>&1 | sed 's/^/R hwloc-info: /'
+            hwloc-info -s 2>&1 | sed 's/^/R hwloc-info-s: /'
+            lstopo-no-graphics --only pu 2>&1 | wc -l | sed 's/^/R lstopo-pu-lines /'
+            lstopo-no-graphics -s 2>&1 | head -12 | sed 's/^/R lstopo-s: /'
+            lscpu -J 2>/dev/null | python3 -c 'import json,sys; d={e["field"]:e["data"] for e in json.load(sys.stdin)["lscpu"]}; print("R lscpu", d.get("Model name:"), "| CPU(s):", d.get("CPU(s):"), "| On-line:", d.get("On-line CPU(s) list:"))'
+            source /etc/profile.d/lmod.sh 2>/dev/null; module load spack/2026.10.06 numactl >/dev/null 2>&1
+            numactl --show 2>&1 | sed 's/^/R numactl: /'
