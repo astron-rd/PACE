@@ -1,4 +1,4 @@
-# Result
+# Result specification
 
 Result of a single benchmark run.
 

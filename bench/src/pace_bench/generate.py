@@ -32,6 +32,7 @@ class GenerateOrderedJsonSchema(GenerateJsonSchema):
         self, schema: CoreSchema, mode: JsonSchemaMode = "validation"
     ) -> JsonSchemaValue:
         json_schema = super().generate(schema, mode)
+        json_schema["title"] = "Result specification"
         # Undo automatic key sorting by Pydantic
         json_schema["examples"] = [EXAMPLE]
         defs = json_schema.get("$defs", {})
