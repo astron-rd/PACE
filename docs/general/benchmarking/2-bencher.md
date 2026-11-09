@@ -1,4 +1,4 @@
-# Bencher
+# Bencher integration
 
 Bencher is the selected benchmarking framework for PACE, chosen for its unique combination of continuous performance tracking, multi-language support, and flexibility.
 
@@ -61,7 +61,7 @@ python3 bencher_upload.py --project $BENCHER_PROJECT \
 
 ## Status and future work
 
-While Bencher served as a proof of concept, the project has since evolved toward a custom workflow, described in [3-architecture.md](3-architecture.md).
+While Bencher served as a proof of concept, the project has since evolved toward a custom workflow, described in [Proposed architecture](3-architecture.md).
 
 Completed:
 

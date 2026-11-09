@@ -1,4 +1,4 @@
-# Intro
+# Rust
 
 Rust is a systems programming language that offers high performance combined
 with a powerful high-level typing and ownership system which lets you

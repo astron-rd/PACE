@@ -1,3 +1,5 @@
+# Data format
+
 In order to test the various applications with identical inputs and to be able
 to compare the outputs, it is important that all applications write their output
 to a single file format.

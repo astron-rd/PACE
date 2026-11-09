@@ -1,4 +1,4 @@
-# Benchmarking setup for PACE
+# Proposed architecture
 
 Bencher, a hosted continuous-benchmarking service, has been on trial for
 recording the benchmark results of PACE: the
@@ -45,7 +45,7 @@ Beyond the [earlier criteria](1-frameworks.md), two requirements matter:
     project. DAS-6 is the way around that, but it should not turn into support
     requests for the people who maintain it.
 
-## Proposed architecture
+## Architecture layers
 
 The setup consists of four layers.
 

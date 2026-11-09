@@ -1,10 +1,10 @@
-# Overview
+# Framework selection
 
 This document outlines the evaluation and selection process for a benchmarking
 framework to support the PACE project's performance tracking needs across
 multiple programming languages and systems.
 
-# The challenge
+## The challenge
 
 PACE requires a robust solution for recording, storing, and visualizing
 benchmarking results that can handle:
@@ -16,7 +16,7 @@ benchmarking results that can handle:
 - Performance regression tracking: Monitoring changes across commits
 - Team collaboration: Sharing results and insights
 
-# Candidate evaluation
+## Candidate evaluation
 
 We evaluated six prominent tools against our requirements.
 
@@ -35,11 +35,11 @@ Scoring scheme:
 | [DVC](https://github.com/treeverse/dvc/wiki/Debugging,-Profiling-and-Benchmarking-DVC) | ✅          | ✅          | ❌             | ❌                   | ◯             |
 | [Hyperfine](https://github.com/sharkdp/hyperfine)                                      | ✅          | ❌          | ✅             | ❌                   | ❌            |
 
-## Conclusion
+### Conclusion
 
 Bencher emerged as the optimal solution due to its unique combination of
 continuous performance tracking, multi-language support, and flexibility.
 
-## References
+### References
 
 - https://github.com/astron-rd/PACE/issues/7
