@@ -18,7 +18,7 @@ considered:
 
 1. numpy's NPY/NPZ
 1. HDF5
-1. Parqueet
+1. Parquet
 1. Safetensors
 1. Apache Avro
 
@@ -39,7 +39,7 @@ The following evaluation was made:
 | :---------- | -----------------: | --------------: | ----------: |
 | NPY         |               Good |            Poor |        Good |
 | HDF5        |               Good |            Good |        Good |
-| Parqueet    |                Bad |               / |           / |
+| Parquet     |                Bad |               / |           / |
 | Safetensors |                Bad |               / |           / |
 | Avro        |                Bad |               / |           / |
 
