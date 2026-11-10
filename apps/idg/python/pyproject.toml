@@ -27,11 +27,14 @@ dependencies = [
 homepage = "https://github.com/astron-rd/pace"
 
 [project.scripts]
-idg = "idg_python.main:main"
+idg = "idg.main:main"
 
 [build-system]
 requires = ["uv_build>=0.12.15,<0.13"]
 build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "idg"
 
 [tool.ruff.lint]
 # Expand basic rules with name and style checks roughly equivalent to flake8 + black + pylint
@@ -45,7 +48,7 @@ branch = true
 
 [tool.pytest.ini_options]
 env = ["PYTHONWARNINGS=default::DeprecationWarning"]
-addopts = "--cov-report term --cov-report xml --cov-report html --cov=idg_python --benchmark-skip --benchmark-warmup on"
+addopts = "--cov-report term --cov-report xml --cov-report html --cov=idg --benchmark-skip --benchmark-warmup on"
 testpaths = ["tests"]
 
 [dependency-groups]
