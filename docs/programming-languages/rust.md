@@ -109,12 +109,14 @@ fn processor(work: &mut [_]) {
 
 ### Parallelization Crates
 
-Below is an overview of some common crates that can be used to parallelize workloads. This list is not exhaustive and will not be updated (2026-10-20).
+Below is an overview of some common crates that can be used to parallelize
+workloads. This list is not exhaustive and will not be updated (2026-10-20).
 
 General threading & parallelization crates:
 
 1. [Crossbeam](https://docs.rs/crossbeam/latest/crossbeam/)
 1. [Rayon](https://docs.rs/rayon/latest/rayon/)
+1. [threadpool_scope](https://docs.rs/threadpool_scope/latest/threadpool_scope/)
 
 Specialized concurrency constructs:
 
@@ -126,12 +128,134 @@ Specialized concurrency constructs:
 
 Overview of Channel crates:
 
-| Crate                                           | SPSC | MPSC | SPMC | MPMC        |
-| ----------------------------------------------- | ---- | ---- | ---- | ----------- |
-| [std::sync](https://doc.rust-lang.org/std/sync) |      | X    |      | X (nightly) |
-| [crossbeam](https://crates.io/crates/crossbeam) |      |      |      | X           |
-| [Flume](https://crates.io/crates/flume)         |      | X    |      | X           |
-| [Kanal](https://crates.io/crates/kanal)         |      |      |      | X           |
-| [oneshot](https://crates.io/crates/oneshot)     | X    |      |      |             |
-| [crossfire](https://crates.io/crates/crossfire) | X    | X    |      | X           |
-| [bus](https://crates.io/crates/bus)             |      | X    |      |             |
+| Crate                                           | SPSC | MPSC | SPMC | MPMC         |
+| ----------------------------------------------- | ---- | ---- | ---- | ------------ |
+| [std::sync](https://doc.rust-lang.org/std/sync) |      | ✅   |      | ✅ (nightly) |
+| [crossbeam](https://crates.io/crates/crossbeam) |      |      |      | ✅           |
+| [Flume](https://crates.io/crates/flume)         |      | ✅   |      | ✅           |
+| [Kanal](https://crates.io/crates/kanal)         |      |      |      | ✅           |
+| [oneshot](https://crates.io/crates/oneshot)     | ✅   |      |      |              |
+| [crossfire](https://crates.io/crates/crossfire) | ✅   | ✅   |      | ✅           |
+| [bus](https://crates.io/crates/bus)             |      | ✅   |      |              |
+
+### Threading & channel crate performance analysis
+
+Both the performance of threading crates as well as channel crates is evaluated.
+In this example application we computed the mandelbrot set and used different
+crates to distribute the work and data across threads.
+
+#### Treading evaluation
+
+Four different parallel implementations are evaluated. The
+goal of this evaluation is to compare the overhead introduced by the crates.
+The implementations are kept as identical as possible. In total crossbeam,
+threadpool_scope, Rayon and a native threadpool are evaluated. For Rayon we tested
+both `par_iter` and `par_chunks` separetely.
+
+The results show marginal performance differences. Rayon `par_iter` is the
+worst performing and the native implementation using the standard library is
+best performing. Our conclusion is that the best choice depends on the
+application. Rayon is less lines of code while the standard library approach is
+the most verbose. In performance critical application that reduces overhead
+might outweigh the impact on readability.
+
+Example code snippets for each are listed below this graph.
+
+![Performance of different threading crates](results-rust-threading.png)
+
+**Crossbeam:**
+
+```Rust
+fn processor(work: &mut [_]) {
+  let num_threads = num_cpus::get();
+  let bands = work.chunks_mut(num_threads*30).collect();
+  crossbeam::scope(|s| {
+    for item in bands.into_iter() {
+      s.spawn(move |_| {
+        process(item);
+      });
+    }
+  });
+}
+```
+
+**Native:**
+
+```Rust
+fn processor(work: &mut [_]) {
+  let num_threads = num_cpus::get();
+  let bands = work.chunks_mut(num_threads*30).collect();
+  let (in_tx, in_rx) = std::sync::mpmc::channel;
+  thread::::scope(|s| {
+    for item in bands.into_iter() {
+      in_tx.send(item).expect("Can't send data to thread");
+    }
+
+    drop(in_tx);
+
+    for _ in 0..n_workers {
+      let t_rx = in_rx.clone();
+      s.spawn(move || {
+        while let Ok(item) = t_rx.recv() {
+          process(item);
+        }
+      });
+    }
+  });
+}
+```
+
+**Rayon par_iter:**
+
+```Rust
+fn processor(work: &mut [_]) {
+  let num_threads = num_cpus::get();
+  work.par_iter_mut().for_each(|item| {
+    process(item);
+  });
+}
+```
+
+**Rayon par_chunks:**
+
+```Rust
+fn processor(work: &mut [_]) {
+  let num_threads = num_cpus::get();
+  work.par_chunks_mut(num_threads*30).for_each(|item| {
+    process(item);
+  });
+}
+```
+
+**threadpool_scope:**
+
+```Rust
+fn processor(work: &mut [_]) {
+  let num_threads = num_cpus::get();
+  let mut pool = Pool::new(num_threads as u32);
+  let bands = work.chunks_mut(num_threads*30).collect();
+  pool.scoped(|scoped| {
+    for item in bands.into_iter() {
+      scoped.execute(move || {
+        process(item);
+      });
+    }
+  }
+}
+```
+
+#### Channel evaluation
+
+The benchmark for channel evaluation uses an identical setup with Multi-Producer
+Multi-Consumer (MPMC) channels for each channel crate. Here parallel workers
+send data into the channel as fast as possible while an equal amount of other
+workers retrieves them as fast as possible. We measure the time for the scope
+to join such that all workers have sent and received all items. The number of
+items per benchmark is fixed.
+
+In total the evaluation covers the standard library, crossbeam, crossfire, kanal
+and flume. Here we can see that generally the standard library implementation
+is the best performing. Our conclusion is to stick to the standard library unless
+you specifically require asyncio or tokio support.
+
+![Performance of different threading crates](results-rust-channel.png)
