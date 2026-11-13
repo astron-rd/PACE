@@ -50,10 +50,9 @@ repos:
             always_run: false
           - id: build-idg
             name: build-idg
-            stages: [manual] # only run when specified manually
             entry: uv build --directory apps/idg/python
             language: system
-            types: [python]
+            files: ^apps/idg/python/
             pass_filenames: false
             always_run: false
           - id: build-all-sky
