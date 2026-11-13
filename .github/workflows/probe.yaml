@@ -1,0 +1,20 @@
+name: probe
+on:
+  push:
+    branches: [probe/das6-hardware]
+jobs:
+  probe:
+    runs-on: [slurm]
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.1.0
+      - uses: astron-rd/slurm-action@v1.3
+        with:
+          partition: rbq
+          time: 00:05:00
+          commands: |
+            hostname
+            module load rocm
+            amd-smi static --asic > amd.txt 2>&1 && echo "R amd rc 0" || echo "R amd rc $?"
+            sed 's/^/R amd: /' amd.txt | head -20
+            uv run --locked --project bench python -c 'from pace_bench.hardware import detect; print("R", detect().model_dump_json())' || echo "R detect failed $?"
