@@ -57,10 +57,9 @@ repos:
             always_run: false
           - id: build-all-sky
             name: build-all-sky
-            stages: [manual] # only run when specified manually
             entry: uv build --directory apps/all-sky/python
             language: system
-            types: [python]
+            files: ^apps/all-sky/python/
             pass_filenames: false
             always_run: false
           - id: benchmark-idg-python

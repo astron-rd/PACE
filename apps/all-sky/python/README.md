@@ -17,7 +17,7 @@ uvx pre-commit run --all
 ### Packaging
 
 ```sh
-uvx pre-commit run --hook-stage manual --all -v build-all-sky
+uv build
 ```
 
 ### Configuring PMT
