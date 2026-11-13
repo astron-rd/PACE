@@ -54,14 +54,18 @@ repos:
             language: system
             files: ^apps/idg/python/
             pass_filenames: false
-            always_run: false
           - id: build-all-sky
             name: build-all-sky
             entry: uv build --directory apps/all-sky/python
             language: system
             files: ^apps/all-sky/python/
             pass_filenames: false
-            always_run: false
+          - id: build-dedisp
+            name: build-dedisp
+            entry: uv build --directory apps/dedisp/python
+            language: system
+            files: ^apps/dedisp/python/
+            pass_filenames: false
           - id: benchmark-idg-python
             name: benchmark-idg-python
             stages: [manual] # run by the benchmark workflow on DAS-6
