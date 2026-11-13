@@ -28,7 +28,7 @@ def nvidia() -> str | None:
         text=True,
         check=False,
     )
-    # Return code 6 means no GPU was found, as without a Slurm GPU allocation
+    # Return code 6 without a Slurm GPU allocation
     if query.returncode == 6:
         return None
     query.check_returncode()
@@ -38,10 +38,13 @@ def nvidia() -> str | None:
 def amd() -> str | None:
     if not shutil.which("amd-smi"):
         return None
-    output = subprocess.run(
-        ["amd-smi", "static", "--asic"], capture_output=True, text=True, check=True
-    ).stdout
-    name = re.search(r"^\s*MARKET_NAME: (.+)$", output, re.MULTILINE)
+    query = subprocess.run(
+        ["amd-smi", "static", "--asic"], capture_output=True, text=True, check=False
+    )
+    # Fails without a Slurm GPU allocation
+    if query.returncode:
+        return None
+    name = re.search(r"^\s*MARKET_NAME: (.+)$", query.stdout, re.MULTILINE)
     return name[1].strip() if name else None
 
 
