@@ -6,6 +6,8 @@ theme:
 markdown_extensions:
   - pymdownx.arithmatex:
       generic: true
+  - pymdownx.highlight
+  - pymdownx.superfences
 extra_css:
   - https://unpkg.com/katex@0.17.0/dist/katex.min.css
 extra_javascript:

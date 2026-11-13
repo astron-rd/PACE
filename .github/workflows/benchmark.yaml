@@ -1,0 +1,37 @@
+name: benchmark
+on:
+  push:
+    branches: [probe/das6-hardware]
+    paths:
+      - .github/workflows/benchmark.yaml
+      - apps/**
+      - bench/**
+  workflow_dispatch:
+jobs:
+  run:
+    name: ${{ matrix.name }}
+    runs-on: [slurm]
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: idg-python
+            partition: defq
+            constraints: A4000
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.1.0
+      - uses: astron-rd/slurm-action@v1.3
+        with:
+          partition: ${{ matrix.partition }}
+          constraints: ${{ matrix.constraints }}
+          gres: ${{ matrix.gres }}
+          time: 00:30:00
+          commands: uvx pre-commit run --hook-stage manual benchmark-${{ matrix.name }}
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: ${{ matrix.name }}
+          path: results/
+          if-no-files-found: error

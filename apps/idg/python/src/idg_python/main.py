@@ -24,9 +24,9 @@ class Timer:
 
     def time(self, description, operation):
         print(f"{description:<38}", end="")
-        start = time.time()
+        start = time.perf_counter()
         result = operation()
-        end = time.time()
+        end = time.perf_counter()
         duration = end - start
         print(f" {duration:>9.6f} s")
         self.timings[description] = duration
@@ -153,9 +153,7 @@ def main():
             output["parameters"][key] = value
 
         for operation, duration in timer.timings.items():
-            output["timings"][operation.lower().replace(" ", "_")] = round(
-                duration * 1000, 2
-            )
+            output["timings"][operation.lower().replace(" ", "_")] = duration
 
         with open(settings.json_output, "w") as f:
             json.dump(output, f, indent=2)

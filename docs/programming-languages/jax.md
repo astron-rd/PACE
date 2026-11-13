@@ -1,3 +1,5 @@
+# JAX
+
 Jax is a framework that can perform many tasks on data. These tasks can be
 performed using an interface that is identical to Numpy making it very
 attractive.
@@ -14,7 +16,7 @@ Jit; Parallelize and optimize entire functions for use on CPU or accelerators
 using OpenXLA. Vmap; Vectorize calls across a multi dimensional array axis
 Autograd; Differentiate / find gradients
 
-### However, there are some important caveats to using Jax, below a short summary:
+## However, there are some important caveats to using Jax, below a short summary:
 
 1. Output data is immutable, you can't `data[12] = y`. Instead you could (but
     shouldn't) `data.at(12) = y` Each time you do this its a full memory copy of
@@ -29,7 +31,7 @@ Autograd; Differentiate / find gradients
 For more info look here:
 https://docs.jax.dev/en/latest/notebooks/Common_Gotchas_in_JAX.html
 
-### Overcoming the caveats
+## Overcoming the caveats
 
 1. Use builtin Numpy operators like `map` or `vectorize` to prevent having to
     mutate individual elements
