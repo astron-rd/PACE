@@ -141,16 +141,16 @@ Overview of Channel crates:
 ### Threading & channel crate performance analysis
 
 Both the performance of threading crates as well as channel crates is evaluated.
-In this example application we computed the mandelbrot set and used different
+In this example application we computed the Mandelbrot set and used different
 crates to distribute the work and data across threads.
 
-#### Treading evaluation
+#### Threading evaluation
 
 Four different parallel implementations are evaluated. The
 goal of this evaluation is to compare the overhead introduced by the crates.
 The implementations are kept as identical as possible. In total crossbeam,
 threadpool_scope, Rayon and a native threadpool are evaluated. For Rayon we tested
-both `par_iter` and `par_chunks` separetely.
+both `par_iter` and `par_chunks` separately.
 
 The results show marginal performance differences. Rayon `par_iter` is the
 worst performing and the native implementation using the standard library is
