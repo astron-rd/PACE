@@ -18,6 +18,9 @@ jobs:
       matrix:
         include:
           - name: idg-python
+            application: idg
+            language: python
+            framework: numba
             partition: defq
             constraints: A4000
     steps:
@@ -29,7 +32,12 @@ jobs:
           constraints: ${{ matrix.constraints }}
           gres: ${{ matrix.gres }}
           time: 00:30:00
-          commands: uvx pre-commit run --hook-stage manual benchmark-${{ matrix.name }}
+          commands: |
+            start=$(date -u +%FT%TZ)
+            uvx pre-commit run --verbose --hook-stage manual benchmark-${{ matrix.name }}
+            uv run --locked --project bench record measurements.json \
+              --application ${{ matrix.application }} --language ${{ matrix.language }} \
+              ${{ matrix.framework && format('--framework {0}', matrix.framework) }} --timestamp "$start"
       - uses: actions/upload-artifact@v7.0.2
         with:
           name: ${{ matrix.name }}
