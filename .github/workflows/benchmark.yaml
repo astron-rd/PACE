@@ -20,12 +20,6 @@ jobs:
           - name: idg-python
             partition: defq
             constraints: A4000
-            commands: |
-              uv run --locked --project apps/idg/input idg-input
-              start=$(date -u +%FT%TZ)
-              uv run --locked --project apps/idg/python idg inputs.h5 --json measurements.json
-              uv run --locked --project bench record measurements.json \
-                --application idg --language python --framework numba --timestamp "$start"
     steps:
       - uses: actions/checkout@v7.0.1
       - uses: astral-sh/setup-uv@v10.1.0
@@ -35,7 +29,7 @@ jobs:
           constraints: ${{ matrix.constraints }}
           gres: ${{ matrix.gres }}
           time: 00:30:00
-          commands: ${{ matrix.commands }}
+          commands: uvx pre-commit run --verbose --hook-stage manual benchmark-${{ matrix.name }}
       - uses: actions/upload-artifact@v7.0.2
         with:
           name: ${{ matrix.name }}
