@@ -5,36 +5,30 @@ on:
 jobs:
   probe:
     runs-on: [slurm]
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - { partition: rbq, gpu: W7700 }
-          - { partition: defq, gpu: A100 }
-    name: probe (${{ matrix.gpu }})
     steps:
-      - uses: astron-rd/slurm-action@v1.2
+      - run: |
+          echo "R home $HOME ws $GITHUB_WORKSPACE"
+          echo "R uv $(command -v uv || echo none)"
+          git --version
+          sinfo -o '%P|%N|%f|%G|%c|%m' | sed 's/^/R sinfo /'
+          module avail 2>&1 | grep -iE 'python|uv' | sed 's/^/R mod /' || true
+      - uses: astral-sh/setup-uv@v10.1.0
+      - run: echo "R uv after $(command -v uv)"; uv --version
+      - uses: astron-rd/slurm-action@v1.3
         with:
-          partition: ${{ matrix.partition }}
-          gres: gpu:${{ matrix.gpu }}
+          time: 00:10:00
+          commands: |
+            hostname
+            echo "R cpus $SLURM_CPUS_ON_NODE"
+            echo "R uv node $(command -v uv)"
+            nvidia-smi --query-gpu=name --format=csv,noheader && echo "R nvsmi ok" || echo "R nvsmi rc $?"
+            uv python find 3.14 || uv python install 3.14
+            uv run --python 3.14 python -c 'import sys; print("R py", sys.version)'
+      - uses: astron-rd/slurm-action@v1.3
+        with:
+          partition: defq
+          constraints: A100
           time: 00:05:00
           commands: |
             hostname
-            python3 --version | sed 's/^/R /'
-            ls /run/udev/data/ | grep -i dmi | sed 's/^/R udevdata: /'
-            python3 - <<'PY'
-            import glob, os, pathlib, re
-            def r(k, f):
-                try: v = f()
-                except Exception as e: v = f"ERR {type(e).__name__}: {e}"
-                print(f"R py {k}: [{v}]")
-            r("cpu.model", lambda: next(l.split(":", 1)[1].strip() for l in open("/proc/cpuinfo") if l.startswith("model name")))
-            r("sched_getaffinity", lambda: len(os.sched_getaffinity(0)))
-            r("process_cpu_count", lambda: os.process_cpu_count())
-            r("cpu_count", lambda: os.cpu_count())
-            r("SLURM_CPUS_ON_NODE", lambda: int(os.environ["SLURM_CPUS_ON_NODE"]))
-            r("memory.gib", lambda: sum(int(pathlib.Path(p).read_text()) for p in glob.glob("/sys/devices/system/edac/mc/mc*/size_mb")) >> 10)
-            r("memory.mts", lambda: re.search(r"_CONFIGURED_SPEED_MTS=(\d+)", pathlib.Path("/run/udev/data/+dmi:id").read_text())[1])
-            r("pynvml", lambda: __import__("pynvml"))
-            r("amdsmi", lambda: __import__("amdsmi"))
-            PY
+            nvidia-smi --query-gpu=name --format=csv,noheader && echo "R nvsmi nogres ok" || echo "R nvsmi nogres rc $?"
