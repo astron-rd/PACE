@@ -7,7 +7,7 @@ confidently write reliable and efficient software.
 Rust is an interesting language for the PACE project because of the following
 properties:
 
-- Native compiled binaries that offer performance rivalling C and C++.
+- Native compiled binaries that offer performance rivaling C and C++.
 - Memory safety semantics that grant C++-like memory flexibility without using a
     garbage collector.
 - Iterator semantics that make it easy to write astronomy code without getting
@@ -255,6 +255,6 @@ items per benchmark is fixed.
 In total the evaluation covers the standard library, crossbeam, crossfire, kanal
 and flume. Here we can see that generally the standard library implementation
 is the best performing. Our conclusion is to stick to the standard library unless
-you specifically require asyncio or tokio support.
+you specifically require [async](https://rust-lang.github.io/async-book/) or [tokio](https://tokio.rs/) support.
 
 ![Performance of different threading crates](results-rust-channel.png)
