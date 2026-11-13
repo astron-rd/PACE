@@ -19,30 +19,35 @@ def cpu() -> Cpu:
     return Cpu(model=model[1].strip(), threads=threads)
 
 
-def gpu() -> Gpu | None:
-    if shutil.which("nvidia-smi"):
-        query = subprocess.run(
-            ["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        # Return code 6 means no GPU was found, as without a Slurm GPU allocation
-        if query.returncode == 6:
-            return None
-        query.check_returncode()
-        names = query.stdout.splitlines()
-    elif shutil.which("amd-smi"):
-        output = subprocess.run(
-            ["amd-smi", "static", "--asic"],
-            capture_output=True,
-            text=True,
-            check=True,
-        ).stdout
-        names = re.findall(r"^\s*MARKET_NAME: (.+)$", output, re.MULTILINE)
-    else:
+def nvidia() -> str | None:
+    if not shutil.which("nvidia-smi"):
         return None
-    return Gpu(model=names[0].strip()) if names else None
+    query = subprocess.run(
+        ["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    # Return code 6 means no GPU was found, as without a Slurm GPU allocation
+    if query.returncode == 6:
+        return None
+    query.check_returncode()
+    return query.stdout.splitlines()[0]
+
+
+def amd() -> str | None:
+    if not shutil.which("amd-smi"):
+        return None
+    output = subprocess.run(
+        ["amd-smi", "static", "--asic"], capture_output=True, text=True, check=True
+    ).stdout
+    name = re.search(r"^\s*MARKET_NAME: (.+)$", output, re.MULTILINE)
+    return name[1].strip() if name else None
+
+
+def gpu() -> Gpu | None:
+    model = nvidia() or amd()
+    return Gpu(model=model) if model else None
 
 
 def memory() -> Memory:
