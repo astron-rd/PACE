@@ -32,16 +32,20 @@ def nvidia() -> str | None:
     if query.returncode == 6:
         return None
     query.check_returncode()
-    return query.stdout.splitlines()[0]
+    names = query.stdout.splitlines()
+    return names[0] if names else None
 
 
 def amd() -> str | None:
     if not shutil.which("amd-smi"):
         return None
-    output = subprocess.run(
-        ["amd-smi", "static", "--asic"], capture_output=True, text=True, check=True
-    ).stdout
-    name = re.search(r"^\s*MARKET_NAME: (.+)$", output, re.MULTILINE)
+    query = subprocess.run(
+        ["amd-smi", "static", "--asic"], capture_output=True, text=True, check=False
+    )
+    # Fails without a GPU, as the device files are denied without a Slurm GPU allocation
+    if query.returncode:
+        return None
+    name = re.search(r"^\s*MARKET_NAME: (.+)$", query.stdout, re.MULTILINE)
     return name[1].strip() if name else None
 
 
@@ -52,13 +56,17 @@ def gpu() -> Gpu | None:
 
 def memory() -> Memory:
     # Installed memory per memory controller, as reported by the EDAC driver
-    sizes = Path("/sys/devices/system/edac/mc").glob("mc*/size_mb")
+    sizes = list(Path("/sys/devices/system/edac/mc").glob("mc*/size_mb"))
+    if not sizes:
+        raise RuntimeError("No EDAC memory controllers")
     gib = sum(int(size.read_text()) for size in sizes) >> 10
     dmi = Path("/run/udev/data/+dmi:id").read_text()
-    speed = re.search(r"_CONFIGURED_SPEED_MTS=(\d+)", dmi)
-    if speed is None:
+    speeds = re.findall(
+        r"^E:MEMORY_DEVICE_\d+_CONFIGURED_SPEED_MTS=(\d+)$", dmi, re.MULTILINE
+    )
+    if not speeds:
         raise RuntimeError("No configured memory speed in udev DMI data")
-    return Memory(gib=gib, mts=int(speed[1]))
+    return Memory(gib=gib, mts=min(map(int, speeds)))
 
 
 def detect() -> Hardware:

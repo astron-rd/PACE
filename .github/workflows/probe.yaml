@@ -5,16 +5,25 @@ on:
 jobs:
   probe:
     runs-on: [slurm]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: rbq-none, partition: rbq, gres: "" }
+          - { name: rbq-W7700, partition: rbq, gres: "gpu:W7700" }
+          - { name: defq-A4000, partition: defq, gres: "gpu:A4000" }
+          - { name: defq-none, partition: defq, gres: "" }
+    name: probe (${{ matrix.name }})
     steps:
       - uses: actions/checkout@v7.0.1
       - uses: astral-sh/setup-uv@v10.1.0
       - uses: astron-rd/slurm-action@v1.3
         with:
-          partition: rbq
+          partition: ${{ matrix.partition }}
+          gres: ${{ matrix.gres }}
           time: 00:05:00
           commands: |
             hostname
-            module load rocm
-            amd-smi static --asic > amd.txt 2>&1 && echo "R amd rc 0" || echo "R amd rc $?"
-            sed 's/^/R amd: /' amd.txt | head -20
+            module load rocm || true
+            grep CONFIGURED_SPEED_MTS /run/udev/data/+dmi:id | sed 's/^/R dmi: /'
             uv run --locked --project bench python -c 'from pace_bench.hardware import detect; print("R", detect().model_dump_json())' || echo "R detect failed $?"
