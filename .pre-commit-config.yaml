@@ -72,3 +72,15 @@ repos:
             types: [python]
             pass_filenames: false
             always_run: false
+          - id: benchmark-idg-python
+            name: benchmark-idg-python
+            stages: [manual] # run by the benchmark workflow on DAS-6
+            entry: >-
+                bash -c 'uv run --locked --project apps/idg/input idg-input &&
+                start=$(date -u +%FT%TZ) &&
+                uv run --locked --project apps/idg/python idg inputs.h5 --json measurements.json &&
+                uv run --locked --project bench record measurements.json
+                --application idg --language python --framework numba --timestamp "$start"'
+            language: system
+            pass_filenames: false
+            always_run: true
