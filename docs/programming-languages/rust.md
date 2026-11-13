@@ -186,14 +186,14 @@ fn processor(work: &mut [_]) {
   let num_threads = num_cpus::get();
   let bands = work.chunks_mut(num_threads*30).collect();
   let (in_tx, in_rx) = std::sync::mpmc::channel;
-  thread::::scope(|s| {
+  thread::scope(|s| {
     for item in bands.into_iter() {
       in_tx.send(item).expect("Can't send data to thread");
     }
 
     drop(in_tx);
 
-    for _ in 0..n_workers {
+    for _ in 0..num_threads {
       let t_rx = in_rx.clone();
       s.spawn(move || {
         while let Ok(item) = t_rx.recv() {
@@ -209,7 +209,6 @@ fn processor(work: &mut [_]) {
 
 ```Rust
 fn processor(work: &mut [_]) {
-  let num_threads = num_cpus::get();
   work.par_iter_mut().for_each(|item| {
     process(item);
   });
