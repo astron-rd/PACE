@@ -31,12 +31,6 @@ uv run idg {input-file}
 
 You can get an input file from the input generator in `idg/input`. Use the `--store` flag to store the resulting image in an HDF5 file.
 
-### Unit tests
-
-```sh
-uvx pre-commit run --hook-stage manual --all -v pytest-idg
-```
-
 ### Linting
 
 ```sh
@@ -46,5 +40,5 @@ uvx pre-commit run --all
 ### Packaging
 
 ```sh
-uvx pre-commit run --hook-stage manual --all -v build-idg
+uv build
 ```

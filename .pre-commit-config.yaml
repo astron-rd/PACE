@@ -40,14 +40,6 @@ repos:
             entry: uv run --project bench export
             language: system
             pass_filenames: false
-          - id: pytest-idg
-            name: pytest-idg
-            stages: [manual] # only run when specified manually
-            entry: uv run --directory apps/idg/python pytest
-            language: system
-            types: [python]
-            pass_filenames: false
-            always_run: false
           - id: pytest-all-sky
             name: pytest-all-sky
             stages: [manual] # only run when specified manually
