@@ -115,16 +115,16 @@ workloads. This list is not exhaustive and will not be updated (2026-10-20).
 General threading & parallelization crates:
 
 1. [Crossbeam](https://docs.rs/crossbeam/latest/crossbeam/)
-1. [Rayon](https://docs.rs/rayon/latest/rayon/)
-1. [threadpool_scope](https://docs.rs/threadpool_scope/latest/threadpool_scope/)
+2. [Rayon](https://docs.rs/rayon/latest/rayon/)
+3. [scoped_threadpool](https://docs.rs/scoped_threadpool/latest/scoped_threadpool/)
 
 Specialized concurrency constructs:
 
 1. [parking_lot](https://docs.rs/parking_lot/latest/parking_lot/)
-1. [spin](https://docs.rs/spin/latest/spin/)
-1. [thread_local](https://docs.rs/thread_local/latest/thread_local/)
-1. [ringbuf](https://docs.rs/ringbuf/latest/ringbuf/)
-1. [dashmap](https://docs.rs/dashmap/latest/dashmap/)
+2. [spin](https://docs.rs/spin/latest/spin/)
+3. [thread_local](https://docs.rs/thread_local/latest/thread_local/)
+4. [ringbuf](https://docs.rs/ringbuf/latest/ringbuf/)
+5. [dashmap](https://docs.rs/dashmap/latest/dashmap/)
 
 Overview of Channel crates:
 
@@ -149,7 +149,7 @@ crates to distribute the work and data across threads.
 Four different parallel implementations are evaluated. The
 goal of this evaluation is to compare the overhead introduced by the crates.
 The implementations are kept as identical as possible. In total crossbeam,
-threadpool_scope, Rayon and a native threadpool are evaluated. For Rayon we tested
+scoped_threadool, Rayon and a native threadpool are evaluated. For Rayon we tested
 both `par_iter` and `par_chunks` separately.
 
 The results show marginal performance differences. Rayon `par_iter` is the
@@ -185,7 +185,7 @@ fn processor(work: &mut [_]) {
 fn processor(work: &mut [_]) {
   let num_threads = num_cpus::get();
   let bands = work.chunks_mut(num_threads*30).collect();
-  let (in_tx, in_rx) = std::sync::mpmc::channel;
+  let (in_tx, in_rx) = std::sync::mpmc::channel();
   thread::scope(|s| {
     for item in bands.into_iter() {
       in_tx.send(item).expect("Can't send data to thread");
@@ -239,7 +239,7 @@ fn processor(work: &mut [_]) {
         process(item);
       });
     }
-  }
+  });
 }
 ```
 
@@ -257,4 +257,4 @@ and flume. Here we can see that generally the standard library implementation
 is the best performing. Our conclusion is to stick to the standard library unless
 you specifically require [async](https://rust-lang.github.io/async-book/) or [tokio](https://tokio.rs/) support.
 
-![Performance of different threading crates](results-rust-channel.png)
+![Performance of different channel crates](results-rust-channel.png)
