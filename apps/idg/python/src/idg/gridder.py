@@ -1,18 +1,20 @@
 import numpy as np
 
-from .kernels.gridding import (
-    add_subgrid_to_grid,
-    compute_phasor,
-    visibilities_to_subgrids,
-)
+from .backends import get_backend
 from .types import FOURIER_DOMAIN_TO_IMAGE_DOMAIN
 
 
 class Gridder:
-    def __init__(self, nr_correlations_in: int, subgrid_size: int):
+    def __init__(self, backend, nr_correlations_in: int, subgrid_size: int):
+        self.backend = backend
         self.nr_correlations_in = nr_correlations_in
         self.nr_correlations_out = 4 if nr_correlations_in == 4 else 1
         self.subgrid_size = subgrid_size
+
+    @classmethod
+    def create(cls, backend_name: str, nr_correlations_in: int, subgrid_size: int):
+        """Build a Gridder for the named backend (``"numba"`` or ``"jax"``)."""
+        return cls(get_backend(backend_name), nr_correlations_in, subgrid_size)
 
     def grid_onto_subgrids(
         self,
@@ -43,7 +45,7 @@ class Gridder:
         assert self.nr_correlations_out == subgrids.shape[1]
         assert self.subgrid_size == subgrids.shape[2]
 
-        visibilities_to_subgrids(
+        self.backend.visibilities_to_subgrids(
             w_step,
             image_size,
             grid_size,
@@ -67,31 +69,27 @@ class Gridder:
         """
         Add subgrids to the grid.
 
-        :param metadata: metadata arraym shape (nr_subgrids)
+        :param metadata: metadata array, shape (nr_subgrids)
         :param subgrids: subgrid array, shape (nr_subgrids, nr_correlations_out, subgrid_size, subgrid_size)
         :param grid: grid array (nr_correlations_out, grid_size, grid_size)
         """
-
         nr_correlations = grid.shape[0]
         grid_size = grid.shape[1]
-        nr_subgrids = subgrids.shape[0]
         subgrid_size = subgrids.shape[2]
 
         # Compute phasor
-        phasor = compute_phasor(subgrid_size)
+        phasor = self.backend.compute_phasor(subgrid_size)
 
-        # Iterate all subgrids
-        for s in range(nr_subgrids):
-            add_subgrid_to_grid(
-                s,
-                metadata,
-                subgrids,
-                grid,
-                phasor,
-                nr_correlations,
-                subgrid_size,
-                grid_size,
-            )
+        # Add all subgrids
+        self.backend.add_subgrids_to_grid(
+            metadata,
+            subgrids,
+            grid,
+            phasor,
+            nr_correlations,
+            subgrid_size,
+            grid_size,
+        )
 
     def transform(self, direction: int, grid: np.ndarray) -> None:
         """

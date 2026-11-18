@@ -1,48 +1,19 @@
 import json
-import time
 
 import h5py
 import numpy as np
 
+from .backends import get_backend
 from .config import settings
 from .gridder import Gridder
-from .taper import get_taper
 from .types import FOURIER_DOMAIN_TO_IMAGE_DOMAIN, GRIDTYPE
-
-
-class Timer:
-    """Times operations and collects their durations keyed by description."""
-
-    def __init__(self):
-        self.timings = {}
-
-    @staticmethod
-    def print_header(title, header_length=50, newline="\n"):
-        print(newline + "=" * header_length)
-        print(title)
-        print("=" * header_length)
-
-    def time(self, description, operation):
-        print(f"{description:<38}", end="")
-        start = time.perf_counter()
-        result = operation()
-        end = time.perf_counter()
-        duration = end - start
-        print(f" {duration:>9.6f} s")
-        self.timings[description] = duration
-        return result
-
-    def print_timings(self):
-        self.print_header("TIMINGS")
-        total_time = sum(self.timings.values())
-        for operation, duration in self.timings.items():
-            percentage = (duration / total_time) * 100
-            print(f"{operation:<30} {duration:>8.3f} s ({percentage:>5.1f}%)")
-        print(f"{'Total':<30} {total_time:>8.3f} s")
+from .utils import Timer
 
 
 def main():
     timer = Timer()
+
+    backend = get_backend(settings.backend)
 
     timer.print_header("READING INPUT DATA", newline="")
     with h5py.File(settings.input, "r") as infile:
@@ -86,17 +57,23 @@ def main():
         "nr_baselines": uvw.shape[0],
         "subgrid_size": subgrid_size,
         "grid_size": grid_size,
+        "backend": settings.backend,
     }
 
     timer.print_header("PARAMETERS")
     for key, value in parameters.items():
         print(f"{key:<39} {value:>10}")
 
+    timer.print_header("INITIALIZATION")
+
     grid = np.zeros(
         (settings.nr_correlations_out, grid_size, grid_size), dtype=GRIDTYPE
     )
 
-    taper = timer.time("Initialize taper", lambda: get_taper(subgrid_size=subgrid_size))
+    taper = timer.time(
+        "Initialize taper",
+        lambda: backend.get_taper(subgrid_size=subgrid_size),
+    )
 
     subgrids = np.zeros(
         shape=(nr_subgrids, settings.nr_correlations_out, subgrid_size, subgrid_size),
@@ -106,6 +83,7 @@ def main():
     gridder = timer.time(
         "Initialize gridder",
         lambda: Gridder(
+            backend=backend,
             nr_correlations_in=nr_correlations_in,
             subgrid_size=subgrid_size,
         ),
