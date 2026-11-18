@@ -115,16 +115,16 @@ workloads. This list is not exhaustive and will not be updated (2026-10-20).
 General threading & parallelization crates:
 
 1. [Crossbeam](https://docs.rs/crossbeam/latest/crossbeam/)
-2. [Rayon](https://docs.rs/rayon/latest/rayon/)
-3. [scoped_threadpool](https://docs.rs/scoped_threadpool/latest/scoped_threadpool/)
+1. [Rayon](https://docs.rs/rayon/latest/rayon/)
+1. [scoped_threadpool](https://docs.rs/scoped_threadpool/latest/scoped_threadpool/)
 
 Specialized concurrency constructs:
 
 1. [parking_lot](https://docs.rs/parking_lot/latest/parking_lot/)
-2. [spin](https://docs.rs/spin/latest/spin/)
-3. [thread_local](https://docs.rs/thread_local/latest/thread_local/)
-4. [ringbuf](https://docs.rs/ringbuf/latest/ringbuf/)
-5. [dashmap](https://docs.rs/dashmap/latest/dashmap/)
+1. [spin](https://docs.rs/spin/latest/spin/)
+1. [thread_local](https://docs.rs/thread_local/latest/thread_local/)
+1. [ringbuf](https://docs.rs/ringbuf/latest/ringbuf/)
+1. [dashmap](https://docs.rs/dashmap/latest/dashmap/)
 
 Overview of Channel crates:
 
