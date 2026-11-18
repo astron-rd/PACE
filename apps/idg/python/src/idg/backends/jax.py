@@ -26,10 +26,45 @@ def _polyval(coefficients, x):
     return result
 
 
+def _spheroidal_element(nu, p, q):
+    """
+    Evaluate the prolate spheroidal wave function for one value.
+
+    Both polynomial branches are always evaluated; ``jnp.where`` selects the
+    one that covers this value.
+
+    :param nu: Parameter of the spheroidal wave function (0 <= nu <= 1).
+    :param p: Spheroidal numerator coefficients for both parts, shape (2, 5).
+    :param q: Spheroidal denominator coefficients for both parts, shape (2, 3).
+    :return: Value of the spheroidal wave function at nu.
+    """
+    nusq = nu * nu
+    result = jnp.zeros_like(nu)
+
+    # Process each part
+    for part, end in [(0, 0.75), (1, 1.00)]:
+        lo = 0.0 if part == 0 else 0.75
+        delnusq = nusq - end**2
+
+        # Calculate polynomial using Horner's method
+        top = _polyval(p[part][::-1], delnusq)
+        bot = _polyval(q[part][::-1], delnusq)
+
+        # Avoid division by zero
+        valid = bot != 0
+        term = jnp.where(valid, (1.0 - nusq) * (top / bot), 0.0)
+        result = jnp.where((nu >= lo) & (nu <= end), term, result)
+
+    return result
+
+
 @jax.jit
 def evaluate_spheroidal(nu):
     """
     Evaluate the prolate spheroidal wave function.
+
+    A scalar evaluation mapped over the input lets XLA optimize a simple
+    elementwise loop, which is faster here than whole-array masked passes.
 
     :param nu: Parameters of the spheroidal wave function.
     :return: Array with values of the spheroidal wave function, shape (len(nu)).
@@ -46,26 +81,7 @@ def evaluate_spheroidal(nu):
             [1.0000000e0, 9.599102e-1, 2.918724e-1],
         ]
     )
-
-    result = jnp.zeros_like(nu)
-
-    # Process each part
-    for part, end in [(0, 0.75), (1, 1.00)]:
-        lo = 0.0 if part == 0 else 0.75
-        mask = (nu >= lo) & (nu <= end)
-        nusq = nu**2
-        delnusq = nusq - end**2
-
-        # Calculate polynomial using Horner's method
-        top = _polyval(p[part][::-1], delnusq)
-        bot = _polyval(q[part][::-1], delnusq)
-
-        # Avoid division by zero
-        valid = bot != 0
-        term = jnp.where(valid, (1.0 - nusq) * (top / bot), 0.0)
-        result = jnp.where(mask, term, result)
-
-    return result
+    return jax.vmap(_spheroidal_element, in_axes=(0, None, None))(nu, p, q)
 
 
 def get_taper(subgrid_size: int) -> np.ndarray:
