@@ -64,6 +64,8 @@ def main():
     for key, value in parameters.items():
         print(f"{key:<39} {value:>10}")
 
+    timer.print_header("INITIALIZATION")
+
     grid = np.zeros(
         (settings.nr_correlations_out, grid_size, grid_size), dtype=GRIDTYPE
     )
