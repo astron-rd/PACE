@@ -6,6 +6,9 @@ from pathlib import Path
 
 from pace_bench.models import Cpu, Gpu, Hardware, Memory
 
+# nvidia-smi: "A query to find an object was unsuccessful"
+NVIDIA_SMI_NOT_FOUND = 6
+
 
 def cpu() -> Cpu:
     cpuinfo = Path("/proc/cpuinfo").read_text()
@@ -28,8 +31,8 @@ def nvidia() -> str | None:
         text=True,
         check=False,
     )
-    # Return code 6 without a Slurm GPU allocation
-    if query.returncode == 6:
+    # No GPU visible without a Slurm GPU allocation
+    if query.returncode == NVIDIA_SMI_NOT_FOUND:
         return None
     query.check_returncode()
     return query.stdout.splitlines()[0]
