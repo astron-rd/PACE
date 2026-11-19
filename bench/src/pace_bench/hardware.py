@@ -22,30 +22,25 @@ def cpu() -> Cpu:
     return Cpu(model=model[1].strip(), threads=threads)
 
 
-def nvidia() -> str | None:
-    if not shutil.which("nvidia-smi"):
+def run(*args: str) -> subprocess.CompletedProcess[str] | None:
+    if shutil.which(args[0]) is None:
         return None
-    query = subprocess.run(
-        ["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    return subprocess.run(args, capture_output=True, text=True, check=False)
+
+
+def nvidia() -> str | None:
+    query = run("nvidia-smi", "--query-gpu=name", "--format=csv,noheader")
     # No GPU visible without a Slurm GPU allocation
-    if query.returncode == NVIDIA_SMI_NOT_FOUND:
+    if query is None or query.returncode == NVIDIA_SMI_NOT_FOUND:
         return None
     query.check_returncode()
     return query.stdout.splitlines()[0]
 
 
 def amd() -> str | None:
-    if not shutil.which("amd-smi"):
-        return None
-    query = subprocess.run(
-        ["amd-smi", "static", "--asic"], capture_output=True, text=True, check=False
-    )
+    query = run("amd-smi", "static", "--asic")
     # Fails without a Slurm GPU allocation
-    if query.returncode:
+    if query is None or query.returncode:
         return None
     name = re.search(r"^\s*MARKET_NAME: (.+)$", query.stdout, re.MULTILINE)
     return name[1].strip() if name else None
