@@ -230,3 +230,6 @@ __marimo__/
 # Image files
 *.png
 !docs/**/*.png
+
+# Build trees (incl. per-backend variants)
+build-*/
