@@ -25,8 +25,7 @@ jobs:
           commands: |
             hostname
             module load rocm || true
-            command -v lspci | sed 's/^/R which: /' || echo "R which: no lspci"
-            lspci --version 2>&1 | sed 's/^/R version: /'
-            lspci -nn | grep -E '\[03[0-9a-f]{2}\]' | sed 's/^/R lspci: /'
-            lspci -vmm | awk -v RS= '/Class:\t(VGA|3D|Display)/' | grep -E '^(Slot|Vendor|Device|SVendor|SDevice):' | sed 's/^/R vmm: /'
+            for t in nvidia-smi amd-smi; do echo "R which $t: $(command -v $t || echo none)"; done
+            nvidia-smi --query-gpu=name --format=csv,noheader >/dev/null 2>&1; echo "R nvidia-smi exit: $?"
+            amd-smi static --asic >/dev/null 2>&1; echo "R amd-smi exit: $?"
             uv run --locked --project bench python -c 'from pace_bench.hardware import detect; print("R", detect().model_dump_json())' || echo "R detect failed $?"
