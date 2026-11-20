@@ -1,0 +1,74 @@
+name: benchmark
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/benchmark.yaml
+      - apps/**
+      - bench/**
+  workflow_dispatch:
+jobs:
+  run:
+    name: ${{ matrix.name }}
+    runs-on: [slurm]
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: idg-python
+            application: idg
+            language: python
+            framework: numba
+            partition: defq
+            constraints: A4000
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.1.0
+      - uses: astron-rd/slurm-action@v1.3
+        with:
+          partition: ${{ matrix.partition }}
+          constraints: ${{ matrix.constraints }}
+          gres: ${{ matrix.gres }}
+          time: 00:30:00
+          commands: |
+            start=$(date -u +%FT%TZ)
+            uvx pre-commit run --verbose --hook-stage manual benchmark-${{ matrix.name }}
+            uv run --locked --project bench record measurements.json \
+              --application ${{ matrix.application }} --language ${{ matrix.language }} \
+              ${{ matrix.framework && format('--framework {0}', matrix.framework) }} --timestamp "$start"
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: ${{ matrix.name }}
+          path: results/
+          if-no-files-found: error
+  store:
+    needs: run
+    runs-on: ubuntu-26.04
+    concurrency: benchmark-store
+    steps:
+      - uses: actions/create-github-app-token@v3.3.0
+        id: app-token
+        with:
+          client-id: ${{ vars.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          permission-contents: write
+      - uses: actions/checkout@v7.0.1
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+      - uses: actions/download-artifact@v8.0.2
+        with:
+          path: results
+          merge-multiple: true
+      - name: Commit and push results
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          BOT: ${{ steps.app-token.outputs.app-slug }}[bot]
+        run: |
+          git config user.name "$BOT"
+          git config user.email "$(gh api "/users/$BOT" --jq .id)+$BOT@users.noreply.github.com"
+          git add results
+          git commit -m "results: add benchmark results for ${GITHUB_SHA::8}"
+          git pull --rebase
+          git push

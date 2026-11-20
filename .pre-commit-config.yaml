@@ -72,3 +72,12 @@ repos:
             types: [python]
             pass_filenames: false
             always_run: false
+          - id: benchmark-idg-python
+            name: benchmark-idg-python
+            stages: [manual] # run by the benchmark workflow on DAS-6
+            entry: >-
+                bash -c 'uv run --locked --project apps/idg/input idg-input &&
+                uv run --locked --project apps/idg/python idg inputs.h5 --json measurements.json'
+            language: system
+            pass_filenames: false
+            always_run: true
