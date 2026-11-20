@@ -5,6 +5,7 @@ description = "Benchmark tooling for PACE"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "gitpython>=3.2.1",
     "jsonschema-markdown>=2026.8.0",
     "loguru>=0.7.3",
     "pydantic>=2.13.5",
@@ -13,6 +14,7 @@ dependencies = [
 
 [project.scripts]
 export = "pace_bench.generate:main"
+record = "pace_bench.record:main"
 
 [build-system]
 requires = ["uv_build>=0.12.19,<0.13.0"]
