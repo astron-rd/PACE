@@ -26,6 +26,6 @@ jobs:
             hostname
             module load rocm || true
             for t in nvidia-smi amd-smi; do echo "R which $t: $(command -v $t || echo none)"; done
-            nvidia-smi --query-gpu=name --format=csv,noheader >/dev/null 2>&1; echo "R nvidia-smi exit: $?"
-            amd-smi static --asic >/dev/null 2>&1; echo "R amd-smi exit: $?"
+            rc=0; nvidia-smi --query-gpu=name --format=csv,noheader >/dev/null 2>&1 || rc=$?; echo "R nvidia-smi exit: $rc"
+            rc=0; amd-smi static --asic >/dev/null 2>&1 || rc=$?; echo "R amd-smi exit: $rc"
             uv run --locked --project bench python -c 'from pace_bench.hardware import detect; print("R", detect().model_dump_json())' || echo "R detect failed $?"
