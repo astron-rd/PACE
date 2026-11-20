@@ -25,5 +25,8 @@ jobs:
           commands: |
             hostname
             module load rocm || true
-            grep CONFIGURED_SPEED_MTS /run/udev/data/+dmi:id | sed 's/^/R dmi: /'
+            command -v lspci | sed 's/^/R which: /' || echo "R which: no lspci"
+            lspci --version 2>&1 | sed 's/^/R version: /'
+            lspci -nn | grep -E '\[03[0-9a-f]{2}\]' | sed 's/^/R lspci: /'
+            lspci -vmm | awk -v RS= '/Class:\t(VGA|3D|Display)/' | grep -E '^(Slot|Vendor|Device|SVendor|SDevice):' | sed 's/^/R vmm: /'
             uv run --locked --project bench python -c 'from pace_bench.hardware import detect; print("R", detect().model_dump_json())' || echo "R detect failed $?"
