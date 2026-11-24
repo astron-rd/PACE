@@ -30,5 +30,3 @@ The `record` command turns the parameters and timings of a run into a result fil
 uv run --project bench record <measurements.json> \
     --application <application> --language <language> --timestamp <start time>
 ```
-
-Run it inside the job that ran the benchmark, as it reads the hardware of that node. The [benchmark workflow](../.github/workflows/benchmark.yaml) runs it on DAS-6.
