@@ -34,6 +34,7 @@ def main() -> None:
     measurements = json.loads(args.measurements.read_text())
     result = Result.model_validate(
         {
+            **measurements,
             "version": metadata.version("pace-bench"),
             "timestamp": args.timestamp,
             "application": args.application,
@@ -41,8 +42,6 @@ def main() -> None:
             "framework": args.framework,
             "commit": commit(),
             "hardware": hardware.detect(),
-            "parameters": measurements["parameters"],
-            "timings": measurements["timings"],
         }
     )
 
