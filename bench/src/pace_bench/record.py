@@ -1,17 +1,12 @@
 import argparse
 import json
+import os
 from datetime import datetime
 from importlib import metadata
 from pathlib import Path
 
-from git import Repo
-
 from pace_bench import hardware
 from pace_bench.models import Result
-
-
-def commit() -> str:
-    return Repo(search_parent_directories=True).head.commit.hexsha[:8]
 
 
 def main() -> None:
@@ -40,7 +35,7 @@ def main() -> None:
             "application": args.application,
             "language": args.language,
             "framework": args.framework,
-            "commit": commit(),
+            "commit": os.environ["GITHUB_SHA"][:8],
             "hardware": hardware.detect(),
         }
     )
