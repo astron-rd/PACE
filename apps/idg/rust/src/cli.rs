@@ -25,9 +25,9 @@ pub struct Cli {
     #[arg(short = 'm', long, default_value = "false")]
     pub output_metadata: bool,
 
-    /// Output timing data
+    /// Output timing data as JSON
     #[arg(long, default_value=None, value_name = "OUTPUT_PATH")]
-    pub timing_output: Option<PathBuf>,
+    pub json: Option<PathBuf>,
 }
 
 #[derive(Subcommand)]
