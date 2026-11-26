@@ -13,6 +13,7 @@ dependencies = [
 
 [project.scripts]
 export = "pace_bench.generate:main"
+record = "pace_bench.record:main"
 
 [build-system]
 requires = ["uv_build>=0.12.19,<0.13.0"]

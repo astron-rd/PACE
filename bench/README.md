@@ -21,3 +21,13 @@ The generated documentation is in [`4-specification.md`](../docs/general/benchma
 
 > [!NOTE]
 > See the [Pydantic documentation on models](https://pydantic.dev/docs/validation/latest/concepts/models/) for the available field types and constraints.
+
+## Recording a result
+
+The benchmark workflow records each run with the `record` command. It turns the parameters and timings of a run into a result file, adds the version, commit and hardware, validates the result and stores it under `results/`:
+
+```sh
+uv run --project bench record <measurements.json> \
+    --application <application> --language <language> \
+    --commit <commit> --timestamp <start time>
+```
