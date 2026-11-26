@@ -37,7 +37,8 @@ jobs:
             uvx pre-commit run --verbose --hook-stage manual benchmark-${{ matrix.name }}
             uv run --locked --project bench record measurements.json \
               --application ${{ matrix.application }} --language ${{ matrix.language }} \
-              ${{ matrix.framework && format('--framework {0}', matrix.framework) }} --timestamp "$start"
+              ${{ matrix.framework && format('--framework {0}', matrix.framework) }} \
+              --commit ${{ github.sha }} --timestamp "$start"
       - uses: actions/upload-artifact@v7.0.2
         with:
           name: ${{ matrix.name }}
