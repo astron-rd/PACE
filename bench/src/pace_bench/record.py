@@ -9,6 +9,15 @@ from pace_bench import hardware
 from pace_bench.models import Result
 
 
+def commit() -> str:
+    if sha := os.environ.get("GITHUB_SHA"):
+        return sha[:8]
+    # Importing GitPython fails on nodes without git
+    from git import Repo
+
+    return Repo(search_parent_directories=True).head.commit.hexsha[:8]
+
+
 def main() -> None:
     """Record the parameters and timings of a run as a result file."""
     parser = argparse.ArgumentParser(description=main.__doc__)
@@ -35,7 +44,7 @@ def main() -> None:
             "application": args.application,
             "language": args.language,
             "framework": args.framework,
-            "commit": os.environ["GITHUB_SHA"][:8],
+            "commit": commit(),
             "hardware": hardware.detect(),
         }
     )
