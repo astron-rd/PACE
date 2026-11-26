@@ -28,5 +28,6 @@ The benchmark workflow records each run with the `record` command. It turns the 
 
 ```sh
 uv run --project bench record <measurements.json> \
-    --application <application> --language <language> --timestamp <start time>
+    --application <application> --language <language> \
+    --commit <commit> --timestamp <start time>
 ```

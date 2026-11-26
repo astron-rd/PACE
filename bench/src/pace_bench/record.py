@@ -1,21 +1,11 @@
 import argparse
 import json
-import os
 from datetime import datetime
 from importlib import metadata
 from pathlib import Path
 
 from pace_bench import hardware
 from pace_bench.models import Result
-
-
-def commit() -> str:
-    if sha := os.environ.get("GITHUB_SHA"):
-        return sha
-    # Importing GitPython fails on nodes without git
-    from git import Repo
-
-    return Repo(search_parent_directories=True).head.commit.hexsha
 
 
 def main() -> None:
@@ -27,6 +17,9 @@ def main() -> None:
     parser.add_argument("--application", required=True)
     parser.add_argument("--language", required=True)
     parser.add_argument("--framework")
+    parser.add_argument(
+        "--commit", required=True, help="git commit hash of the benchmarked code"
+    )
     parser.add_argument(
         "--timestamp",
         required=True,
@@ -44,7 +37,7 @@ def main() -> None:
             "application": args.application,
             "language": args.language,
             "framework": args.framework,
-            "commit": commit()[:8],
+            "commit": args.commit[:8],
             "hardware": hardware.detect(),
         }
     )
