@@ -26,7 +26,7 @@ macro_rules! time_function {
             String::from($pretty_name).to_lowercase().replace(" ", "_"),
             duration,
         ));
-        println!("{:<38} {:>10.5}s", $pretty_name, duration.as_secs_f32());
+        println!("{:<38} {:>10.5}s", $pretty_name, duration.as_secs_f64());
         result
     }};
 
@@ -35,7 +35,7 @@ macro_rules! time_function {
         let result = $exp;
         let duration = start.elapsed();
         crate::timing::add_timing((String::from($name), duration));
-        println!("{:<38} {:>10.5}s", $pretty_name, duration.as_secs_f32());
+        println!("{:<38} {:>10.5}s", $pretty_name, duration.as_secs_f64());
         result
     }};
 }

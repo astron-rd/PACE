@@ -56,3 +56,23 @@ fn evaluate_polynomial(x: Float, coefficients: &[Float]) -> Float {
     }
     val
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_evaluate_polynomial() {
+        let coefficients = [3.1, 4.1, 5.9];
+
+        let inputs = [-2.0, 0.0, 1.0, 1.5, 10.0];
+
+        let outputs = inputs.map(|x| evaluate_polynomial(x, &coefficients));
+
+        let expected_outputs = [18.5, 3.1, 13.1, 22.525002, 634.1];
+
+        for (actual, expected) in outputs.iter().zip(expected_outputs.iter()) {
+            assert!(approx::relative_eq!(actual, expected));
+        }
+    }
+}

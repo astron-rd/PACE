@@ -107,7 +107,8 @@ impl Input {
                     )
                 );
 
-                let taper: Taper = time_function!("generate taper", Taper::generate(*subgrid_size));
+                let taper: Taper =
+                    time_function!("initialize taper", Taper::generate(*subgrid_size));
 
                 Ok(Self {
                     baseline_count,
@@ -138,7 +139,8 @@ impl Input {
 
                 let file = hdf5_metno::File::open(std::env::current_dir()?.join(filename))?;
 
-                let uvw: UvwArray = time_function!("load UVW coordinates", UvwArray::from_file(&file)?);
+                let uvw: UvwArray =
+                    time_function!("load UVW coordinates", UvwArray::from_file(&file)?);
 
                 let frequencies: FrequencyArray =
                     time_function!("load frequencies", FrequencyArray::from_file(&file)?);
@@ -154,7 +156,8 @@ impl Input {
                 let metadata: MetadataArray =
                     time_function!("load metadata", MetadataArray::from_file(&file)?);
 
-                let taper: Taper = time_function!("generate taper", "initialize_taper", Taper::generate(*subgrid_size));
+                let taper: Taper =
+                    time_function!("initialize taper", Taper::generate(*subgrid_size));
 
                 Ok(Self {
                     subgrid_count: metadata.len(),
@@ -163,9 +166,9 @@ impl Input {
                     correlation_count_in: visibilities.shape()[3].try_into().unwrap(),
                     correlation_count_out: *correlation_count_out,
                     w_step: cli.w_step,
-                    channel_count: frequencies.len() as u32,
-                    baseline_count: visibilities.shape()[0] as u32,
-                    timestep_count: visibilities.shape()[1] as u32,
+                    channel_count: frequencies.len().try_into().unwrap(),
+                    baseline_count: visibilities.shape()[0].try_into().unwrap(),
+                    timestep_count: visibilities.shape()[1].try_into().unwrap(),
                     uvw,
                     frequencies,
                     wavenumbers,

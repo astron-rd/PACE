@@ -1,7 +1,8 @@
-use std::{collections::HashMap, fs::File, time::Duration};
+use std::{fs::File, time::Duration};
 
 use anyhow::Result;
 use clap::Parser;
+use indexmap::IndexMap;
 use serde::Serialize;
 
 use crate::{
@@ -26,7 +27,11 @@ fn main() -> Result<()> {
     print_header!("MAIN");
     let mut gridder = Gridder::new_empty(&input);
 
-    time_function!("grid visibilities onto subgrids", "grid_visibilities", gridder.grid_onto_subgrids(&input));
+    time_function!(
+        "grid visibilities onto subgrids",
+        "grid_visibilities",
+        gridder.grid_onto_subgrids(&input)
+    );
 
     time_function!("ifft subgrids", gridder.ifft_subgrids(&input));
 
@@ -83,7 +88,7 @@ fn main() -> Result<()> {
     if let Some(path) = &cli.json {
         let mut outfile = File::create(path)?;
         let report = Report::new(&input, timing::get_timings());
-        serde_json::to_writer(&mut outfile, &report).unwrap();
+        serde_json::to_writer_pretty(&mut outfile, &report)?;
     }
 
     println!("done!");
@@ -92,13 +97,13 @@ fn main() -> Result<()> {
 
 #[derive(Serialize)]
 struct Report {
-    parameters: HashMap<&'static str, u32>,
-    timings: HashMap<String, f32>,
+    parameters: IndexMap<&'static str, u32>,
+    timings: IndexMap<String, f64>,
 }
 
 impl Report {
     fn new(input: &Input, timings: Vec<(String, Duration)>) -> Self {
-        let mut parameters = HashMap::new();
+        let mut parameters = IndexMap::new();
 
         parameters.insert("nr_correlations_in", input.correlation_count_in);
         parameters.insert("nr_correlations_out", input.correlation_count_out);
@@ -108,9 +113,9 @@ impl Report {
         parameters.insert("subgrid_size", input.subgrid_size);
         parameters.insert("grid_size", input.grid_size);
 
-        let timings: HashMap<String, f32> = timings
+        let timings = timings
             .into_iter()
-            .map(|(name, duration)| (name, duration.as_secs_f32() * 1000.0))
+            .map(|(name, duration)| (name, duration.as_secs_f64()))
             .collect();
 
         Self {
