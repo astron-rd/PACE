@@ -1,12 +1,11 @@
 [package]
 name = "dedisp"
 version = "0.1.0"
-rust-version = "1.85"
 edition = "2024"
 
 [dependencies]
-clap = { version = "4.6.6", features = ["derive"] }
-hdf5-metno = { version = "0.12.3", features = ["complex"] }
+clap = { version = "4.6.10", features = ["derive"] }
+hdf5-metno = { version = "0.15.3", features = ["complex"] }
 ndarray = { version = "0.17.2", features = ["rayon"] }
 ndarray-ndimage = "0.6.0"
 ndarray-rand = "0.16.0"
