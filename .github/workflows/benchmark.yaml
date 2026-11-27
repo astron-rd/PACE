@@ -1,52 +1,58 @@
 name: benchmark
 on:
-  push:
-    branches: [main]
-    paths:
-      - apps/**
-      - bench/**
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      name:
+        type: string
+        required: true
+      application:
+        type: string
+        required: true
+      language:
+        type: string
+        required: true
+      framework:
+        type: string
+      partition:
+        type: string
+        required: true
+      constraints:
+        type: string
+      gres:
+        type: string
 jobs:
   run:
-    name: ${{ matrix.name }}
+    name: ${{ inputs.name }}
     runs-on: [slurm]
     permissions:
       contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: idg-python
-            application: idg
-            language: python
-            framework: numba
-            partition: rbq
-            constraints: zen5
     steps:
       - uses: actions/checkout@v7.0.1
       - uses: astral-sh/setup-uv@v10.1.0
       - uses: astron-rd/slurm-action@v1.4
         with:
-          partition: ${{ matrix.partition }}
-          constraints: ${{ matrix.constraints }}
-          gres: ${{ matrix.gres }}
+          partition: ${{ inputs.partition }}
+          constraints: ${{ inputs.constraints }}
+          gres: ${{ inputs.gres }}
           time: 00:30:00
           commands: |
             start=$(date -u +%FT%TZ)
-            uvx pre-commit run --verbose --hook-stage manual benchmark-${{ matrix.name }}
+            uvx pre-commit run --verbose --hook-stage manual benchmark-${{ inputs.name }}
             uv run --locked --project bench record measurements.json \
-              --application ${{ matrix.application }} --language ${{ matrix.language }} \
-              ${{ matrix.framework && format('--framework {0}', matrix.framework) }} \
+              --application ${{ inputs.application }} --language ${{ inputs.language }} \
+              ${{ inputs.framework && format('--framework {0}', inputs.framework) }} \
               --commit ${{ github.sha }} --timestamp "$start"
       - uses: actions/upload-artifact@v7.0.2
         with:
-          name: ${{ matrix.name }}
+          name: ${{ inputs.name }}
           path: results/
           if-no-files-found: error
   store:
     needs: run
     runs-on: ubuntu-26.04
-    concurrency: benchmark-store
+    concurrency:
+      group: benchmark-store
+      queue: max
     steps:
       - uses: actions/create-github-app-token@v3.3.0
         id: app-token
