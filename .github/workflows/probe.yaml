@@ -13,8 +13,8 @@ jobs:
           constraints: zen5
           time: 00:05:00
           commands: |
-            hostname
-            module avail 2>&1 | grep -i -E 'hdf5|fftw|cmake' || echo "R no modules matched"
-            for m in hdf5 HDF5 hdf5/serial; do module load $m 2>/dev/null && echo "R loaded $m: HDF5_DIR=${HDF5_DIR:-unset} $(command -v h5cc h5dump | tr '\n' ' ')" && break; done
-            ls -d /usr/include/hdf5* /usr/lib64/libhdf5* /usr/lib/x86_64-linux-gnu/hdf5 2>&1 | head
-            command -v cmake pkg-config || true
+            set +e
+            type module; module --version
+            module avail 2>&1 | tail -30
+            for t in cmake gcc cc make pkg-config h5cc spack conda pixi; do echo "R $t: $(command -v $t || echo none)"; done
+            cat /etc/os-release | head -2
