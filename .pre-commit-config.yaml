@@ -89,7 +89,7 @@ repos:
             entry: >-
                 bash -c 'module load spack hdf5 &&
                 uv run --locked --project apps/idg/input idg-input &&
-                cargo run --release --manifest-path apps/idg/rust/Cargo.toml -- --json measurements.json load -f inputs.h5'
+                cargo run --release --manifest-path apps/idg/rust/Cargo.toml -- --json=measurements.json load -f inputs.h5'
             language: system
             pass_filenames: false
             always_run: true

@@ -31,6 +31,8 @@ jobs:
       - uses: astral-sh/setup-uv@v10.1.0
       - uses: actions-rust-lang/setup-rust-toolchain@v2.0.1
         if: inputs.language == 'rust'
+        with:
+          cache: false
       - uses: astron-rd/slurm-action@v1.4
         with:
           partition: ${{ inputs.partition }}
