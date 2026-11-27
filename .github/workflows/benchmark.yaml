@@ -3,7 +3,6 @@ on:
   push:
     branches: [main]
     paths:
-      - .github/workflows/benchmark.yaml
       - apps/**
       - bench/**
   workflow_dispatch:
@@ -70,6 +69,6 @@ jobs:
           git config user.name "$BOT"
           git config user.email "$(gh api "/users/$BOT" --jq .id)+$BOT@users.noreply.github.com"
           git add results
-          git commit -m "results: add benchmark results for ${GITHUB_SHA::8}"
+          git commit -m "Record benchmark results for ${GITHUB_SHA::8}"
           git pull --rebase
           git push
