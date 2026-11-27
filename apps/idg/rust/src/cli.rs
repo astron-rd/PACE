@@ -26,7 +26,7 @@ pub struct Cli {
     pub output_metadata: bool,
 
     /// Output timing data as JSON
-    #[arg(long, default_missing_value="result.json", num_args=0..1, value_name = "OUTPUT_PATH")]
+    #[arg(long, default_missing_value="result.json", num_args=0..=1, require_equals=true, value_name = "OUTPUT_PATH")]
     pub json: Option<PathBuf>,
 }
 
