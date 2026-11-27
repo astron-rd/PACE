@@ -57,26 +57,26 @@ fn main() -> Result<()> {
             .create("subgrids")?;
     }
 
-    if let Commands::Generate { output_input, .. } = cli.command {
-        if output_input {
-            let inputs_file = hdf5_metno::File::create(std::env::current_dir()?.join("inputs.h5"))?;
-            inputs_file
-                .new_dataset_builder()
-                .with_data(&input.uvw)
-                .create("uvws")?;
-            inputs_file
-                .new_dataset_builder()
-                .with_data(&input.frequencies)
-                .create("frequencies")?;
-            inputs_file
-                .new_dataset_builder()
-                .with_data(&input.visibilities)
-                .create("visibilities")?;
-            inputs_file
-                .new_dataset_builder()
-                .with_data(&input.metadata)
-                .create("metadata")?;
-        }
+    if let Commands::Generate { output_input, .. } = cli.command
+        && output_input
+    {
+        let inputs_file = hdf5_metno::File::create(std::env::current_dir()?.join("inputs.h5"))?;
+        inputs_file
+            .new_dataset_builder()
+            .with_data(&input.uvw)
+            .create("uvws")?;
+        inputs_file
+            .new_dataset_builder()
+            .with_data(&input.frequencies)
+            .create("frequencies")?;
+        inputs_file
+            .new_dataset_builder()
+            .with_data(&input.visibilities)
+            .create("visibilities")?;
+        inputs_file
+            .new_dataset_builder()
+            .with_data(&input.metadata)
+            .create("metadata")?;
     }
 
     if let Some(path) = &cli.json {
