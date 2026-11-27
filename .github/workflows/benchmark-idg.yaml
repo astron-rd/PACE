@@ -1,0 +1,27 @@
+name: benchmark-idg
+on:
+  push:
+    branches: [probe/das6-hardware]
+    paths:
+      - apps/idg/**
+      - bench/**
+      - '!**.md'
+  workflow_dispatch:
+jobs:
+  benchmark:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: python
+            framework: numba
+          - language: rust
+    uses: ./.github/workflows/benchmark.yaml
+    with:
+      name: idg-${{ matrix.language }}
+      application: idg
+      language: ${{ matrix.language }}
+      framework: ${{ matrix.framework }}
+      partition: rbq
+      constraints: zen5
+    secrets: inherit

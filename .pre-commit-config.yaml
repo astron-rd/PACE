@@ -83,3 +83,12 @@ repos:
             language: system
             pass_filenames: false
             always_run: true
+          - id: benchmark-idg-rust
+            name: benchmark-idg-rust
+            stages: [manual]
+            entry: >-
+                bash -c 'uv run --locked --project apps/idg/input idg-input &&
+                cargo run --release --manifest-path apps/idg/rust/Cargo.toml -- --json measurements.json load -f inputs.h5'
+            language: system
+            pass_filenames: false
+            always_run: true
