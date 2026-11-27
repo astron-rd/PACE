@@ -1,7 +1,7 @@
 name: benchmark-idg-python
 on:
   push:
-    branches: [main]
+    branches: [probe/das6-hardware]
     paths:
       - apps/idg/python/**
       - apps/idg/input/**
