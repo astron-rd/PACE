@@ -106,7 +106,12 @@ def main():
     )
 
     timer.time(
-        "Add subgrids",
+        "iFFT subgrids",
+        lambda: gridder.ifft_subgrids(subgrids),
+    )
+
+    timer.time(
+        "Add subgrids to grid",
         lambda: gridder.add_subgrids_to_grid(
             metadata=metadata, subgrids=subgrids, grid=grid
         ),

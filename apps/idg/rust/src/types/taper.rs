@@ -15,12 +15,7 @@ impl TaperExtension for Taper {
             .collect();
         let spheroidal = x.map(|x| evaluate_spheroidal(*x));
 
-        let mat_1n = spheroidal
-            .to_shape((1, spheroidal.len()))
-            .expect("1D array should fit in 1xN matrix.");
-        let mat_n1 = mat_1n.clone().reversed_axes();
-
-        (mat_1n * mat_n1).to_owned()
+        &spheroidal.slice(s![NewAxis, ..]) * &spheroidal.slice(s![.., NewAxis])
     }
 }
 
@@ -55,11 +50,29 @@ pub fn evaluate_spheroidal(x: Float) -> Float {
 }
 
 fn evaluate_polynomial(x: Float, coefficients: &[Float]) -> Float {
-    let mut val = coefficients[0];
-    let mut x_accumulator = x;
-    for p in coefficients.iter().skip(1) {
-        val += p * x_accumulator;
-        x_accumulator *= x;
+    let mut val = 0.0;
+    for c in coefficients.iter().rev() {
+        val = val * x + c
     }
     val
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_evaluate_polynomial() {
+        let coefficients = [3.1, 4.1, 5.9];
+
+        let inputs = [-2.0, 0.0, 1.0, 1.5, 10.0];
+
+        let outputs = inputs.map(|x| evaluate_polynomial(x, &coefficients));
+
+        let expected_outputs = [18.5, 3.1, 13.1, 22.525002, 634.1];
+
+        for (actual, expected) in outputs.iter().zip(expected_outputs.iter()) {
+            assert!(approx::relative_eq!(actual, expected));
+        }
+    }
 }

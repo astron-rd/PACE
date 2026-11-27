@@ -70,8 +70,12 @@ impl Gridder {
 
     pub fn ifft_subgrids(&mut self, input: &Input) {
         let subgrid_size = input.subgrid_size.try_into().unwrap();
-        let mut plan: C2CPlanFloat =
-            C2CPlan::aligned(&[subgrid_size, subgrid_size], Sign::Backward, Flag::ESTIMATE).unwrap();
+        let mut plan: C2CPlanFloat = C2CPlan::aligned(
+            &[subgrid_size, subgrid_size],
+            Sign::Backward,
+            Flag::ESTIMATE,
+        )
+        .unwrap();
 
         let mut input: AlignedVec<Complex> = AlignedVec::new(subgrid_size * subgrid_size);
         let mut output: AlignedVec<Complex> = AlignedVec::new(subgrid_size * subgrid_size);
@@ -220,7 +224,8 @@ fn visibility_to_subgrid(
             let y_dst = (y + (subgrid_size / 2)) % subgrid_size;
 
             for pol in 0..correlation_count_out {
-                subgrid[(pol as usize, y_dst as usize, x_dst as usize)] = pixels[pol as usize] * sph;
+                subgrid[(pol as usize, y_dst as usize, x_dst as usize)] =
+                    pixels[pol as usize] * sph;
             }
         }
     }
