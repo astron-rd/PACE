@@ -1,0 +1,9 @@
+name: probe
+on:
+  push:
+    branches: [probe/das6-hardware]
+jobs:
+  probe:
+    runs-on: [slurm]
+    steps:
+      - run: hostname; command -v cargo rustup || echo "no cargo"; ls -d ~/.cargo ~/.rustup 2>&1
