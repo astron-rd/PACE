@@ -57,7 +57,10 @@ class Gridder:
             subgrids,
         )
 
-        # Apply FFT to each subgrid
+    def ifft_subgrids(self, subgrids: np.ndarray) -> None:
+        """
+        Apply inverse 2-D FFT to each subgrid.
+        """
         subgrids[:] = np.fft.ifft2(subgrids, axes=(2, 3))
 
     def add_subgrids_to_grid(

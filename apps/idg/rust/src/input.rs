@@ -3,8 +3,9 @@ use anyhow::Result;
 use crate::{
     cli::{Cli, Commands},
     constants::{Float, SPEED_OF_LIGHT},
+    timing::time_function,
     types::*,
-    util::{print_header, print_param, time_function},
+    util::{print_header, print_param},
 };
 
 pub struct Input {
@@ -16,6 +17,9 @@ pub struct Input {
     pub metadata: MetadataArray,
     pub taper: Taper,
 
+    pub channel_count: u32,
+    pub timestep_count: u32,
+    pub baseline_count: u32,
     pub grid_size: u32,
     pub subgrid_size: u32,
     pub subgrid_count: usize,
@@ -103,22 +107,26 @@ impl Input {
                     )
                 );
 
-                let taper: Taper = time_function!("generate taper", Taper::generate(*subgrid_size));
+                let taper: Taper =
+                    time_function!("initialize taper", Taper::generate(*subgrid_size));
 
                 Ok(Self {
-                    uvw,
-                    frequencies,
-                    wavenumbers,
-                    visibilities,
-                    metadata,
-                    taper,
-                    grid_size: *grid_size,
-                    subgrid_size: *subgrid_size,
-                    subgrid_count,
+                    baseline_count,
+                    channel_count: *channel_count,
                     correlation_count_in: *correlation_count_in,
                     correlation_count_out: *correlation_count_out,
-                    w_step: cli.w_step,
+                    frequencies,
+                    grid_size: *grid_size,
                     image_size,
+                    metadata,
+                    subgrid_count,
+                    subgrid_size: *subgrid_size,
+                    taper,
+                    timestep_count,
+                    uvw,
+                    visibilities,
+                    w_step: cli.w_step,
+                    wavenumbers,
                 })
             }
             Commands::Load {
@@ -131,7 +139,8 @@ impl Input {
 
                 let file = hdf5_metno::File::open(std::env::current_dir()?.join(filename))?;
 
-                let uvw: UvwArray = time_function!("load uvws", UvwArray::from_file(&file)?);
+                let uvw: UvwArray =
+                    time_function!("load UVW coordinates", UvwArray::from_file(&file)?);
 
                 let frequencies: FrequencyArray =
                     time_function!("load frequencies", FrequencyArray::from_file(&file)?);
@@ -147,7 +156,8 @@ impl Input {
                 let metadata: MetadataArray =
                     time_function!("load metadata", MetadataArray::from_file(&file)?);
 
-                let taper: Taper = time_function!("generate taper", Taper::generate(*subgrid_size));
+                let taper: Taper =
+                    time_function!("initialize taper", Taper::generate(*subgrid_size));
 
                 Ok(Self {
                     subgrid_count: metadata.len(),
@@ -156,6 +166,9 @@ impl Input {
                     correlation_count_in: visibilities.shape()[3].try_into().unwrap(),
                     correlation_count_out: *correlation_count_out,
                     w_step: cli.w_step,
+                    channel_count: frequencies.len().try_into().unwrap(),
+                    baseline_count: visibilities.shape()[0].try_into().unwrap(),
+                    timestep_count: visibilities.shape()[1].try_into().unwrap(),
                     uvw,
                     frequencies,
                     wavenumbers,
