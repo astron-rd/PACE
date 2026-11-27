@@ -14,7 +14,6 @@ jobs:
           time: 00:05:00
           commands: |
             set +e
-            type module; module --version
-            module avail 2>&1 | tail -30
-            for t in cmake gcc cc make pkg-config h5cc spack conda pixi; do echo "R $t: $(command -v $t || echo none)"; done
-            cat /etc/os-release | head -2
+            module load spack
+            module avail 2>&1 | grep -i -E 'hdf5|fftw' | sed 's/^/R /'
+            module load hdf5 && echo "R loaded hdf5: HDF5_DIR=${HDF5_DIR:-unset} HDF5_ROOT=${HDF5_ROOT:-unset} h5cc=$(command -v h5cc) pc=$(pkg-config --modversion hdf5 2>&1)"
