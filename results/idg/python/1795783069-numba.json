@@ -1,0 +1,39 @@
+{
+  "version": "1.0.0",
+  "timestamp": "2026-11-27T12:37:49Z",
+  "application": "idg",
+  "language": "python",
+  "framework": "numba",
+  "commit": "e645edf5",
+  "hardware": {
+    "cpu": {
+      "model": "AMD EPYC 9555P 64-Core Processor",
+      "threads": 16
+    },
+    "memory": {
+      "gib": 576,
+      "mts": 4800
+    }
+  },
+  "parameters": {
+    "nr_correlations_in": 2,
+    "nr_correlations_out": 1,
+    "nr_channels": 16,
+    "nr_timesteps": 14400,
+    "nr_baselines": 190,
+    "subgrid_size": 32,
+    "grid_size": 1024,
+    "backend": "numba"
+  },
+  "timings": {
+    "load_uvw_coordinates": 0.0028898008167743683,
+    "load_frequencies": 0.00010726135224103928,
+    "load_metadata": 0.00030311383306980133,
+    "load_visibilities": 0.051963224075734615,
+    "initialize_taper": 2.376061343587935,
+    "initialize_gridder": 4.509463906288147e-6,
+    "grid_visibilities": 59.899107199162245,
+    "add_subgrids": 0.3857503663748503,
+    "transform_grid": 0.009485356509685516
+  }
+}
