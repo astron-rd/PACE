@@ -1,0 +1,20 @@
+name: probe
+on:
+  push:
+    branches: [probe/das6-hardware]
+    paths: [.github/workflows/probe.yaml]
+jobs:
+  probe:
+    runs-on: [slurm]
+    steps:
+      - uses: astron-rd/slurm-action@v1.4
+        with:
+          partition: rbq
+          constraints: zen5
+          time: 00:05:00
+          commands: |
+            hostname
+            module avail 2>&1 | grep -i -E 'hdf5|fftw|cmake' || echo "R no modules matched"
+            for m in hdf5 HDF5 hdf5/serial; do module load $m 2>/dev/null && echo "R loaded $m: HDF5_DIR=${HDF5_DIR:-unset} $(command -v h5cc h5dump | tr '\n' ' ')" && break; done
+            ls -d /usr/include/hdf5* /usr/lib64/libhdf5* /usr/lib/x86_64-linux-gnu/hdf5 2>&1 | head
+            command -v cmake pkg-config || true
